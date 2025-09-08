@@ -14,16 +14,430 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audit_logs: {
+        Row: {
+          actor: string | null
+          cambio_json: Json | null
+          created_at: string
+          entidad: string
+          entidad_id: string
+          id: string
+        }
+        Insert: {
+          actor?: string | null
+          cambio_json?: Json | null
+          created_at?: string
+          entidad: string
+          entidad_id: string
+          id?: string
+        }
+        Update: {
+          actor?: string | null
+          cambio_json?: Json | null
+          created_at?: string
+          entidad?: string
+          entidad_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      clients: {
+        Row: {
+          apellido: string | null
+          created_at: string
+          dni: string | null
+          email: string | null
+          es_temporal: boolean | null
+          id: string
+          nombre: string
+          telefono: string
+          updated_at: string
+        }
+        Insert: {
+          apellido?: string | null
+          created_at?: string
+          dni?: string | null
+          email?: string | null
+          es_temporal?: boolean | null
+          id?: string
+          nombre: string
+          telefono: string
+          updated_at?: string
+        }
+        Update: {
+          apellido?: string | null
+          created_at?: string
+          dni?: string | null
+          email?: string | null
+          es_temporal?: boolean | null
+          id?: string
+          nombre?: string
+          telefono?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      config: {
+        Row: {
+          created_at: string
+          extras_json: Json | null
+          id: string
+          plantillas_json: Json | null
+          politicas_md: string | null
+          porcentaje_senia: number | null
+          precio_km: number | null
+          tarifa_base: number | null
+          umbral_km: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          extras_json?: Json | null
+          id?: string
+          plantillas_json?: Json | null
+          politicas_md?: string | null
+          porcentaje_senia?: number | null
+          precio_km?: number | null
+          tarifa_base?: number | null
+          umbral_km?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          extras_json?: Json | null
+          id?: string
+          plantillas_json?: Json | null
+          politicas_md?: string | null
+          porcentaje_senia?: number | null
+          precio_km?: number | null
+          tarifa_base?: number | null
+          umbral_km?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      drivers: {
+        Row: {
+          activo: boolean | null
+          created_at: string
+          id: string
+          nombre: string
+          telefono: string
+        }
+        Insert: {
+          activo?: boolean | null
+          created_at?: string
+          id?: string
+          nombre: string
+          telefono: string
+        }
+        Update: {
+          activo?: boolean | null
+          created_at?: string
+          id?: string
+          nombre?: string
+          telefono?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          canal: Database["public"]["Enums"]["notification_channel"]
+          created_at: string
+          enviado_ts: string | null
+          estado: string
+          id: string
+          payload_json: Json | null
+          plantilla: string
+          request_id: string | null
+        }
+        Insert: {
+          canal: Database["public"]["Enums"]["notification_channel"]
+          created_at?: string
+          enviado_ts?: string | null
+          estado?: string
+          id?: string
+          payload_json?: Json | null
+          plantilla: string
+          request_id?: string | null
+        }
+        Update: {
+          canal?: Database["public"]["Enums"]["notification_channel"]
+          created_at?: string
+          enviado_ts?: string | null
+          estado?: string
+          id?: string
+          payload_json?: Json | null
+          plantilla?: string
+          request_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          created_at: string
+          id: string
+          moneda: string | null
+          monto: number
+          payment_id: string | null
+          provider: string
+          request_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          moneda?: string | null
+          monto: number
+          payment_id?: string | null
+          provider: string
+          request_id?: string | null
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          moneda?: string | null
+          monto?: number
+          payment_id?: string | null
+          provider?: string
+          request_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          created_at: string
+          extras_json: Json | null
+          id: string
+          km: number | null
+          precio_km: number
+          request_id: string | null
+          tarifa_base: number
+          total: number
+        }
+        Insert: {
+          created_at?: string
+          extras_json?: Json | null
+          id?: string
+          km?: number | null
+          precio_km: number
+          request_id?: string | null
+          tarifa_base: number
+          total: number
+        }
+        Update: {
+          created_at?: string
+          extras_json?: Json | null
+          id?: string
+          km?: number | null
+          precio_km?: number
+          request_id?: string | null
+          tarifa_base?: number
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      requests: {
+        Row: {
+          carga_tipo: string
+          carga_volumen: string | null
+          client_id: string | null
+          created_at: string
+          destino: string
+          estado: Database["public"]["Enums"]["request_status"] | null
+          fecha: string
+          franja: string
+          id: string
+          notas: string | null
+          origen: string
+          updated_at: string
+        }
+        Insert: {
+          carga_tipo: string
+          carga_volumen?: string | null
+          client_id?: string | null
+          created_at?: string
+          destino: string
+          estado?: Database["public"]["Enums"]["request_status"] | null
+          fecha: string
+          franja: string
+          id?: string
+          notas?: string | null
+          origen: string
+          updated_at?: string
+        }
+        Update: {
+          carga_tipo?: string
+          carga_volumen?: string | null
+          client_id?: string | null
+          created_at?: string
+          destino?: string
+          estado?: Database["public"]["Enums"]["request_status"] | null
+          fecha?: string
+          franja?: string
+          id?: string
+          notas?: string | null
+          origen?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requests_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedule: {
+        Row: {
+          bloqueado: boolean | null
+          chofer_id: string | null
+          created_at: string
+          fin_ts: string
+          id: string
+          inicio_ts: string
+          request_id: string | null
+          vehiculo_id: string | null
+        }
+        Insert: {
+          bloqueado?: boolean | null
+          chofer_id?: string | null
+          created_at?: string
+          fin_ts: string
+          id?: string
+          inicio_ts: string
+          request_id?: string | null
+          vehiculo_id?: string | null
+        }
+        Update: {
+          bloqueado?: boolean | null
+          chofer_id?: string | null
+          created_at?: string
+          fin_ts?: string
+          id?: string
+          inicio_ts?: string
+          request_id?: string | null
+          vehiculo_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_chofer_id_fkey"
+            columns: ["chofer_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_vehiculo_id_fkey"
+            columns: ["vehiculo_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          activo: boolean | null
+          capacidad: string
+          created_at: string
+          id: string
+          patente: string
+        }
+        Insert: {
+          activo?: boolean | null
+          capacidad: string
+          created_at?: string
+          id?: string
+          patente: string
+        }
+        Update: {
+          activo?: boolean | null
+          capacidad?: string
+          created_at?: string
+          id?: string
+          patente?: string
+        }
+        Relationships: []
+      }
+      zones: {
+        Row: {
+          created_at: string
+          geo_json: Json | null
+          id: string
+          nombre: string
+        }
+        Insert: {
+          created_at?: string
+          geo_json?: Json | null
+          id?: string
+          nombre: string
+        }
+        Update: {
+          created_at?: string
+          geo_json?: Json | null
+          id?: string
+          nombre?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      notification_channel: "email" | "whatsapp"
+      request_status:
+        | "Solicitada"
+        | "Señada"
+        | "Confirmada"
+        | "Rechazada"
+        | "Completada"
+        | "Cancelada"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +564,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      notification_channel: ["email", "whatsapp"],
+      request_status: [
+        "Solicitada",
+        "Señada",
+        "Confirmada",
+        "Rechazada",
+        "Completada",
+        "Cancelada",
+      ],
+    },
   },
 } as const

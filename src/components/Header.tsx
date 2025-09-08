@@ -1,0 +1,115 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Menu, X, Truck } from "lucide-react";
+import { Link } from "react-router-dom";
+
+const Header = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  return (
+    <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center py-4">
+          {/* Logo */}
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="bg-primary p-2 rounded-lg">
+              <Truck className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-xl font-bold text-primary">Fletestereo</span>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-8">
+            <Link 
+              to="/servicios" 
+              className="text-muted-foreground hover:text-primary transition-colors"
+            >
+              Servicios
+            </Link>
+            <Link 
+              to="/zonas" 
+              className="text-muted-foreground hover:text-primary transition-colors"
+            >
+              Zonas
+            </Link>
+            <Link 
+              to="/tarifas" 
+              className="text-muted-foreground hover:text-primary transition-colors"
+            >
+              Tarifas
+            </Link>
+            <Link 
+              to="/contacto" 
+              className="text-muted-foreground hover:text-primary transition-colors"
+            >
+              Contacto
+            </Link>
+            <Button variant="outline" size="sm">
+              Iniciar Sesión
+            </Button>
+            <Button variant="hero" size="sm">
+              Solicitar Flete
+            </Button>
+          </nav>
+
+          {/* Mobile menu button */}
+          <button
+            onClick={toggleMenu}
+            className="md:hidden p-2 rounded-md text-muted-foreground hover:text-primary hover:bg-secondary"
+            aria-label="Toggle menu"
+          >
+            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
+
+        {/* Mobile Navigation */}
+        {isMenuOpen && (
+          <div className="md:hidden border-t py-4">
+            <nav className="flex flex-col space-y-4">
+              <Link 
+                to="/servicios" 
+                className="text-muted-foreground hover:text-primary transition-colors py-2"
+                onClick={toggleMenu}
+              >
+                Servicios
+              </Link>
+              <Link 
+                to="/zonas" 
+                className="text-muted-foreground hover:text-primary transition-colors py-2"
+                onClick={toggleMenu}
+              >
+                Zonas
+              </Link>
+              <Link 
+                to="/tarifas" 
+                className="text-muted-foreground hover:text-primary transition-colors py-2"
+                onClick={toggleMenu}
+              >
+                Tarifas
+              </Link>
+              <Link 
+                to="/contacto" 
+                className="text-muted-foreground hover:text-primary transition-colors py-2"
+                onClick={toggleMenu}
+              >
+                Contacto
+              </Link>
+              <div className="flex flex-col space-y-2 pt-4">
+                <Button variant="outline" size="sm">
+                  Iniciar Sesión
+                </Button>
+                <Button variant="hero" size="sm">
+                  Solicitar Flete
+                </Button>
+              </div>
+            </nav>
+          </div>
+        )}
+      </div>
+    </header>
+  );
+};
+
+export default Header;
