@@ -12,24 +12,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { MapPin, Calculator, User, Phone, Mail, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-
-interface ClientData {
-  nombre: string;
-  apellido: string;
-  telefono: string;
-  email: string;
-  dni: string;
-}
-
-interface RequestData {
-  origen: string;
-  destino: string;
-  fecha: string;
-  franja: string;
-  cargaTipo: string;
-  cargaVolumen: string;
-  notas: string;
-}
+import { freightService } from "@/modules/freight";
+import { paymentService } from "@/modules/payments";
+import type { 
+  ClientInfo, 
+  QuoteData, 
+  QuoteResult 
+} from "@/core/events/domain-events";
 
 const SolicitarFlete = () => {
   const navigate = useNavigate();
@@ -39,7 +28,7 @@ const SolicitarFlete = () => {
   const [loading, setLoading] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   
-  const [clientData, setClientData] = useState<ClientData>({
+  const [clientData, setClientData] = useState<ClientInfo>({
     nombre: "",
     apellido: "",
     telefono: "",
@@ -47,7 +36,7 @@ const SolicitarFlete = () => {
     dni: ""
   });
 
-  const [requestData, setRequestData] = useState<RequestData>({
+  const [requestData, setRequestData] = useState<QuoteData>({
     origen: "",
     destino: "",
     fecha: "",
@@ -57,35 +46,34 @@ const SolicitarFlete = () => {
     notas: ""
   });
 
-  const [quote, setQuote] = useState<any>(null);
+  const [quote, setQuote] = useState<QuoteResult | null>(null);
 
-  const handleClientDataChange = (field: keyof ClientData, value: string) => {
+  const handleClientDataChange = (field: keyof ClientInfo, value: string) => {
     setClientData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleRequestDataChange = (field: keyof RequestData, value: string) => {
+  const handleRequestDataChange = (field: keyof QuoteData, value: string) => {
     setRequestData(prev => ({ ...prev, [field]: value }));
   };
 
-  const calculateQuote = () => {
-    // Simulación de cálculo de cotización
-    const mockQuote = {
-      km: Math.floor(Math.random() * 150) + 10,
-      tarifaBase: 5000,
-      precioKm: 50,
-      extras: {
-        cargaPesada: requestData.cargaTipo === "pesada" ? 2000 : 0,
-        ayudanteExtra: requestData.cargaVolumen === "grande" ? 1500 : 0,
-        embalaje: requestData.notas.toLowerCase().includes("embalaje") ? 800 : 0
-      },
-      total: 0
-    };
+  const calculateQuote = async () => {
+    try {
+      // Usar el servicio de fletes con Event Bus
+      const calculatedQuote = await freightService.requestQuote(
+        requestData,
+        clientData,
+        `formal_quote_${Date.now()}`
+      );
 
-    const extrasTotal = Object.values(mockQuote.extras).reduce((sum, extra) => sum + extra, 0);
-    mockQuote.total = mockQuote.tarifaBase + (mockQuote.km * mockQuote.precioKm) + extrasTotal;
-
-    setQuote(mockQuote);
-    setStep(3);
+      setQuote(calculatedQuote);
+      setStep(3);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No pudimos calcular la cotización. Intenta nuevamente.",
+        variant: "destructive"
+      });
+    }
   };
 
   const submitRequest = async () => {
@@ -98,68 +86,44 @@ const SolicitarFlete = () => {
       return;
     }
 
+    if (!quote) {
+      toast({
+        title: "Error",
+        description: "No hay cotización disponible",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // 1. Crear cliente temporal
-      const { data: clientResult, error: clientError } = await supabase
-        .from("clients")
-        .insert({
-          nombre: clientData.nombre,
-          apellido: clientData.apellido,
-          telefono: clientData.telefono,
-          email: clientData.email || null,
-          dni: clientData.dni || null,
-          es_temporal: true
-        })
-        .select()
-        .single();
-
-      if (clientError) throw clientError;
-
-      // 2. Crear solicitud
-      const { data: requestResult, error: requestError } = await supabase
-        .from("requests")
-        .insert({
-          client_id: clientResult.id,
-          origen: requestData.origen,
-          destino: requestData.destino,
-          fecha: requestData.fecha,
-          franja: requestData.franja,
-          carga_tipo: requestData.cargaTipo,
-          carga_volumen: requestData.cargaVolumen,
-          notas: requestData.notas,
-          estado: "Solicitada"
-        })
-        .select()
-        .single();
-
-      if (requestError) throw requestError;
-
-      // 3. Guardar cotización
-      if (quote) {
-        const { error: quoteError } = await supabase
-          .from("quotes")
-          .insert({
-            request_id: requestResult.id,
-            km: quote.km,
-            tarifa_base: quote.tarifaBase,
-            precio_km: quote.precioKm,
-            extras_json: quote.extras,
-            total: quote.total
-          });
-
-        if (quoteError) throw quoteError;
-      }
+      // Usar el servicio de fletes que manejará todo a través del Event Bus
+      const freightRequest = await freightService.createFreightRequest(
+        clientData,
+        requestData,
+        quote
+      );
 
       toast({
         title: "¡Solicitud enviada exitosamente!",
-        description: `Tu solicitud #${requestResult.id.slice(0, 8)} ha sido registrada. Te contactaremos pronto.`
+        description: `Tu solicitud #${freightRequest.id.slice(0, 8)} ha sido registrada. Te contactaremos pronto.`
       });
+
+      // Opcional: Simular confirmación automática del dueño después de 5 segundos
+      setTimeout(async () => {
+        await freightService.confirmFreightRequest(
+          freightRequest.id,
+          "owner_demo",
+          new Date(Date.now() + 24 * 60 * 60 * 1000), // Mañana
+          "Solicitud confirmada automáticamente para demo"
+        );
+      }, 5000);
 
       // Redirigir a página de confirmación
       setTimeout(() => {
         navigate("/");
+      }, 2000);
       }, 3000);
 
     } catch (error: any) {

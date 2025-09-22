@@ -7,16 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar, MapPin, Package, Calculator } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface QuoteData {
-  origen: string;
-  destino: string;
-  fecha: string;
-  franja: string;
-  cargaTipo: string;
-  cargaVolumen: string;
-  notas: string;
-}
+import { freightService } from "@/modules/freight";
+import type { QuoteData, QuoteResult } from "@/core/events/domain-events";
 
 const QuoteForm = () => {
   const { toast } = useToast();
@@ -29,7 +21,7 @@ const QuoteForm = () => {
     cargaVolumen: "",
     notas: ""
   });
-  const [quote, setQuote] = useState<any>(null);
+  const [quote, setQuote] = useState<QuoteResult | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleInputChange = (field: keyof QuoteData, value: string) => {
@@ -49,23 +41,14 @@ const QuoteForm = () => {
     setLoading(true);
     
     try {
-      // Simulamos cálculo de cotización
-      // En la implementación real esto haría una llamada a la API
-      const mockQuote = {
-        km: Math.floor(Math.random() * 100) + 10,
-        tarifaBase: 5000,
-        precioKm: 50,
-        extras: {
-          cargaPesada: formData.cargaTipo === "pesada" ? 2000 : 0,
-          ayudanteExtra: formData.cargaVolumen === "grande" ? 1500 : 0
-        },
-        total: 0
-      };
+      // Usar el servicio de fletes que emite eventos
+      const calculatedQuote = await freightService.requestQuote(
+        formData,
+        undefined, // clientInfo opcional para cotización rápida
+        `quote_session_${Date.now()}` // sessionId para tracking
+      );
 
-      mockQuote.total = mockQuote.tarifaBase + (mockQuote.km * mockQuote.precioKm) + 
-                      mockQuote.extras.cargaPesada + mockQuote.extras.ayudanteExtra;
-
-      setQuote(mockQuote);
+      setQuote(calculatedQuote);
       
       toast({
         title: "Cotización calculada",
