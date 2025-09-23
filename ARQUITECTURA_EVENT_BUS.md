@@ -2,7 +2,7 @@
 
 ## Descripción General
 
-El proyecto Fletestereo ha sido reestructurado para implementar una **arquitectura de Bus de Eventos**, que permite el desacoplamiento completo entre módulos y facilita el manejo eficiente de eventos asíncronos en tiempo real.
+El proyecto Fletestereo ha sido reestructurado para implementar una **arquitectura de Bus de Eventos** que permite el desacoplamiento completo entre módulos y facilita el manejo eficiente de eventos asíncronos en tiempo real.
 
 ## ¿Por qué Bus de Eventos?
 
