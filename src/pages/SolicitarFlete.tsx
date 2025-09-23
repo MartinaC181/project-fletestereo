@@ -124,9 +124,8 @@ const SolicitarFlete = () => {
       setTimeout(() => {
         navigate("/");
       }, 2000);
-      }, 3000);
 
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error al enviar solicitud:", error);
       toast({
         title: "Error al enviar solicitud",
