@@ -153,12 +153,12 @@ const Zonas = () => {
             
             <div className="grid md:grid-cols-2 gap-8">
               {mainZones.map((zone, index) => (
-                <Card key={index} className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md">
+                <Card key={index} className="group">
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between">
                       <div>
                         <CardTitle className="text-xl text-primary mb-2 flex items-center gap-2">
-                          <MapPin className="h-5 w-5 text-accent-orange" />
+                          <MapPin className="h-5 w-5 text-accent-yellow" />
                           {zone.title}
                         </CardTitle>
                         <div className="flex gap-4 text-sm text-muted-foreground">
@@ -261,34 +261,6 @@ const Zonas = () => {
                   <p className="text-muted-foreground">{feature.description}</p>
                 </div>
               ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Coverage Map CTA */}
-        <section className="py-16 lg:py-24 bg-gradient-to-r from-primary to-primary-deep">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="max-w-3xl mx-auto">
-              <Truck className="h-16 w-16 text-white mx-auto mb-6" />
-              <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-                ¿No encuentras tu zona?
-              </h2>
-              <p className="text-lg text-primary-foreground/80 mb-8">
-                Estamos expandiendo constantemente nuestras zonas de cobertura. 
-                Consulta disponibilidad para tu ubicación específica.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/contacto">
-                  <Button variant="secondary" size="lg" className="w-full sm:w-auto">
-                    Consultar mi Zona
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-                <Button variant="outline" size="lg" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-primary">
-                  <Phone className="mr-2 h-5 w-5" />
-                  Llamar Ahora
-                </Button>
-              </div>
             </div>
           </div>
         </section>

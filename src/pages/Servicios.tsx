@@ -208,31 +208,6 @@ const Servicios = () => {
             </div>
           </div>
         </section>
-
-        {/* CTA Section */}
-        <section className="py-16 lg:py-24 bg-gradient-to-r from-primary to-primary-deep">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-              ¿Listo para comenzar?
-            </h2>
-            <p className="text-lg text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
-              Obtén tu cotización personalizada en menos de 5 minutos. Sin compromiso, totalmente gratuito.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/solicitar">
-                <Button variant="secondary" size="lg" className="w-full sm:w-auto">
-                  Solicitar Cotización Gratuita
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/contacto">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-primary">
-                  Contactar por WhatsApp
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
       </main>
       <Footer />
     </div>
