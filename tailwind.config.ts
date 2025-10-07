@@ -40,8 +40,8 @@ export default {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
-          orange: "hsl(var(--accent-orange))",
-          "orange-light": "hsl(var(--accent-orange-light))",
+          yellow: "hsl(var(--accent-yellow))",
+          "yellow-light": "hsl(var(--accent-yellow-light))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
@@ -66,6 +66,9 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      fontFamily: {
+        'fredoka': ['Fredoka One', 'sans-serif'],
       },
       keyframes: {
         "accordion-down": {

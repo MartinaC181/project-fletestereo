@@ -202,7 +202,7 @@ const SolicitarFlete = () => {
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5 text-accent-orange" />
+                  <User className="h-5 w-5 text-accent-yellow" />
                   Tus Datos de Contacto
                 </CardTitle>
               </CardHeader>
@@ -272,7 +272,7 @@ const SolicitarFlete = () => {
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-accent-orange" />
+                  <MapPin className="h-5 w-5 text-accent-yellow" />
                   Detalles del Flete
                 </CardTitle>
               </CardHeader>
@@ -379,7 +379,7 @@ const SolicitarFlete = () => {
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Calculator className="h-5 w-5 text-accent-orange" />
+                  <Calculator className="h-5 w-5 text-accent-yellow" />
                   Confirmación de Solicitud
                 </CardTitle>
               </CardHeader>
@@ -407,13 +407,13 @@ const SolicitarFlete = () => {
                     <hr />
                     <div className="flex justify-between font-bold text-lg">
                       <span>Total estimado:</span>
-                      <span className="text-accent-orange">${quote.total.toLocaleString()}</span>
+                      <span className="text-accent-yellow">${quote.total.toLocaleString()}</span>
                     </div>
                   </div>
 
                   {quote.km > 100 && (
-                    <div className="mt-4 bg-accent-orange-light/20 p-4 rounded-lg border border-accent-orange/20">
-                      <h5 className="font-semibold text-accent-orange mb-2">Seña Requerida</h5>
+                    <div className="mt-4 bg-accent-yellow-light/20 p-4 rounded-lg border border-accent-yellow/20">
+                      <h5 className="font-semibold text-accent-yellow mb-2">Seña Requerida</h5>
                       <p className="text-sm">
                         Para viajes mayores a 100km se requiere una seña del 30% 
                         (${Math.round(quote.total * 0.3).toLocaleString()})

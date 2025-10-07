@@ -4,19 +4,19 @@ import { Truck, Home, Package, MapPin, Clock, Shield } from "lucide-react";
 const ServicesSection = () => {
   const services = [
     {
-      icon: <Truck className="h-8 w-8 text-accent-orange" />,
+      icon: <Truck className="h-8 w-8 text-accent-yellow" />,
       title: "Flete Comercial",
       description: "Transporte de mercadería y productos comerciales con total seguridad",
       features: ["Carga hasta 3000kg", "Seguimiento GPS", "Seguro incluido"]
     },
     {
-      icon: <Home className="h-8 w-8 text-accent-orange" />,
+      icon: <Home className="h-8 w-8 text-accent-yellow" />,
       title: "Mudanzas Residenciales",
       description: "Servicio completo de mudanza con embalaje y armado de muebles",
       features: ["Embalaje profesional", "Armado de muebles", "Equipo especializado"]
     },
     {
-      icon: <Package className="h-8 w-8 text-accent-orange" />,
+      icon: <Package className="h-8 w-8 text-accent-yellow" />,
       title: "Envío de Paquetes",
       description: "Entrega rápida y segura de paquetes y documentos importantes",
       features: ["Entrega en el día", "Comprobante digital", "Rastreo en tiempo real"]
@@ -60,7 +60,7 @@ const ServicesSection = () => {
           {services.map((service, index) => (
             <Card key={index} className="border-0 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
               <CardHeader className="text-center pb-4">
-                <div className="mx-auto bg-accent-orange-light/20 p-4 rounded-full w-fit mb-4">
+                <div className="mx-auto bg-accent-yellow-light/20 p-4 rounded-full w-fit mb-4">
                   {service.icon}
                 </div>
                 <CardTitle className="text-xl text-primary">{service.title}</CardTitle>
@@ -72,7 +72,7 @@ const ServicesSection = () => {
                 <ul className="space-y-2">
                   {service.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-center text-sm">
-                      <div className="w-2 h-2 bg-accent-orange rounded-full mr-3"></div>
+                      <div className="w-2 h-2 bg-accent-yellow rounded-full mr-3"></div>
                       {feature}
                     </li>
                   ))}

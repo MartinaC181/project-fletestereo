@@ -82,7 +82,7 @@ const QuoteForm = () => {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-accent-orange" />
+                <MapPin className="h-5 w-5 text-accent-yellow" />
                 Detalles del Servicio
               </CardTitle>
             </CardHeader>
@@ -189,7 +189,7 @@ const QuoteForm = () => {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-accent-orange" />
+                <Package className="h-5 w-5 text-accent-yellow" />
                 Tu Cotización
               </CardTitle>
             </CardHeader>
@@ -222,13 +222,13 @@ const QuoteForm = () => {
                       <hr />
                       <div className="flex justify-between font-bold text-lg">
                         <span>Total:</span>
-                        <span className="text-accent-orange">${quote.total.toLocaleString()}</span>
+                        <span className="text-accent-yellow">${quote.total.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
 
                   {quote.km > 100 && (
-                    <div className="bg-accent-orange-light/20 p-4 rounded-lg border border-accent-orange/20">
+                    <div className="bg-accent-yellow-light/20 p-4 rounded-lg border border-accent-yellow/20">
                       <h5 className="font-semibold text-accent-orange mb-2">Seña Requerida</h5>
                       <p className="text-sm">
                         Para viajes mayores a 100km se requiere una seña del 30% 
