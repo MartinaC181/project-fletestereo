@@ -19,60 +19,74 @@ import {
 const Servicios = () => {
   const services = [
     {
-      icon: <Truck className="h-12 w-12 text-accent-orange" />,
-      title: "Flete Comercial",
-      description: "Transporte seguro y eficiente de mercadería y productos comerciales para empresas y particulares.",
+      icon: <Home className="h-12 w-12 text-accent-orange" />,
+      title: "Mudanza Completa",
+      description: "Servicio completo de mudanza hasta que la camioneta se llene. Los espejos y pantallas viajan aparte.",
       features: [
-        "Carga hasta 3000kg",
-        "Seguimiento GPS en tiempo real",
-        "Seguro de transporte incluido",
-        "Carga y descarga profesional",
-        "Documentación completa"
+        "Incluye todo hasta llenar la camioneta",
+        "Espejos y pantallas protegidos aparte",
+        "Precio puede variar por escaleras",
+        "Servicio completo de carga y descarga",
+        "Transporte profesional"
       ],
-      price: "Desde $15.000",
-      duration: "Mismo día o programado"
+      price: "$80.000",
+      duration: "Día completo"
     },
     {
-      icon: <Home className="h-12 w-12 text-accent-orange" />,
-      title: "Mudanzas Residenciales",
-      description: "Servicio integral de mudanza con embalaje profesional, traslado y armado de muebles.",
+      icon: <Truck className="h-12 w-12 text-accent-orange" />,
+      title: "Mini Mudanza (Mayor a 10 cuadras)",
+      description: "Mudanza de elementos esenciales con recorrido mayor a 10 cuadras en Corrientes.",
       features: [
-        "Embalaje y desembalaje",
-        "Desmontaje y armado de muebles",
-        "Material de protección incluido",
-        "Equipo especializado",
-        "Limpieza post-mudanza"
+        "Incluye heladera, lavarropa, cocina",
+        "Juego de comedor y 1 cama",
+        "Recorrido mayor a 10 cuadras",
+        "Precio varía por escaleras",
+        "Carga y descarga incluida"
       ],
-      price: "Desde $25.000",
-      duration: "4-8 horas"
+      price: "$40.000",
+      duration: "Medio día"
     },
     {
       icon: <Package className="h-12 w-12 text-accent-orange" />,
-      title: "Envío de Paquetes",
-      description: "Entrega rápida y segura de paquetes, documentos y productos de e-commerce.",
+      title: "Mini Mudanza (Menor a 10 cuadras)",
+      description: "Mudanza de elementos esenciales con recorrido menor a 10 cuadras. No incluye bolsas ni cajas.",
       features: [
-        "Entrega en el día",
-        "Comprobante digital",
-        "Rastreo en tiempo real",
-        "Manejo de productos frágiles",
-        "Confirmación de entrega"
+        "Heladera, lavarropa, cocina",
+        "Juego de comedor y 1 cama",
+        "Distancia hasta 10 cuadras",
+        "No incluye bolsas ni cajas",
+        "Ideal para mudanzas locales"
       ],
-      price: "Desde $3.500",
-      duration: "2-6 horas"
+      price: "$30.000",
+      duration: "Pocas horas"
     },
     {
       icon: <MapPin className="h-12 w-12 text-accent-orange" />,
-      title: "Viajes al Interior",
-      description: "Transporte de larga distancia hacia el interior del país con máxima seguridad.",
+      title: "Flete Liviano Recorrido Largo",
+      description: "Transporte de 1 a 4 objetos con recorrido mayor a 10 cuadras en Corrientes.",
       features: [
-        "Cobertura nacional",
-        "Seguimiento satelital",
-        "Conductor especializado",
-        "Seguro extendido",
-        "Coordinación de horarios"
+        "De 1 a 4 objetos",
+        "Recorrido mayor a 10 cuadras",
+        "Puede incluir ayudante",
+        "Ideal para pocos objetos",
+        "Servicio rápido y eficiente"
       ],
-      price: "Consultar",
-      duration: "1-3 días"
+      price: "$25.000",
+      duration: "2-4 horas"
+    },
+    {
+      icon: <Truck className="h-12 w-12 text-accent-orange" />,
+      title: "Flete Liviano Recorrido Corto",
+      description: "Transporte de 1 a 4 objetos que puede levantar una persona promedio, hasta 10 cuadras.",
+      features: [
+        "De 1 a 4 objetos livianos",
+        "Distancia hasta 10 cuadras",
+        "Objetos que levanta 1 persona",
+        "Servicio económico",
+        "Ideal para objetos pequeños"
+      ],
+      price: "$20.000",
+      duration: "1-2 horas"
     }
   ];
 

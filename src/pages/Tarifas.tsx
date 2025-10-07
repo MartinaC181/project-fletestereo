@@ -22,62 +22,89 @@ import {
 const Tarifas = () => {
   const serviceTypes = [
     {
-      icon: <Package className="h-8 w-8 text-accent-orange" />,
-      title: "Envío de Paquetes",
-      subtitle: "Ideal para e-commerce y documentos",
-      basePrice: 3500,
-      priceUnit: "por envío",
+      icon: <Home className="h-8 w-8 text-accent-orange" />,
+      title: "Mudanza Completa",
+      subtitle: "Hasta llenar la camioneta - Corrientes Capital",
+      basePrice: 80000,
+      priceUnit: "precio fijo",
       zones: [
-        { name: "Capital Federal", price: 3500, time: "2-4 hs" },
-        { name: "GBA Norte", price: 4200, time: "3-5 hs" },
-        { name: "GBA Sur", price: 4000, time: "3-5 hs" },
-        { name: "GBA Oeste", price: 4500, time: "4-6 hs" }
+        { name: "Corrientes Capital", price: 80000, time: "Día completo" },
+        { name: "Con escaleras", price: 80000, time: "Precio puede variar" }
       ],
       features: [
-        "Hasta 30kg",
-        "Seguimiento GPS",
-        "Comprobante digital",
-        "Seguro incluido"
+        "Incluye todo hasta llenar camioneta",
+        "Espejos y pantallas aparte",
+        "Precio puede aumentar por escaleras",
+        "Servicio completo"
+      ],
+      popular: true
+    },
+    {
+      icon: <Truck className="h-8 w-8 text-accent-orange" />,
+      title: "Mini Mudanza (Mayor a 10 cuadras)",
+      subtitle: "Elementos esenciales - Corrientes",
+      basePrice: 40000,
+      priceUnit: "precio fijo",
+      zones: [
+        { name: "Mayor a 10 cuadras", price: 40000, time: "Medio día" },
+        { name: "Con escaleras", price: 40000, time: "Precio varía" }
+      ],
+      features: [
+        "Heladera, lavarropa, cocina",
+        "Juego de comedor y 1 cama",
+        "Precio varía por escaleras",
+        "Recorrido mayor a 10 cuadras"
+      ],
+      popular: false
+    },
+    {
+      icon: <Package className="h-8 w-8 text-accent-orange" />,
+      title: "Mini Mudanza (Menor a 10 cuadras)",
+      subtitle: "Elementos esenciales - Distancia corta",
+      basePrice: 30000,
+      priceUnit: "precio fijo",
+      zones: [
+        { name: "Menor a 10 cuadras", price: 30000, time: "Pocas horas" }
+      ],
+      features: [
+        "Heladera, lavarropa, cocina",
+        "Juego de comedor y 1 cama",
+        "No incluye bolsas ni cajas",
+        "Distancia hasta 10 cuadras"
+      ],
+      popular: false
+    },
+    {
+      icon: <MapPin className="h-8 w-8 text-accent-orange" />,
+      title: "Flete Liviano Recorrido Largo",
+      subtitle: "1 a 4 objetos - Mayor a 10 cuadras",
+      basePrice: 25000,
+      priceUnit: "precio fijo",
+      zones: [
+        { name: "Mayor a 10 cuadras", price: 25000, time: "2-4 horas" }
+      ],
+      features: [
+        "De 1 a 4 objetos",
+        "Mayor a 10 cuadras en Corrientes",
+        "Puede incluir ayudante",
+        "Ideal para pocos objetos"
       ],
       popular: false
     },
     {
       icon: <Truck className="h-8 w-8 text-accent-orange" />,
-      title: "Flete Comercial",
-      subtitle: "Para empresas y comercios",
-      basePrice: 15000,
-      priceUnit: "por viaje",
+      title: "Flete Liviano Recorrido Corto",
+      subtitle: "1 a 4 objetos livianos - Hasta 10 cuadras",
+      basePrice: 20000,
+      priceUnit: "precio fijo",
       zones: [
-        { name: "Capital Federal", price: 15000, time: "2-4 hs" },
-        { name: "GBA Norte", price: 18000, time: "3-5 hs" },
-        { name: "GBA Sur", price: 17000, time: "3-5 hs" },
-        { name: "GBA Oeste", price: 19000, time: "4-6 hs" }
+        { name: "Hasta 10 cuadras", price: 20000, time: "1-2 horas" }
       ],
       features: [
-        "Hasta 3000kg",
-        "Carga y descarga",
-        "Seguro de transporte",
-        "Documentación"
-      ],
-      popular: true
-    },
-    {
-      icon: <Home className="h-8 w-8 text-accent-orange" />,
-      title: "Mudanza Completa",
-      subtitle: "Servicio integral de mudanza",
-      basePrice: 25000,
-      priceUnit: "por mudanza",
-      zones: [
-        { name: "Capital Federal", price: 25000, time: "4-8 hs" },
-        { name: "GBA Norte", price: 30000, time: "5-9 hs" },
-        { name: "GBA Sur", price: 28000, time: "5-9 hs" },
-        { name: "GBA Oeste", price: 32000, time: "6-10 hs" }
-      ],
-      features: [
-        "Embalaje incluido",
-        "Armado de muebles",
-        "Equipo especializado",
-        "Limpieza post-mudanza"
+        "De 1 a 4 objetos livianos",
+        "Objetos que levanta 1 persona",
+        "Distancia hasta 10 cuadras",
+        "Servicio económico"
       ],
       popular: false
     }

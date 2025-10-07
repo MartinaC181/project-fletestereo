@@ -331,9 +331,11 @@ const SolicitarFlete = () => {
                         <SelectValue placeholder="Tipo de carga" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="liviana">Liviana (hasta 500kg)</SelectItem>
-                        <SelectItem value="media">Media (500kg - 1000kg)</SelectItem>
-                        <SelectItem value="pesada">Pesada (más de 1000kg)</SelectItem>
+                        <SelectItem value="mudanza-completa">Mudanza Completa ($80.000)</SelectItem>
+                        <SelectItem value="mini-mudanza-larga">Mini Mudanza (+10 cuadras - $40.000)</SelectItem>
+                        <SelectItem value="mini-mudanza-corta">Mini Mudanza (-10 cuadras - $30.000)</SelectItem>
+                        <SelectItem value="flete-largo">Flete Liviano Largo ($25.000)</SelectItem>
+                        <SelectItem value="flete-corto">Flete Liviano Corto ($20.000)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -344,9 +346,11 @@ const SolicitarFlete = () => {
                         <SelectValue placeholder="Tamaño de carga" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="pequeño">Pequeño (caja)</SelectItem>
-                        <SelectItem value="mediano">Mediano (varios bultos)</SelectItem>
-                        <SelectItem value="grande">Grande (requiere ayudante)</SelectItem>
+                        <SelectItem value="1-objeto">1 objeto</SelectItem>
+                        <SelectItem value="2-4-objetos">2 a 4 objetos</SelectItem>
+                        <SelectItem value="electrodomesticos">Electrodomésticos básicos</SelectItem>
+                        <SelectItem value="muebles-basicos">Muebles básicos (cama, comedor)</SelectItem>
+                        <SelectItem value="camioneta-completa">Hasta llenar camioneta</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

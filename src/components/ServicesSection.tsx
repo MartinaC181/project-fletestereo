@@ -4,22 +4,22 @@ import { Truck, Home, Package, MapPin, Clock, Shield } from "lucide-react";
 const ServicesSection = () => {
   const services = [
     {
-      icon: <Truck className="h-8 w-8 text-accent-yellow" />,
-      title: "Flete Comercial",
-      description: "Transporte de mercadería y productos comerciales con total seguridad",
-      features: ["Carga hasta 3000kg", "Seguimiento GPS", "Seguro incluido"]
+      icon: <Home className="h-8 w-8 text-accent-yellow" />,
+      title: "Mudanza Completa",
+      description: "Servicio completo hasta llenar la camioneta, espejos y pantallas aparte",
+      features: ["Incluye todo", "Protección de frágiles", "$80.000 CTES CAP"]
     },
     {
-      icon: <Home className="h-8 w-8 text-accent-yellow" />,
-      title: "Mudanzas Residenciales",
-      description: "Servicio completo de mudanza con embalaje y armado de muebles",
-      features: ["Embalaje profesional", "Armado de muebles", "Equipo especializado"]
+      icon: <Truck className="h-8 w-8 text-accent-yellow" />,
+      title: "Mini Mudanza",
+      description: "Mudanza de elementos esenciales: heladera, lavarropa, cocina, comedor y cama",
+      features: ["Mayor a 10 cuadras: $40.000", "Menor a 10 cuadras: $30.000", "Precio varía por escaleras"]
     },
     {
       icon: <Package className="h-8 w-8 text-accent-yellow" />,
-      title: "Envío de Paquetes",
-      description: "Entrega rápida y segura de paquetes y documentos importantes",
-      features: ["Entrega en el día", "Comprobante digital", "Rastreo en tiempo real"]
+      title: "Flete Liviano",
+      description: "Transporte de 1 a 4 objetos con diferentes distancias",
+      features: ["Recorrido largo: $25.000", "Recorrido corto: $20.000", "Puede incluir ayudante"]
     }
   ];
 

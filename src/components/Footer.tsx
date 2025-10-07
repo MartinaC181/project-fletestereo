@@ -35,10 +35,10 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">Servicios</h3>
             <ul className="space-y-2 text-sm text-primary-foreground/80">
-              <li><Link to="/servicios/flete" className="hover:text-accent-orange transition-colors">Flete Comercial</Link></li>
-              <li><Link to="/servicios/mudanza" className="hover:text-accent-orange transition-colors">Mudanzas</Link></li>
-              <li><Link to="/servicios/paquetes" className="hover:text-accent-orange transition-colors">Envío de Paquetes</Link></li>
-              <li><Link to="/servicios/interior" className="hover:text-accent-orange transition-colors">Viajes al Interior</Link></li>
+              <li><Link to="/servicios" className="hover:text-accent-orange transition-colors">Mudanza Completa</Link></li>
+              <li><Link to="/servicios" className="hover:text-accent-orange transition-colors">Mini Mudanza</Link></li>
+              <li><Link to="/servicios" className="hover:text-accent-orange transition-colors">Flete Liviano</Link></li>
+              <li><Link to="/tarifas" className="hover:text-accent-orange transition-colors">Ver Tarifas</Link></li>
             </ul>
           </div>
 

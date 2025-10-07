@@ -189,10 +189,11 @@ const Contacto = () => {
                         <Label htmlFor="service">Tipo de Servicio</Label>
                         <select className="w-full px-3 py-2 border border-input rounded-md text-sm">
                           <option value="">Seleccioná un servicio</option>
-                          <option value="paquete">Envío de Paquetes</option>
-                          <option value="flete">Flete Comercial</option>
-                          <option value="mudanza">Mudanza</option>
-                          <option value="interior">Viaje al Interior</option>
+                          <option value="mudanza-completa">Mudanza Completa ($80.000)</option>
+                          <option value="mini-mudanza-larga">Mini Mudanza Mayor a 10 cuadras ($40.000)</option>
+                          <option value="mini-mudanza-corta">Mini Mudanza Menor a 10 cuadras ($30.000)</option>
+                          <option value="flete-largo">Flete Liviano Recorrido Largo ($25.000)</option>
+                          <option value="flete-corto">Flete Liviano Recorrido Corto ($20.000)</option>
                           <option value="otro">Otro</option>
                         </select>
                       </div>
