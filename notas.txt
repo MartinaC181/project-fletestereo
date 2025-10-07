@@ -7,3 +7,5 @@
 4.flete liviano recorrido largo: $25.000 flete de 1 a 4 cosas con un recorrido mayor a 10 cuadras en corrientes (podria incluir eventualmente un ayudante)
 
 5.flete liviano recorrido corto: $20.000 flete de 1 a 4 cosas que puede levantar una persona promedio. distancia hasta 10 cuadras
+
+6. recibidas
