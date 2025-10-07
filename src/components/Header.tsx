@@ -10,7 +10,7 @@ const Header = () => {
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   return (
-    <header className="bg-gray-900 dark:bg-accent-yellow shadow-sm border-b border-gray-700 dark:border-accent-yellow sticky top-0 z-50">
+    <header className="bg-black dark:bg-accent-yellow shadow-sm border-b border-gray-800 dark:border-accent-yellow sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-0.5">
           {/* Logo */}
@@ -67,7 +67,7 @@ const Header = () => {
                   document.documentElement.classList.add('dark');
                 }
               }}
-              className="h-9 w-9 px-0 bg-accent-yellow dark:bg-black border-accent-yellow dark:border-black text-primary dark:text-accent-yellow hover:opacity-80 transition-all"
+              className="h-9 w-9 px-0 bg-accent-yellow dark:bg-black border-transparent dark:border-transparent text-primary dark:text-accent-yellow hover:opacity-80 transition-all"
               aria-label="Toggle theme"
             >
               <Moon className="h-4 w-4 dark:hidden" />
@@ -76,14 +76,14 @@ const Header = () => {
             <Button 
               variant="outline" 
               size="sm"
-              className="bg-accent-yellow dark:bg-black border-accent-yellow dark:border-black text-primary dark:text-white hover:opacity-80 dark:hover:bg-black transition-all"
+              className="bg-accent-yellow dark:bg-black border-transparent dark:border-transparent text-primary dark:text-white hover:opacity-80 dark:hover:bg-black transition-all"
             >
               Iniciar Sesión
             </Button>
             <Button 
               variant="outline" 
               size="sm"
-              className="bg-accent-yellow dark:bg-background border-accent-yellow dark:border-white/20 text-primary dark:text-white hover:opacity-80 dark:hover:bg-background transition-all"
+              className="bg-accent-yellow dark:bg-background border-transparent dark:border-transparent text-primary dark:text-white hover:opacity-80 dark:hover:bg-background transition-all"
             >
               Solicitar Flete
             </Button>
@@ -102,7 +102,7 @@ const Header = () => {
                   document.documentElement.classList.add('dark');
                 }
               }}
-              className="h-9 w-9 px-0 bg-accent-yellow dark:bg-black border-accent-yellow dark:border-black text-primary dark:text-accent-yellow hover:opacity-80 transition-all"
+              className="h-9 w-9 px-0 bg-accent-yellow dark:bg-black border-transparent dark:border-transparent text-primary dark:text-accent-yellow hover:opacity-80 transition-all"
               aria-label="Toggle theme"
             >
               <Moon className="h-4 w-4 dark:hidden" />
@@ -110,7 +110,7 @@ const Header = () => {
             </Button>
             <button
               onClick={toggleMenu}
-              className="p-2 rounded-md text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 hover:bg-gray-800 dark:hover:bg-black/10"
+              className="p-2 rounded-md text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 hover:bg-black dark:hover:bg-black/10"
               aria-label="Toggle menu"
             >
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}

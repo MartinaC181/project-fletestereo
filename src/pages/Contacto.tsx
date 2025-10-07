@@ -22,7 +22,7 @@ import {
 const Contacto = () => {
   const contactMethods = [
     {
-      icon: <Phone className="h-8 w-8 text-accent-orange" />,
+      icon: <Phone className="h-8 w-8 text-accent-yellow" />,
       title: "Teléfono",
       content: "+54 11 1234-5678",
       description: "Llamanos de lunes a domingo",
@@ -30,7 +30,7 @@ const Contacto = () => {
       action: "Llamar Ahora"
     },
     {
-      icon: <MessageSquare className="h-8 w-8 text-accent-orange" />,
+      icon: <MessageSquare className="h-8 w-8 text-accent-yellow" />,
       title: "WhatsApp",
       content: "+54 9 11 1234-5678",
       description: "Escribinos por WhatsApp",
@@ -38,7 +38,7 @@ const Contacto = () => {
       action: "Enviar Mensaje"
     },
     {
-      icon: <Mail className="h-8 w-8 text-accent-orange" />,
+      icon: <Mail className="h-8 w-8 text-accent-yellow" />,
       title: "Email",
       content: "info@fletestereo.com",
       description: "Consultás y cotizaciones",
@@ -120,13 +120,13 @@ const Contacto = () => {
             
             <div className="grid md:grid-cols-3 gap-8">
               {contactMethods.map((method, index) => (
-                <Card key={index} className="text-center hover:shadow-lg transition-all duration-300 border-0 shadow-md">
+                <Card key={index} className="text-center">
                   <CardHeader className="pb-4">
-                    <div className="bg-accent-orange/10 p-4 rounded-full w-fit mx-auto mb-4">
+                    <div className="bg-accent-yellow/20 p-4 rounded-full w-fit mx-auto mb-4">
                       {method.icon}
                     </div>
                     <CardTitle className="text-xl text-primary">{method.title}</CardTitle>
-                    <CardDescription className="text-lg font-semibold text-accent-orange">
+                    <CardDescription className="text-lg font-semibold text-accent-yellow dark:text-black">
                       {method.content}
                     </CardDescription>
                   </CardHeader>
@@ -281,33 +281,6 @@ const Contacto = () => {
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="py-16 lg:py-24 bg-gradient-to-r from-primary to-primary-deep">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="max-w-3xl mx-auto">
-              <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-                ¿Necesitas un servicio urgente?
-              </h2>
-              <p className="text-lg text-primary-foreground/80 mb-8">
-                Para servicios de emergencia y pedidos urgentes, contactanos directamente. 
-                Estamos disponibles 24/7 para situaciones especiales.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button variant="secondary" size="lg" className="w-full sm:w-auto">
-                  <Phone className="mr-2 h-5 w-5" />
-                  Emergencias: +54 11 1234-5678
-                </Button>
-                <Link to="/solicitar">
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-primary">
-                    Solicitar Servicio
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
               </div>
             </div>
           </div>
