@@ -65,7 +65,7 @@ const ServicesSection = () => {
                 whileHover={{ scale: 1.02, y: -5 }}
                 transition={{ duration: 0.2 }}
               >
-                <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300 h-full">
+                <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300 h-full bg-white dark:bg-white/5">
                   <CardHeader className="text-center pb-4">
                     <div className="mx-auto bg-accent-yellow-light/20 p-4 rounded-full w-fit mb-4">
                       {service.icon}
@@ -93,7 +93,7 @@ const ServicesSection = () => {
 
         {/* Benefits */}
         <FadeInSection delay={0.3}>
-          <div className="bg-card rounded-2xl p-8 shadow-sm border">
+          <div className="bg-white dark:bg-white/5 rounded-2xl p-8 shadow-sm border border-border/20">
             <h3 className="text-2xl font-bold text-card-foreground text-center mb-8">
               ¿Por qué elegir Fletestereo?
             </h3>

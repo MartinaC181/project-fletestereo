@@ -213,7 +213,7 @@ const Zonas = () => {
             
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {interiorProvinces.map((province, index) => (
-                <Card key={index} className="text-center hover:shadow-lg transition-all duration-300">
+                <Card key={index} className="text-center">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg text-primary">{province.province}</CardTitle>
                     <CardDescription className="text-sm text-muted-foreground">
