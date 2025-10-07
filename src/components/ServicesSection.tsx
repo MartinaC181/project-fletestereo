@@ -93,8 +93,8 @@ const ServicesSection = () => {
 
         {/* Benefits */}
         <FadeInSection delay={0.3}>
-          <div className="bg-white rounded-2xl p-8 shadow-sm">
-            <h3 className="text-2xl font-bold text-primary text-center mb-8">
+          <div className="bg-card rounded-2xl p-8 shadow-sm border">
+            <h3 className="text-2xl font-bold text-card-foreground text-center mb-8">
               ¿Por qué elegir Fletestereo?
             </h3>
             <div className="grid md:grid-cols-3 gap-8">
@@ -104,7 +104,7 @@ const ServicesSection = () => {
                     <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4">
                       {benefit.icon}
                     </div>
-                    <h4 className="font-semibold text-primary mb-2">{benefit.title}</h4>
+                    <h4 className="font-semibold text-card-foreground mb-2">{benefit.title}</h4>
                     <p className="text-sm text-muted-foreground">{benefit.description}</p>
                   </div>
                 </FadeInSection>

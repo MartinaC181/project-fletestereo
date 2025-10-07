@@ -333,35 +333,6 @@ const Tarifas = () => {
             </div>
           </div>
         </section>
-
-        {/* Guarantee Section */}
-        <section className="py-16 lg:py-24 bg-gradient-to-r from-primary to-primary-deep">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="max-w-3xl mx-auto">
-              <DollarSign className="h-16 w-16 text-white mx-auto mb-6" />
-              <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-                Garantía de Precio
-              </h2>
-              <p className="text-lg text-primary-foreground/80 mb-8">
-                Si encuentras un precio mejor, lo igualamos. Nuestro compromiso es ofrecerte 
-                la mejor relación calidad-precio del mercado.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/solicitar">
-                  <Button variant="secondary" size="lg" className="w-full sm:w-auto">
-                    Obtener Cotización
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-                <Link to="/contacto">
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-primary">
-                    Comparar Precios
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
       <Footer />
     </div>
