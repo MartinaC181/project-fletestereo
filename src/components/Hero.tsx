@@ -34,8 +34,8 @@ const Hero = () => {
                 transition={{ duration: 0.6, delay: 0.3, ease: [0.4, 0, 0.2, 1] }}
                 className="text-lg lg:text-xl text-muted-foreground max-w-lg"
               >
-                Servicio de flete confiable y rápido. Cotización inmediata, 
-                seguimiento en tiempo real y profesionales experimentados.
+                Servicio de flete confiable y rápido. Cotización inmediata 
+                y profesionales experimentados en Corrientes.
               </motion.p>
             </div>
 

@@ -29,7 +29,7 @@ const ServicesSection = () => {
     {
       icon: <MapPin className="h-6 w-6 text-primary" />,
       title: "Cobertura Total",
-      description: "AMBA y alrededores, viajes al interior"
+      description: "Corrientes y alrededores, viajes al interior"
     },
     {
       icon: <Clock className="h-6 w-6 text-primary" />,

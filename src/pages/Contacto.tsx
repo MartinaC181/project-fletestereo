@@ -9,8 +9,6 @@ import { Link } from "react-router-dom";
 import { 
   Phone,
   Mail,
-  MapPin,
-  Clock,
   MessageSquare,
   Send,
   ArrowRight,
@@ -47,16 +45,7 @@ const Contacto = () => {
     }
   ];
 
-  const officeInfo = {
-    address: "Av. Corrientes 1234, CABA",
-    neighborhood: "Barracas, Buenos Aires",
-    zipCode: "C1043AAZ",
-    hours: [
-      "Lunes a Viernes: 8:00 - 18:00",
-      "Sábados: 9:00 - 14:00",
-      "Domingos: Solo emergencias"
-    ]
-  };
+
 
   const reasons = [
     {
@@ -220,47 +209,12 @@ const Contacto = () => {
               <div className="space-y-8">
                 <div>
                   <h2 className="text-3xl font-bold text-primary mb-4">
-                    Nuestra Oficina
+                    Servicio a Domicilio
                   </h2>
                   <p className="text-muted-foreground mb-6">
-                    Visitanos en nuestras oficinas o coordiná una visita a domicilio
+                    Vamos donde nos necesites. Servicio completo de fletes y mudanzas a domicilio en toda Corrientes.
                   </p>
                 </div>
-                
-                <Card className="border-0 shadow-lg">
-                  <CardContent className="p-6 space-y-6">
-                    <div className="flex items-start gap-4">
-                      <div className="bg-primary/10 p-3 rounded-lg">
-                        <MapPin className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-primary mb-1">Dirección</h3>
-                        <p className="text-muted-foreground">{officeInfo.address}</p>
-                        <p className="text-muted-foreground">{officeInfo.neighborhood}</p>
-                        <p className="text-muted-foreground">{officeInfo.zipCode}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start gap-4">
-                      <div className="bg-primary/10 p-3 rounded-lg">
-                        <Clock className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-primary mb-2">Horarios de Atención</h3>
-                        <ul className="space-y-1 text-muted-foreground">
-                          {officeInfo.hours.map((hour, index) => (
-                            <li key={index}>{hour}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                    
-                    <Button variant="outline" className="w-full">
-                      <MapPin className="mr-2 h-4 w-4" />
-                      Ver en Google Maps
-                    </Button>
-                  </CardContent>
-                </Card>
 
                 {/* Why Choose Us */}
                 <Card className="border-0 shadow-lg">

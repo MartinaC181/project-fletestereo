@@ -15,7 +15,7 @@ const Footer = () => {
               <span className="text-xl font-bold">Fletestereo</span>
             </div>
             <p className="text-primary-foreground/80 dark:text-black/80 text-sm">
-              Tu servicio de confianza para fletes y mudanzas en AMBA y alrededores.
+              Tu servicio de confianza para fletes y mudanzas en Corrientes y alrededores.
               Profesionalismo, seguridad y puntualidad garantizada.
             </p>
             <div className="flex space-x-4">
@@ -67,7 +67,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <MapPin className="h-4 w-4" />
-                <span>Buenos Aires, Argentina</span>
+                <span>Corrientes, Argentina</span>
               </div>
             </div>
             

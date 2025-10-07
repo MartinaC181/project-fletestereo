@@ -17,55 +17,55 @@ import {
 const Zonas = () => {
   const mainZones = [
     {
-      title: "Capital Federal",
+      title: "Corrientes Capital",
       areas: [
-        "Palermo", "Belgrano", "Recoleta", "San Telmo", 
-        "La Boca", "Puerto Madero", "Barracas", "Villa Crespo",
-        "Caballito", "Flores", "Villa Urquiza", "Núñez"
+        "Centro", "San Benito", "Aldana", "Quintana", 
+        "Pirayuí", "Molina Punta", "Laguna Brava", "Villa Raquel",
+        "San Cayetano", "Piedritas", "Villa Libertad", "Tres Esquinas"
       ],
-      deliveryTime: "1-3 horas",
+      deliveryTime: "1-2 horas",
       coverage: "100%",
-      price: "Desde $3.500"
+      price: "Desde $20.000"
     },
     {
-      title: "Gran Buenos Aires Norte",
+      title: "Gran Corrientes Norte",
       areas: [
-        "Vicente López", "Olivos", "Martínez", "San Isidro",
-        "Tigre", "San Fernando", "Escobar", "Pilar",
-        "Pacheco", "Boulogne", "Acassuso", "Villa Adelina"
+        "Riachuelo", "Santa Ana", "San Cosme", "Paso de la Patria",
+        "Itatí", "Berón de Astrada", "Palmar Grande", "Carolina",
+        "Chavarría", "General Paz", "Lomas de Vallejos"
       ],
-      deliveryTime: "2-4 horas",
+      deliveryTime: "2-3 horas",
       coverage: "95%",
-      price: "Desde $4.500"
+      price: "Desde $25.000"
     },
     {
-      title: "Gran Buenos Aires Sur",
+      title: "Gran Corrientes Sur",
       areas: [
-        "Avellaneda", "Lanús", "Quilmes", "Berazategui",
-        "Florencio Varela", "Almirante Brown", "Lomas de Zamora",
-        "Banfield", "Temperley", "Adrogué", "Burzaco"
+        "Empedrado", "San Luis del Palmar", "Bella Vista", "Saladas",
+        "Mburucuyá", "San Roque", "Concepción", "Tabay",
+        "Lomas de Vallejos", "Riachuelo", "Santa Lucía"
       ],
       deliveryTime: "2-4 horas",
       coverage: "90%",
-      price: "Desde $4.200"
+      price: "Desde $30.000"
     },
     {
-      title: "Gran Buenos Aires Oeste",
+      title: "Gran Corrientes Este",
       areas: [
-        "Morón", "Castelar", "Ituzaingó", "Hurlingham",
-        "San Justo", "Ramos Mejía", "Haedo", "Villa Luro",
-        "Ciudadela", "Santos Lugares", "Caseros", "Tres de Febrero"
+        "Goya", "Esquina", "Sauce", "Curuzú Cuatiá", 
+        "Mercedes", "Felipe Yofre", "Perugorría", "Lavalle",
+        "Santa Lucía", "San Roque", "Berón de Astrada"
       ],
-      deliveryTime: "2-5 horas",
+      deliveryTime: "3-5 horas",
       coverage: "85%",
-      price: "Desde $4.800"
+      price: "Desde $35.000"
     }
   ];
 
   const interiorProvinces = [
     {
-      province: "Buenos Aires Interior",
-      cities: ["La Plata", "Mar del Plata", "Bahía Blanca", "Tandil", "Olavarría", "Pergamino"],
+      province: "Corrientes Interior",
+      cities: ["Goya", "Curuzú Cuatiá", "Mercedes", "Paso de los Libres", "Monte Caseros", "Ituzaingó"],
       deliveryTime: "1-2 días",
       price: "Consultar"
     },
@@ -97,8 +97,8 @@ const Zonas = () => {
     },
     {
       icon: <Navigation className="h-6 w-6 text-accent-orange" />,
-      title: "Seguimiento GPS",
-      description: "Rastrea tu envío en tiempo real desde tu celular"
+      title: "Confirmación de Entrega",
+      description: "Te confirmamos la entrega y estado de tu pedido"
     },
     {
       icon: <Star className="h-6 w-6 text-accent-orange" />,
@@ -120,7 +120,7 @@ const Zonas = () => {
                 <span className="block text-accent-orange">Cobertura</span>
               </h1>
               <p className="text-lg lg:text-xl text-muted-foreground mb-8">
-                Llegamos a todo AMBA y principales ciudades del interior. 
+                Llegamos a toda Corrientes y principales ciudades del interior. 
                 Consulta disponibilidad en tu zona y obtén una cotización inmediata.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -139,15 +139,15 @@ const Zonas = () => {
           </div>
         </section>
 
-        {/* AMBA Coverage */}
+        {/* Corrientes Coverage */}
         <section className="py-16 lg:py-24">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-16">
               <h2 className="text-3xl lg:text-4xl font-bold text-primary mb-4">
-                Área Metropolitana de Buenos Aires
+                Provincia de Corrientes
               </h2>
               <p className="text-lg text-muted-foreground">
-                Cobertura completa en AMBA con los mejores tiempos de entrega
+                Cobertura completa en Corrientes con los mejores tiempos de entrega
               </p>
             </div>
             
