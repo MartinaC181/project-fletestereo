@@ -110,38 +110,7 @@ const Tarifas = () => {
     }
   ];
 
-  const additionalServices = [
-    {
-      service: "Embalaje Premium",
-      price: "Desde $5.000",
-      description: "Materiales especiales para objetos frágiles"
-    },
-    {
-      service: "Servicio Express",
-      price: "+50%",
-      description: "Entrega en menos de 2 horas"
-    },
-    {
-      service: "Carga/Descarga Extra",
-      price: "$2.000/hora",
-      description: "Personal adicional para carga pesada"
-    },
-    {
-      service: "Viaje Nocturno",
-      price: "+30%",
-      description: "Servicios entre 20:00 y 6:00 hs"
-    },
-    {
-      service: "Fin de Semana",
-      price: "+25%",
-      description: "Sábados, domingos y feriados"
-    },
-    {
-      service: "Seguro Extendido",
-      price: "2% del valor",
-      description: "Cobertura hasta $500.000"
-    }
-  ];
+
 
   const factors = [
     {
@@ -151,8 +120,8 @@ const Tarifas = () => {
     },
     {
       icon: <Clock className="h-6 w-6 text-primary" />,
-      title: "Urgencia",
-      description: "Servicios express tienen recargo por prioridad"
+      title: "Horario",
+      description: "Los precios pueden variar según el horario elegido"
     },
     {
       icon: <Truck className="h-6 w-6 text-primary" />,
@@ -280,33 +249,6 @@ const Tarifas = () => {
           </div>
         </section>
 
-        {/* Additional Services */}
-        <section className="py-16 lg:py-24 bg-muted/30">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-3xl lg:text-4xl font-bold text-primary mb-4">
-                Servicios Adicionales
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                Personalizá tu servicio con nuestros complementos
-              </p>
-            </div>
-            
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {additionalServices.map((addon, index) => (
-                <Card key={index} className="hover:shadow-lg transition-all duration-300">
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-3">
-                      <h3 className="font-semibold text-primary">{addon.service}</h3>
-                      <span className="font-bold text-accent-orange">{addon.price}</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{addon.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
 
         {/* Pricing Factors */}
         <section className="py-16 lg:py-24">

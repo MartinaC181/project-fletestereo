@@ -360,7 +360,7 @@ const SolicitarFlete = () => {
                   <Label htmlFor="notas">Información Adicional</Label>
                   <Textarea
                     id="notas"
-                    placeholder="Describe tu carga, instrucciones especiales, si necesitas embalaje, etc."
+                    placeholder="Describe tu carga, instrucciones especiales, detalles importantes, etc."
                     value={requestData.notas}
                     onChange={(e) => handleRequestDataChange("notas", e.target.value)}
                   />
