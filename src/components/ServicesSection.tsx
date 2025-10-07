@@ -1,5 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Truck, Home, Package, MapPin, Clock, Shield } from "lucide-react";
+import FadeInSection from "./FadeInSection";
+import { motion } from "framer-motion";
 
 const ServicesSection = () => {
   const services = [
@@ -45,7 +47,7 @@ const ServicesSection = () => {
     <section className="py-16 lg:py-24 bg-muted/30">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <FadeInSection className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold text-primary mb-4">
             Nuestros Servicios
           </h2>
@@ -53,52 +55,63 @@ const ServicesSection = () => {
             Ofrecemos soluciones integrales de transporte y logística 
             adaptadas a tus necesidades específicas.
           </p>
-        </div>
+        </FadeInSection>
 
         {/* Services Grid */}
         <div className="grid md:grid-cols-3 gap-8 mb-16">
           {services.map((service, index) => (
-            <Card key={index} className="border-0 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-              <CardHeader className="text-center pb-4">
-                <div className="mx-auto bg-accent-yellow-light/20 p-4 rounded-full w-fit mb-4">
-                  {service.icon}
-                </div>
-                <CardTitle className="text-xl text-primary">{service.title}</CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  {service.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {service.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-center text-sm">
-                      <div className="w-2 h-2 bg-accent-yellow rounded-full mr-3"></div>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
+            <FadeInSection key={index} delay={index * 0.1}>
+              <motion.div
+                whileHover={{ scale: 1.02, y: -5 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300 h-full">
+                  <CardHeader className="text-center pb-4">
+                    <div className="mx-auto bg-accent-yellow-light/20 p-4 rounded-full w-fit mb-4">
+                      {service.icon}
+                    </div>
+                    <CardTitle className="text-xl text-primary">{service.title}</CardTitle>
+                    <CardDescription className="text-muted-foreground">
+                      {service.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {service.features.map((feature, featureIndex) => (
+                        <li key={featureIndex} className="flex items-center text-sm">
+                          <div className="w-2 h-2 bg-accent-yellow rounded-full mr-3"></div>
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </FadeInSection>
           ))}
         </div>
 
         {/* Benefits */}
-        <div className="bg-white rounded-2xl p-8 shadow-sm">
-          <h3 className="text-2xl font-bold text-primary text-center mb-8">
-            ¿Por qué elegir Fletestereo?
-          </h3>
-          <div className="grid md:grid-cols-3 gap-8">
-            {benefits.map((benefit, index) => (
-              <div key={index} className="text-center">
-                <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4">
-                  {benefit.icon}
-                </div>
-                <h4 className="font-semibold text-primary mb-2">{benefit.title}</h4>
-                <p className="text-sm text-muted-foreground">{benefit.description}</p>
-              </div>
-            ))}
+        <FadeInSection delay={0.3}>
+          <div className="bg-white rounded-2xl p-8 shadow-sm">
+            <h3 className="text-2xl font-bold text-primary text-center mb-8">
+              ¿Por qué elegir Fletestereo?
+            </h3>
+            <div className="grid md:grid-cols-3 gap-8">
+              {benefits.map((benefit, index) => (
+                <FadeInSection key={index} delay={0.4 + index * 0.1}>
+                  <div className="text-center">
+                    <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4">
+                      {benefit.icon}
+                    </div>
+                    <h4 className="font-semibold text-primary mb-2">{benefit.title}</h4>
+                    <p className="text-sm text-muted-foreground">{benefit.description}</p>
+                  </div>
+                </FadeInSection>
+              ))}
+            </div>
           </div>
-        </div>
+        </FadeInSection>
       </div>
     </section>
   );

@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Star, Shield, Clock } from "lucide-react";
-import heroImage from "@/assets/hero-truck.jpg";
+import { motion } from "framer-motion";
+import FadeInSection from "./FadeInSection";
 
 const Hero = () => {
   return (
@@ -11,14 +12,31 @@ const Hero = () => {
           {/* Content */}
           <div className="space-y-8">
             <div className="space-y-4">
-              <h1 className="text-4xl lg:text-6xl font-bold text-primary leading-tight">
+              <motion.h1 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+                className="text-4xl lg:text-6xl font-bold text-primary leading-tight"
+              >
                 Fletes y Mudanzas
-                <span className="block text-accent-orange">Profesionales</span>
-              </h1>
-              <p className="text-lg lg:text-xl text-muted-foreground max-w-lg">
+                <motion.span 
+                  initial={{ opacity: 0, x: -30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.6, delay: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                  className="block text-accent-orange"
+                >
+                  Profesionales
+                </motion.span>
+              </motion.h1>
+              <motion.p 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                className="text-lg lg:text-xl text-muted-foreground max-w-lg"
+              >
                 Servicio de flete confiable y rápido. Cotización inmediata, 
                 seguimiento en tiempo real y profesionales experimentados.
-              </p>
+              </motion.p>
             </div>
 
             {/* Features */}
@@ -44,7 +62,12 @@ const Hero = () => {
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5, ease: [0.4, 0, 0.2, 1] }}
+              className="flex flex-col sm:flex-row gap-4"
+            >
               <Link to="/solicitar">
                 <Button variant="hero" size="lg" className="w-full sm:w-auto">
                   Solicitar Flete Ahora
@@ -54,7 +77,7 @@ const Hero = () => {
               <Button variant="outline" size="lg" className="w-full sm:w-auto">
                 Ver Tarifas
               </Button>
-            </div>
+            </motion.div>
 
             {/* Trust indicators */}
             <div className="pt-8 border-t">
@@ -70,19 +93,53 @@ const Hero = () => {
           </div>
 
           {/* Image */}
-          <div className="relative">
+          <motion.div 
+            initial={{ opacity: 0, x: 30, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            className="relative"
+          >
             <div className="relative z-10">
-              <img
-                src={heroImage}
-                alt="Camión de mudanza profesional"
+              <motion.img
+                src="/videocamioneta.gif"
+                alt="Camión de mudanza profesional en movimiento"
                 className="w-full h-auto rounded-2xl shadow-2xl"
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.3 }}
+                style={{ 
+                  imageRendering: 'auto',
+                  animation: 'none' // El GIF ya tiene su propia animación
+                }}
               />
             </div>
             
             {/* Decorative elements */}
-            <div className="absolute -top-4 -right-4 bg-accent-orange/20 rounded-full w-24 h-24 blur-xl"></div>
-            <div className="absolute -bottom-8 -left-8 bg-primary/20 rounded-full w-32 h-32 blur-xl"></div>
-          </div>
+            <motion.div 
+              animate={{ 
+                scale: [1, 1.1, 1],
+                opacity: [0.3, 0.5, 0.3]
+              }}
+              transition={{ 
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="absolute -top-4 -right-4 bg-accent-orange/20 rounded-full w-24 h-24 blur-xl"
+            />
+            <motion.div 
+              animate={{ 
+                scale: [1, 1.2, 1],
+                opacity: [0.2, 0.4, 0.2]
+              }}
+              transition={{ 
+                duration: 5,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 1
+              }}
+              className="absolute -bottom-8 -left-8 bg-primary/20 rounded-full w-32 h-32 blur-xl"
+            />
+          </motion.div>
         </div>
       </div>
 
