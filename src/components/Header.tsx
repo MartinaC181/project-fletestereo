@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, Moon, Sun } from "lucide-react";
 import { Link } from "react-router-dom";
 
-
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -12,46 +11,56 @@ const Header = () => {
   return (
     <header className="bg-black dark:bg-accent-yellow shadow-sm border-b border-gray-800 dark:border-accent-yellow sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-0.5">
+        <div className="flex justify-between items-center py-1">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-6">
-            <div className="relative w-32 h-32 flex items-center justify-center">
-              <img 
-                src="/LogoLightMode.png" 
-                alt="Logo" 
-                className="h-32 w-auto dark:hidden object-contain absolute"
+          <Link to="/" className="flex items-center space-x-4 relative z-10">
+            <div className="relative w-20 h-20 flex items-center justify-center -my-2">
+              <img
+                src="/LogoLightMode.png"
+                alt="Logo"
+                className="h-20 w-auto dark:hidden object-contain absolute"
               />
-              <img 
-                src="/LogoDarkMode.png" 
-                alt="Logo" 
-                className="h-32 w-auto hidden dark:block object-contain absolute"
+              <img
+                src="/LogoDarkMode.png"
+                alt="Logo"
+                className="h-20 w-auto hidden dark:block object-contain absolute"
               />
             </div>
-            <span className="text-3xl font-bold text-accent-yellow dark:text-black font-fredoka antialiased" style={{ textRendering: 'optimizeLegibility', fontSmooth: 'always', WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' }}>Fletestereo</span>
+            <span
+              className="text-3xl font-bold text-accent-yellow dark:text-black font-fredoka antialiased"
+              style={{
+                textRendering: "optimizeLegibility",
+                fontSmooth: "always",
+                WebkitFontSmoothing: "antialiased",
+                MozOsxFontSmoothing: "grayscale",
+              }}
+            >
+              Fletestereo
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link 
-              to="/servicios" 
+            <Link
+              to="/servicios"
               className="text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 transition-colors"
             >
               Servicios
             </Link>
-            <Link 
-              to="/zonas" 
+            <Link
+              to="/zonas"
               className="text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 transition-colors"
             >
               Zonas
             </Link>
-            <Link 
-              to="/tarifas" 
+            <Link
+              to="/tarifas"
               className="text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 transition-colors"
             >
               Tarifas
             </Link>
-            <Link 
-              to="/contacto" 
+            <Link
+              to="/contacto"
               className="text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 transition-colors"
             >
               Contacto
@@ -60,11 +69,12 @@ const Header = () => {
               variant="outline"
               size="sm"
               onClick={() => {
-                const isDark = document.documentElement.classList.contains('dark');
+                const isDark =
+                  document.documentElement.classList.contains("dark");
                 if (isDark) {
-                  document.documentElement.classList.remove('dark');
+                  document.documentElement.classList.remove("dark");
                 } else {
-                  document.documentElement.classList.add('dark');
+                  document.documentElement.classList.add("dark");
                 }
               }}
               className="h-9 w-9 px-0 bg-accent-yellow dark:bg-black border-transparent dark:border-transparent text-primary dark:text-accent-yellow hover:opacity-80 transition-all"
@@ -73,15 +83,15 @@ const Header = () => {
               <Moon className="h-4 w-4 dark:hidden" />
               <Sun className="h-4 w-4 hidden dark:block" />
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               className="bg-accent-yellow dark:bg-black border-transparent dark:border-transparent text-primary dark:text-white hover:opacity-80 dark:hover:bg-black transition-all"
             >
               Iniciar Sesión
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               className="bg-accent-yellow dark:bg-background border-transparent dark:border-transparent text-primary dark:text-white hover:opacity-80 dark:hover:bg-background transition-all"
             >
@@ -95,11 +105,12 @@ const Header = () => {
               variant="outline"
               size="sm"
               onClick={() => {
-                const isDark = document.documentElement.classList.contains('dark');
+                const isDark =
+                  document.documentElement.classList.contains("dark");
                 if (isDark) {
-                  document.documentElement.classList.remove('dark');
+                  document.documentElement.classList.remove("dark");
                 } else {
-                  document.documentElement.classList.add('dark');
+                  document.documentElement.classList.add("dark");
                 }
               }}
               className="h-9 w-9 px-0 bg-accent-yellow dark:bg-black border-transparent dark:border-transparent text-primary dark:text-accent-yellow hover:opacity-80 transition-all"
@@ -113,7 +124,11 @@ const Header = () => {
               className="p-2 rounded-md text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 hover:bg-black dark:hover:bg-black/10"
               aria-label="Toggle menu"
             >
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </button>
           </div>
         </div>
@@ -122,29 +137,29 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t py-4">
             <nav className="flex flex-col space-y-4">
-              <Link 
-                to="/servicios" 
+              <Link
+                to="/servicios"
                 className="text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 transition-colors py-2"
                 onClick={toggleMenu}
               >
                 Servicios
               </Link>
-              <Link 
-                to="/zonas" 
+              <Link
+                to="/zonas"
                 className="text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 transition-colors py-2"
                 onClick={toggleMenu}
               >
                 Zonas
               </Link>
-              <Link 
-                to="/tarifas" 
+              <Link
+                to="/tarifas"
                 className="text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 transition-colors py-2"
                 onClick={toggleMenu}
               >
                 Tarifas
               </Link>
-              <Link 
-                to="/contacto" 
+              <Link
+                to="/contacto"
                 className="text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 transition-colors py-2"
                 onClick={toggleMenu}
               >

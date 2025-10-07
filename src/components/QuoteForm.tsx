@@ -175,7 +175,7 @@ const QuoteForm = () => {
               <Button 
                 onClick={calculateQuote} 
                 disabled={loading}
-                className="w-full"
+                className="w-full bg-black text-white hover:bg-gray-800"
                 variant="cta"
                 size="lg"
               >

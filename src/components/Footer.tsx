@@ -3,7 +3,7 @@ import { Truck, Phone, Mail, MapPin, Facebook, Instagram, Twitter } from "lucide
 
 const Footer = () => {
   return (
-    <footer className="bg-primary dark:bg-accent-yellow text-primary-foreground dark:text-black">
+    <footer className="bg-black dark:bg-accent-yellow text-white dark:text-black">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
@@ -82,7 +82,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-primary-foreground/20 dark:border-black/20 mt-8 pt-8 text-center">
+        <div className="border-t border-white/20 dark:border-black/20 mt-8 pt-8 text-center">
           <p className="text-sm text-primary-foreground/60 dark:text-black/60">
             © 2024 Fletestereo. Todos los derechos reservados.
           </p>

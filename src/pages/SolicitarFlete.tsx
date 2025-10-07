@@ -370,7 +370,7 @@ const SolicitarFlete = () => {
                   <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
                     Volver
                   </Button>
-                  <Button onClick={nextStep} className="flex-1" variant="cta">
+                  <Button onClick={nextStep} className="flex-1 bg-black text-white hover:bg-gray-800" variant="cta">
                     Calcular Cotización
                   </Button>
                 </div>
