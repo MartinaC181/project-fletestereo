@@ -13,7 +13,6 @@ const Header = () => {
     <header className="bg-background shadow-sm border-b sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
-          {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <div className="bg-primary p-2 rounded-lg">
               <Truck className="h-6 w-6 text-primary-foreground" />
@@ -21,7 +20,6 @@ const Header = () => {
             <span className="text-xl font-bold text-primary">Fletestereo</span>
           </Link>
 
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link 
               to="/servicios" 
@@ -56,7 +54,6 @@ const Header = () => {
             </Button>
           </nav>
 
-          {/* Theme toggle and Mobile menu button */}
           <div className="md:hidden flex items-center gap-2">
             <ThemeToggle />
             <button
@@ -69,7 +66,6 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden border-t py-4">
             <nav className="flex flex-col space-y-4">
