@@ -11,19 +11,19 @@ const Header = () => {
   return (
     <header className="bg-black dark:bg-accent-yellow shadow-sm border-b border-gray-800 dark:border-accent-yellow sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-0.5">
+        <div className="flex justify-between items-center py-1">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-6">
-            <div className="relative w-32 h-32 flex items-center justify-center">
+          <Link to="/" className="flex items-center space-x-4 relative z-10">
+            <div className="relative w-20 h-20 flex items-center justify-center -my-2">
               <img
                 src="/LogoLightMode.png"
                 alt="Logo"
-                className="h-32 w-auto dark:hidden object-contain absolute"
+                className="h-20 w-auto dark:hidden object-contain absolute"
               />
               <img
                 src="/LogoDarkMode.png"
                 alt="Logo"
-                className="h-32 w-auto hidden dark:block object-contain absolute"
+                className="h-20 w-auto hidden dark:block object-contain absolute"
               />
             </div>
             <span
