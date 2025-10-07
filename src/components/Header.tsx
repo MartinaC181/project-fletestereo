@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Truck } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -14,11 +14,12 @@ const Header = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="bg-primary p-2 rounded-lg">
-              <Truck className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold text-primary">Fletestereo</span>
+          <Link to="/" className="flex items-center space-x-4">
+            <img 
+              src="/LogoGemini.jpg" 
+              className="h-16 w-auto"
+            />
+            <span className="text-2xl font-semibold text-primary font-fredoka">Fletestereo</span>
           </Link>
 
           {/* Desktop Navigation */}
