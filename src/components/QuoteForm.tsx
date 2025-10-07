@@ -229,8 +229,8 @@ const QuoteForm = () => {
 
                   {quote.km > 100 && (
                     <div className="bg-accent-yellow-light/20 p-4 rounded-lg border border-accent-yellow/20">
-                      <h5 className="font-semibold text-accent-orange mb-2">Seña Requerida</h5>
-                      <p className="text-sm">
+                      <h5 className="font-semibold text-black mb-2">Seña Requerida</h5>
+                      <p className="text-sm text-black">
                         Para viajes mayores a 100km se requiere una seña del 30% 
                         (${Math.round(quote.total * 0.3).toLocaleString()})
                       </p>
