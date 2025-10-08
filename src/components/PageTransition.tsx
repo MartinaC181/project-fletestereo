@@ -8,15 +8,15 @@ interface PageTransitionProps {
 const pageVariants = {
   initial: {
     opacity: 0,
-    scale: 0.99
+    x: 300
   },
   animate: {
     opacity: 1,
-    scale: 1
+    x: 0
   },
   exit: {
     opacity: 0,
-    scale: 1.01
+    x: -300
   }
 };
 
@@ -28,10 +28,10 @@ const PageTransition = ({ children }: PageTransitionProps) => {
       exit="exit"
       variants={pageVariants}
       transition={{ 
-        duration: 0.1,
-        ease: "easeOut"
+        duration: 0.2,
+        ease: "easeInOut"
       }}
-      className="min-h-screen"
+      className="min-h-screen overflow-hidden"
     >
       {children}
     </motion.div>
