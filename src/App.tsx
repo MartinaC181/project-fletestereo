@@ -7,6 +7,7 @@ import { AnimatePresence } from "framer-motion";
 import { EventBusProvider } from "@/components/EventBusProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import PageTransition from "@/components/PageTransition";
+import ScrollToTop from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import SolicitarFlete from "./pages/SolicitarFlete";
 import Servicios from "./pages/Servicios";
@@ -48,6 +49,7 @@ const App = () => (
           <Toaster />
           <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <AnimatedRoutes />
         </BrowserRouter>
         </TooltipProvider>

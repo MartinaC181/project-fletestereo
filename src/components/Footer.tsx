@@ -19,14 +19,8 @@ const Footer = () => {
               Profesionalismo, seguridad y puntualidad garantizada.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-primary-foreground/60 dark:text-black/60 hover:text-accent-yellow dark:hover:text-black transition-colors">
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-primary-foreground/60 dark:text-black/60 hover:text-accent-yellow dark:hover:text-black transition-colors">
+              <a href="https://www.instagram.com/frenkyfletestereo?igsh=MTZzNmY3cWp2MWxlOQ==" className="text-primary-foreground/60 dark:text-black/60 hover:text-accent-yellow dark:hover:text-black transition-colors">
                 <Instagram className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-primary-foreground/60 dark:text-black/60 hover:text-accent-yellow dark:hover:text-black transition-colors">
-                <Twitter className="h-5 w-5" />
               </a>
             </div>
           </div>
@@ -59,11 +53,11 @@ const Footer = () => {
             <div className="space-y-3 text-sm text-primary-foreground/80 dark:text-black/80">
               <div className="flex items-center space-x-2">
                 <Phone className="h-4 w-4" />
-                <span>+54 11 1234-5678</span>
+                <span>+54 9 3795170535</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4" />
-                <span>info@fletestereo.com</span>
+                <span>masdeu398@gmail.com</span>
               </div>
               <div className="flex items-center space-x-2">
                 <MapPin className="h-4 w-4" />
@@ -74,9 +68,9 @@ const Footer = () => {
             <div className="mt-6">
               <h4 className="font-medium mb-2 dark:text-black">Horarios de Atención</h4>
               <p className="text-xs text-primary-foreground/60 dark:text-black/60">
-                Lunes a Viernes: 8:00 - 20:00<br />
-                Sábados: 8:00 - 16:00<br />
-                Domingos: 10:00 - 16:00
+                Lunes a Viernes: XX:XX - XX:XX<br />
+                Sábados: XX:XX - XX:XX<br />
+                Domingos: XX:XX - XX:XX
               </p>
             </div>
           </div>

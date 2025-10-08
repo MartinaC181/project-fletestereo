@@ -18,30 +18,78 @@ import {
 } from "lucide-react";
 
 const Contacto = () => {
+  // Funciones para manejar los contactos
+  const handlePhoneCall = () => {
+    window.open("tel:+543795170535", "_self");
+  };
+
+  const handleWhatsApp = () => {
+    const message = encodeURIComponent("Hola! Me interesa solicitar información sobre sus servicios de fletes y mudanzas.");
+    window.open(`https://wa.me/543795170535?text=${message}`, "_blank");
+  };
+
+  const handleEmail = () => {
+    const subject = encodeURIComponent("Consulta sobre servicios - Fletestereo");
+    const body = encodeURIComponent("Hola,\n\nMe interesa solicitar información sobre sus servicios.\n\nGracias.");
+    window.open(`mailto:masdeu398@gmail.com?subject=${subject}&body=${body}`, "_self");
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Obtener datos del formulario
+    const formData = new FormData(e.target as HTMLFormElement);
+    const firstName = formData.get('firstName') || '';
+    const lastName = formData.get('lastName') || '';
+    const email = formData.get('email') || '';
+    const phone = formData.get('phone') || '';
+    const service = formData.get('service') || '';
+    const message = formData.get('message') || '';
+    
+    // Crear el cuerpo del email
+    const emailBody = `
+Nombre: ${firstName} ${lastName}
+Email: ${email}
+Teléfono: ${phone}
+Servicio solicitado: ${service}
+
+Mensaje:
+${message}
+    `.trim();
+    
+    const subject = encodeURIComponent("Nueva consulta desde la web - Fletestereo");
+    const body = encodeURIComponent(emailBody);
+    
+    window.open(`mailto:masdeu398@gmail.com?subject=${subject}&body=${body}`, "_self");
+  };
+
   const contactMethods = [
     {
       icon: <Phone className="h-8 w-8 text-accent-yellow" />,
       title: "Teléfono",
-      content: "+54 11 1234-5678",
+      content: "+54 9 3795170535",
       description: "Llamanos de lunes a domingo",
       hours: "7:00 - 22:00 hs",
-      action: "Llamar Ahora"
+      action: "Llamar Ahora",
+      handler: handlePhoneCall
     },
     {
       icon: <MessageSquare className="h-8 w-8 text-accent-yellow" />,
       title: "WhatsApp",
-      content: "+54 9 11 1234-5678",
+      content: "+54 9 3795170535",
       description: "Escribinos por WhatsApp",
       hours: "24/7 disponible",
-      action: "Enviar Mensaje"
+      action: "Enviar Mensaje",
+      handler: handleWhatsApp
     },
     {
       icon: <Mail className="h-8 w-8 text-accent-yellow" />,
       title: "Email",
-      content: "info@fletestereo.com",
+      content: "masdeu398@gmail.com",
       description: "Consultás y cotizaciones",
       hours: "Respuesta en 2 hs",
-      action: "Enviar Email"
+      action: "Enviar Email",
+      handler: handleEmail
     }
   ];
 
@@ -82,11 +130,11 @@ const Contacto = () => {
                 y cotizaciones personalizadas sin compromiso.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button variant="hero" size="lg" className="w-full sm:w-auto">
+                <Button variant="hero" size="lg" className="w-full sm:w-auto" onClick={handleWhatsApp}>
                   <MessageSquare className="mr-2 h-5 w-5" />
                   WhatsApp Directo
                 </Button>
-                <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto" onClick={handlePhoneCall}>
                   <Phone className="mr-2 h-5 w-5" />
                   Llamar Ahora
                 </Button>
@@ -124,7 +172,7 @@ const Contacto = () => {
                       <p className="text-muted-foreground mb-1">{method.description}</p>
                       <p className="text-sm text-primary font-medium">{method.hours}</p>
                     </div>
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full" onClick={method.handler}>
                       {method.action}
                     </Button>
                   </CardContent>
@@ -151,39 +199,39 @@ const Contacto = () => {
                 
                 <Card className="border-0 shadow-lg">
                   <CardContent className="p-6">
-                    <form className="space-y-6">
+                    <form className="space-y-6" onSubmit={handleFormSubmit}>
                       <div className="grid md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="firstName">Nombre</Label>
-                          <Input id="firstName" placeholder="Tu nombre" />
+                          <Input id="firstName" name="firstName" placeholder="Tu nombre" />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="lastName">Apellido</Label>
-                          <Input id="lastName" placeholder="Tu apellido" />
+                          <Input id="lastName" name="lastName" placeholder="Tu apellido" />
                         </div>
                       </div>
                       
                       <div className="grid md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="email">Email</Label>
-                          <Input id="email" type="email" placeholder="tu@email.com" />
+                          <Input id="email" name="email" type="email" placeholder="tu@email.com" />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="phone">Teléfono</Label>
-                          <Input id="phone" placeholder="+54 11 1234-5678" />
+                          <Input id="phone" name="phone" placeholder="+54 11 1234-5678" />
                         </div>
                       </div>
                       
                       <div className="space-y-2">
                         <Label htmlFor="service">Tipo de Servicio</Label>
-                        <select className="w-full px-3 py-2 border border-input rounded-md text-sm">
+                        <select name="service" className="w-full px-3 py-2 border border-input rounded-md text-sm">
                           <option value="">Seleccioná un servicio</option>
-                          <option value="mudanza-completa">Mudanza Completa ($80.000)</option>
-                          <option value="mini-mudanza-larga">Mini Mudanza Mayor a 10 cuadras ($40.000)</option>
-                          <option value="mini-mudanza-corta">Mini Mudanza Menor a 10 cuadras ($30.000)</option>
-                          <option value="flete-largo">Flete Liviano Recorrido Largo ($25.000)</option>
-                          <option value="flete-corto">Flete Liviano Recorrido Corto ($20.000)</option>
-                          <option value="otro">Otro</option>
+                          <option value="Mudanza Completa ($80.000)">Mudanza Completa ($80.000)</option>
+                          <option value="Mini Mudanza Mayor a 10 cuadras ($40.000)">Mini Mudanza Mayor a 10 cuadras ($40.000)</option>
+                          <option value="Mini Mudanza Menor a 10 cuadras ($30.000)">Mini Mudanza Menor a 10 cuadras ($30.000)</option>
+                          <option value="Flete Liviano Recorrido Largo ($25.000)">Flete Liviano Recorrido Largo ($25.000)</option>
+                          <option value="Flete Liviano Recorrido Corto ($20.000)">Flete Liviano Recorrido Corto ($20.000)</option>
+                          <option value="Otro">Otro</option>
                         </select>
                       </div>
                       
@@ -191,12 +239,13 @@ const Contacto = () => {
                         <Label htmlFor="message">Mensaje</Label>
                         <Textarea 
                           id="message" 
+                          name="message"
                           placeholder="Contanos los detalles de tu proyecto..."
                           rows={5}
                         />
                       </div>
                       
-                      <Button variant="hero" size="lg" className="w-full">
+                      <Button type="submit" variant="hero" size="lg" className="w-full">
                         <Send className="mr-2 h-5 w-5" />
                         Enviar Consulta
                       </Button>
