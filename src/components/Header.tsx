@@ -83,20 +83,24 @@ const Header = () => {
               <Moon className="h-4 w-4 dark:hidden" />
               <Sun className="h-4 w-4 hidden dark:block" />
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-accent-yellow dark:bg-black border-transparent dark:border-transparent text-primary dark:text-white hover:opacity-80 dark:hover:bg-black transition-all"
-            >
-              Iniciar Sesión
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-accent-yellow dark:bg-background border-transparent dark:border-transparent text-primary dark:text-white hover:opacity-80 dark:hover:bg-background transition-all"
-            >
-              Solicitar Flete
-            </Button>
+            <Link to="/login">
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-accent-yellow dark:bg-black border-transparent dark:border-transparent text-primary dark:text-white hover:opacity-80 dark:hover:bg-black transition-all"
+              >
+                Iniciar Sesión
+              </Button>
+            </Link>
+            <Link to="/solicitar">
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-accent-yellow dark:bg-background border-transparent dark:border-transparent text-primary dark:text-white hover:opacity-80 dark:hover:bg-background transition-all"
+              >
+                Solicitar Flete
+              </Button>
+            </Link>
           </nav>
 
           {/* Theme toggle and Mobile menu button */}
@@ -166,12 +170,16 @@ const Header = () => {
                 Contacto
               </Link>
               <div className="flex flex-col space-y-2 pt-4">
-                <Button variant="outline" size="sm">
-                  Iniciar Sesión
-                </Button>
-                <Button variant="hero" size="sm">
-                  Solicitar Flete
-                </Button>
+                <Link to="/login" onClick={toggleMenu}>
+                  <Button variant="outline" size="sm" className="w-full">
+                    Iniciar Sesión
+                  </Button>
+                </Link>
+                <Link to="/solicitar" onClick={toggleMenu}>
+                  <Button variant="hero" size="sm" className="w-full">
+                    Solicitar Flete
+                  </Button>
+                </Link>
               </div>
             </nav>
           </div>
