@@ -13,6 +13,8 @@ import Servicios from "./pages/Servicios";
 import Zonas from "./pages/Zonas";
 import Tarifas from "./pages/Tarifas";
 import Contacto from "./pages/Contacto";
+import Nosotros from "./pages/Nosotros";
+import Politicas from "./pages/Politicas";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,9 +28,11 @@ const AnimatedRoutes = () => {
         <Route path="/" element={<PageTransition><Index /></PageTransition>} />
         <Route path="/solicitar" element={<PageTransition><SolicitarFlete /></PageTransition>} />
         <Route path="/servicios" element={<PageTransition><Servicios /></PageTransition>} />
+          <Route path="/nosotros" element={<PageTransition><Nosotros /></PageTransition>} />
         <Route path="/zonas" element={<PageTransition><Zonas /></PageTransition>} />
         <Route path="/tarifas" element={<PageTransition><Tarifas /></PageTransition>} />
         <Route path="/contacto" element={<PageTransition><Contacto /></PageTransition>} />
+        <Route path="/politicas" element={<PageTransition><Politicas /></PageTransition>} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>

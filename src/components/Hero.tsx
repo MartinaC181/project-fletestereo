@@ -78,18 +78,6 @@ const Hero = () => {
                 Ver Tarifas
               </Button>
             </motion.div>
-
-            {/* Trust indicators */}
-            <div className="pt-8 border-t">
-              <p className="text-sm text-muted-foreground mb-4">
-                Empresas que confían en nosotros:
-              </p>
-              <div className="flex items-center gap-8 opacity-60">
-                <div className="bg-muted rounded px-4 py-2 text-sm font-medium">EMPRESA A</div>
-                <div className="bg-muted rounded px-4 py-2 text-sm font-medium">EMPRESA B</div>
-                <div className="bg-muted rounded px-4 py-2 text-sm font-medium">EMPRESA C</div>
-              </div>
-            </div>
           </div>
 
           {/* Image */}
