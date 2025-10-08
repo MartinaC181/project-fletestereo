@@ -130,9 +130,6 @@ const Hero = () => {
           </motion.div>
         </div>
       </div>
-
-      {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-accent-orange/5 to-transparent"></div>
     </section>
   );
 };
