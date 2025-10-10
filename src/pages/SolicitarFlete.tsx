@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { freightService } from "@/modules/freight";
 import { paymentService } from "@/modules/payments";
+import GooglePlacesInput from "@/components/GooglePlacesInput";
 import type { 
   ClientInfo, 
   QuoteData, 
@@ -165,7 +166,7 @@ const SolicitarFlete = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20">
         <div className="max-w-3xl mx-auto">
           {/* Progress indicator */}
           <div className="mb-8">
@@ -278,24 +279,22 @@ const SolicitarFlete = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <Label htmlFor="origen">Dirección de Origen *</Label>
-                    <Input
-                      id="origen"
-                      placeholder="Dirección completa de donde retirar"
-                      value={requestData.origen}
-                      onChange={(e) => handleRequestDataChange("origen", e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="destino">Dirección de Destino *</Label>
-                    <Input
-                      id="destino"
-                      placeholder="Dirección completa de entrega"
-                      value={requestData.destino}
-                      onChange={(e) => handleRequestDataChange("destino", e.target.value)}
-                    />
-                  </div>
+                  <GooglePlacesInput
+                    id="origen"
+                    label="Dirección de Origen"
+                    placeholder="Escriba la dirección de origen..."
+                    value={requestData.origen}
+                    onChange={(value) => handleRequestDataChange("origen", value)}
+                    required
+                  />
+                  <GooglePlacesInput
+                    id="destino"
+                    label="Dirección de Destino"
+                    placeholder="Escriba la dirección de destino..."
+                    value={requestData.destino}
+                    onChange={(value) => handleRequestDataChange("destino", value)}
+                    required
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

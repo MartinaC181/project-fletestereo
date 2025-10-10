@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar, MapPin, Package, Calculator } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { freightService } from "@/modules/freight";
+import GooglePlacesInput from "@/components/GooglePlacesInput";
 import type { QuoteData, QuoteResult } from "@/core/events/domain-events";
 
 const QuoteForm = () => {
@@ -88,24 +89,22 @@ const QuoteForm = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <Label htmlFor="origen">Origen *</Label>
-                  <Input
-                    id="origen"
-                    placeholder="Dirección de origen"
-                    value={formData.origen}
-                    onChange={(e) => handleInputChange("origen", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="destino">Destino *</Label>
-                  <Input
-                    id="destino"
-                    placeholder="Dirección de destino"
-                    value={formData.destino}
-                    onChange={(e) => handleInputChange("destino", e.target.value)}
-                  />
-                </div>
+                <GooglePlacesInput
+                  id="origen"
+                  label="Origen"
+                  placeholder="Escriba la dirección de origen..."
+                  value={formData.origen}
+                  onChange={(value) => handleInputChange("origen", value)}
+                  required
+                />
+                <GooglePlacesInput
+                  id="destino"
+                  label="Destino" 
+                  placeholder="Escriba la dirección de destino..."
+                  value={formData.destino}
+                  onChange={(value) => handleInputChange("destino", value)}
+                  required
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
