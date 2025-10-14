@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ import type {
 } from "@/core/events/domain-events";
 
 const SolicitarFlete = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { toast } = useToast();
   
   const [step, setStep] = useState(1);
@@ -123,7 +123,7 @@ const SolicitarFlete = () => {
 
       // Redirigir a página de confirmación
       setTimeout(() => {
-        navigate("/");
+        router.push("/");
       }, 2000);
 
     } catch (error) {

@@ -3,7 +3,7 @@ import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 
 const Nosotros = () => {
   return (
@@ -22,7 +22,7 @@ const Nosotros = () => {
                 un servicio seguro, eficiente y cercano, adaptado a las necesidades de tu mudanza o envío.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/solicitar">
+                <Link href="/solicitar">
                 </Link>
               </div>
             </div>

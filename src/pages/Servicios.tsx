@@ -2,7 +2,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { 
   Truck, 
   Home, 
@@ -125,7 +125,7 @@ const Servicios = () => {
                 Profesionalismo, seguridad y eficiencia en cada servicio.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/solicitar">
+                <Link href="/solicitar">
                   <Button variant="hero" size="lg" className="w-full sm:w-auto">
                     Solicitar Cotización
                     <ArrowRight className="ml-2 h-5 w-5" />
@@ -171,7 +171,7 @@ const Servicios = () => {
                         <p className="text-lg font-semibold text-primary">{service.price}</p>
                         <p className="text-sm text-muted-foreground">{service.duration}</p>
                       </div>
-                      <Link to="/solicitar">
+                      <Link href="/solicitar">
                         <Button variant="outline" size="sm">
                           Cotizar
                         </Button>

@@ -2,7 +2,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { 
   MapPin, 
   Clock, 
@@ -124,7 +124,7 @@ const Zonas = () => {
                 Consulta disponibilidad en tu zona y obtén una cotización inmediata.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/solicitar">
+                <Link href="/solicitar">
                   <Button variant="hero" size="lg" className="w-full sm:w-auto">
                     Verificar mi Zona
                     <ArrowRight className="ml-2 h-5 w-5" />
@@ -185,7 +185,7 @@ const Zonas = () => {
                         </div>
                       </div>
                       <div className="pt-4 border-t">
-                        <Link to="/solicitar">
+                        <Link href="/solicitar">
                           <Button variant="outline" size="sm" className="w-full">
                             Solicitar en esta zona
                           </Button>

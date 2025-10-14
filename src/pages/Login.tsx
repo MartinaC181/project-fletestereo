@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Mail, Lock, LogIn, User, FileText } from "lucide-react";
 
 const Login = () => {
@@ -91,7 +91,7 @@ const Login = () => {
                     <p className="text-muted-foreground">
                       ¿No tienes una cuenta?{" "}
                       <Link 
-                        to="/registro" 
+                        href="/registro" 
                         className="text-primary hover:text-primary/80 font-medium transition-colors"
                       >
                         Regístrate aquí
@@ -103,7 +103,7 @@ const Login = () => {
                     <div className="text-center">
                       <p className="text-sm text-muted-foreground mb-4">¿Necesitas ayuda?</p>
                       <div className="flex justify-center space-x-4">
-                        <Link to="/contacto">
+                        <Link href="/contacto">
                           <Button variant="outline" size="sm">
                             Contactar Soporte
                           </Button>

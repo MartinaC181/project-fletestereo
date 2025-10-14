@@ -3,7 +3,7 @@ import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { 
   Calculator,
   Truck, 
@@ -152,7 +152,7 @@ const Tarifas = () => {
                 Calculá tu tarifa exacta en segundos.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/solicitar">
+                <Link href="/solicitar">
                   <Button variant="hero" size="lg" className="w-full sm:w-auto">
                     <Calculator className="mr-2 h-5 w-5" />
                     Calcular mi Tarifa
@@ -234,7 +234,7 @@ const Tarifas = () => {
                       </div>
                     </div>
                     
-                    <Link to="/solicitar" className="block">
+                    <Link href="/solicitar" className="block">
                       <Button 
                         variant={service.popular ? "default" : "outline"} 
                         className="w-full"

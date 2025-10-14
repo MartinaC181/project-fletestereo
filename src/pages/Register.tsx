@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Mail, Lock, User, Phone, UserPlus, Shield } from "lucide-react";
 
 const Register = () => {
@@ -132,11 +132,11 @@ const Register = () => {
                       <input type="checkbox" className="mt-1 rounded" required />
                       <label className="text-sm text-muted-foreground">
                         Acepto los{" "}
-                        <Link to="/politicas" className="text-primary hover:text-primary/80 transition-colors">
+                        <Link href="/politicas" className="text-primary hover:text-primary/80 transition-colors">
                           términos y condiciones
                         </Link>{" "}
                         y la{" "}
-                        <Link to="/politicas" className="text-primary hover:text-primary/80 transition-colors">
+                        <Link href="/politicas" className="text-primary hover:text-primary/80 transition-colors">
                           política de privacidad
                         </Link>
                       </label>
@@ -152,7 +152,7 @@ const Register = () => {
                     <p className="text-muted-foreground">
                       ¿Ya tienes una cuenta?{" "}
                       <Link 
-                        to="/login" 
+                        href="/login" 
                         className="text-primary hover:text-primary/80 font-medium transition-colors"
                       >
                         Inicia sesión aquí
