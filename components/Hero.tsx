@@ -68,15 +68,17 @@ const Hero = () => {
               transition={{ duration: 0.6, delay: 0.5, ease: [0.4, 0, 0.2, 1] }}
               className="flex flex-col sm:flex-row gap-4"
             >
-              <Link href="/solicitar">
+              <Link href="/solicitar-flete">
                 <Button variant="hero" size="lg" className="w-full sm:w-auto">
                   Solicitar Flete Ahora
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Button variant="outline" size="lg" className="w-full sm:w-auto border-accent-yellow">
-                Ver Tarifas
-              </Button>
+              <Link href="/tarifas">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto border-accent-yellow">
+                  Ver Tarifas
+                </Button>
+              </Link>
             </motion.div>
           </div>
 

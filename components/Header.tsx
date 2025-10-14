@@ -92,7 +92,7 @@ const Header = () => {
                 Iniciar Sesión
               </Button>
             </Link>
-            <Link href="/solicitar">
+            <Link href="/solicitar-flete">
               <Button
                 variant="outline"
                 size="sm"
@@ -175,7 +175,7 @@ const Header = () => {
                     Iniciar Sesión
                   </Button>
                 </Link>
-                <Link href="/solicitar" onClick={toggleMenu}>
+                <Link href="/solicitar-flete" onClick={toggleMenu}>
                   <Button variant="hero" size="sm" className="w-full">
                     Solicitar Flete
                   </Button>

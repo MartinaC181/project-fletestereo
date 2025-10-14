@@ -230,67 +230,76 @@ export default function RootLayout({ children }) {
 }
 ```
 
-### Uso en Páginas de Next.js
+### Uso en Páginas de Next.js (Patrón Actual Inline)
+
+En lugar de mantener componentes de página duplicados en `components/pages`, ahora la lógica de cada vista vive directamente en su archivo de ruta dentro de `app/`. Así el Event Bus puede usarse inline.
 
 ```tsx
 // app/solicitar-flete/page.tsx
 'use client'
 
-import { AnimatePresence } from "framer-motion";
-import PageTransition from "@/components/PageTransition";
-import SolicitarFlete from "@/components/pages/SolicitarFlete";
+import { useEffect, useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
+import PageTransition from '@/components/PageTransition';
+import { useEventBus } from '@/components/EventBusProvider';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { freightService } from '@/modules/freight';
 
 export default function SolicitarFletePage() {
+  const eventBus = useEventBus();
+  const [origen, setOrigen] = useState('');
+  const [destino, setDestino] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const sub = eventBus.subscribe('freight.confirmed', evt => {
+      // Aquí podrías disparar un toast u otra UI
+      console.log('Flete confirmado', evt.payload);
+    });
+    return () => sub.unsubscribe();
+  }, [eventBus]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      // Ejemplo mínimo: normalmente recolectarías más datos
+      await freightService.createFreightRequest(
+        { nombre: 'Demo', apellido: '', telefono: '---', email: '', dni: '' },
+        { origen, destino, fecha: '', franja: '', cargaTipo: '', cargaVolumen: '', notas: '' },
+        { tarifaBase: 0, km: 0, extras: {}, total: 0 }
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <AnimatePresence mode="wait" initial={false}>
       <PageTransition>
-        <SolicitarFlete />
+        <main className="container mx-auto py-10">
+          <Card>
+            <CardHeader>
+              <CardTitle>Solicitar Flete (Demo Inline)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <Input placeholder="Dirección de origen" value={origen} onChange={e=>setOrigen(e.target.value)} />
+                <Input placeholder="Dirección de destino" value={destino} onChange={e=>setDestino(e.target.value)} />
+                <Button type="submit" disabled={loading}>{loading? 'Enviando...' : 'Solicitar Flete'}</Button>
+              </form>
+            </CardContent>
+          </Card>
+        </main>
       </PageTransition>
     </AnimatePresence>
   );
 }
 ```
 
-### Uso del Event Bus en Componentes
-
-```tsx
-// components/pages/SolicitarFlete.tsx
-import { freightService } from '@/modules/freight';
-import { useEventBus } from '@/components/EventBusProvider';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
-
-function SolicitarFlete() {
-  const eventBus = useEventBus();
-  
-  // Escuchar eventos específicos
-  useEffect(() => {
-    const subscription = eventBus.subscribe('freight.confirmed', (event) => {
-      toast.success('¡Flete confirmado!');
-    });
-    
-    return () => subscription.unsubscribe();
-  }, []);
-  
-  // Crear solicitud (emite eventos automáticamente)
-  const handleSubmit = async () => {
-    await freightService.createFreightRequest(clientData, quoteData, quote);
-  };
-  
-  return (
-    <Card>
-      <form onSubmit={handleSubmit}>
-        <Input placeholder="Dirección de origen" />
-        <Input placeholder="Dirección de destino" />
-        <Button variant="hero" type="submit">
-          Solicitar Flete Ahora
-        </Button>
-      </form>
-    </Card>
-  );
-}
-```
+> Nota: Si la página crece demasiado puedes extraer sub-componentes reutilizables a `components/` pero evita recrear un árbol paralelo de "pages" para no duplicar responsabilidades.
 
 ## Migración Realizada
 
