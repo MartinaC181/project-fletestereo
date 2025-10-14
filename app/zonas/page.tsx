@@ -2,7 +2,7 @@
 
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
-import Zonas from "@/src/pages/Zonas";
+import Zonas from "@/components/pages/Zonas";
 
 export default function ZonasPage() {
   return (

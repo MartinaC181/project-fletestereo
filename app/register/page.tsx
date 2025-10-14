@@ -2,7 +2,7 @@
 
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
-import Register from "@/src/pages/Register";
+import Register from "@/components/pages/Register";
 
 export default function RegisterPage() {
   return (

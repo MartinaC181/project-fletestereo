@@ -2,7 +2,7 @@
 
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
-import Politicas from "@/src/pages/Politicas";
+import Politicas from "@/components/pages/Politicas";
 
 export default function PoliticasPage() {
   return (

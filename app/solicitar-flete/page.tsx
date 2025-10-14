@@ -2,7 +2,7 @@
 
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
-import SolicitarFlete from "@/src/pages/SolicitarFlete";
+import SolicitarFlete from "@/components/pages/SolicitarFlete";
 
 export default function SolicitarFletePage() {
   return (

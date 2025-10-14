@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { EventBusProvider } from "@/components/EventBusProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import ScrollToTop from "@/components/ScrollToTop";
-import "@/src/index.css";
+import "./globals.css";
 
 const queryClient = new QueryClient();
 
@@ -17,7 +17,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html lang="es" className="light" suppressHydrationWarning>
+      <head>
+        <link 
+          href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" 
+          rel="stylesheet" 
+        />
+      </head>
       <body>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>

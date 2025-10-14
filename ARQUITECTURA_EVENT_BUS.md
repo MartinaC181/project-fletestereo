@@ -17,29 +17,56 @@ El proyecto Fletestereo ha sido reestructurado para implementar una **arquitectu
 ## Estructura de la Arquitectura
 
 ```
-src/
+project-fletestereo/
+├── app/                          # Next.js App Router (Sistema de rutas)
+│   ├── contacto/page.tsx        # Página de contacto
+│   ├── tarifas/page.tsx         # Página de tarifas
+│   ├── zonas/page.tsx           # Página de zonas
+│   ├── solicitar-flete/page.tsx # Formulario de solicitud
+│   ├── layout.tsx               # Layout principal con proveedores
+│   ├── page.tsx                 # Página de inicio
+│   └── globals.css              # Estilos globales unificados
 ├── core/
 │   └── events/
-│       ├── types.ts              # Interfaces base del Event Bus
-│       ├── EventBus.ts           # Implementación del Event Bus
-│       ├── domain-events.ts      # Eventos específicos de Fletestereo
-│       └── index.ts
+│       ├── types.ts             # Interfaces base del Event Bus
+│       ├── EventBus.ts          # Implementación del Event Bus
+│       ├── domain-events.ts     # Eventos específicos de Fletestereo
+│       └── index.ts             # Exportaciones del núcleo
 ├── modules/
-│   ├── freight/
-│   │   ├── FreightService.ts     # Lógica de fletes con eventos
-│   │   └── index.ts
-│   ├── notifications/
-│   │   ├── NotificationService.ts # Sistema de notificaciones
-│   │   └── index.ts
-│   └── payments/
-│       ├── PaymentService.ts     # Procesamiento de pagos
-│       ├── gateways.ts          # Pasarelas de pago extensibles
-│       └── index.ts
+│   ├── freight/                 # Módulo de gestión de fletes
+│   ├── notifications/           # Sistema de notificaciones
+│   └── payments/                # Procesamiento de pagos
 ├── integrations/
 │   └── supabase/
-│       └── eventHandler.ts      # Persistencia automática
-└── components/
-    └── EventBusProvider.tsx     # Inicialización del sistema
+│       ├── client.ts            # Cliente de Supabase configurado
+│       ├── eventHandler.ts      # Persistencia automática de eventos
+│       └── types.ts             # Tipos generados de la DB
+├── components/
+│   ├── pages/                   # Componentes de páginas (unificados)
+│   │   ├── Index.tsx           # Página principal
+│   │   ├── Contacto.tsx        # Página de contacto
+│   │   ├── Tarifas.tsx         # Página de tarifas
+│   │   ├── SolicitarFlete.tsx  # Formulario de solicitud
+│   │   └── ...                 # Otras páginas
+│   ├── ui/                     # Componentes UI reutilizables (shadcn/ui)
+│   │   ├── button.tsx          # Componente de botón
+│   │   ├── input.tsx           # Campos de entrada
+│   │   ├── card.tsx            # Tarjetas
+│   │   └── ...                 # Otros componentes UI
+│   ├── EventBusProvider.tsx    # Inicialización del sistema de eventos
+│   ├── ThemeProvider.tsx       # Proveedor de temas (light/dark)
+│   ├── Hero.tsx                # Sección hero principal
+│   ├── ServicesSection.tsx     # Sección de servicios
+│   ├── QuoteForm.tsx           # Formulario de cotización
+│   └── ...                     # Otros componentes
+├── lib/
+│   ├── utils.ts                # Utilidades generales
+│   └── theme-context.ts        # Contexto de temas
+├── hooks/                      # Hooks personalizados de React
+├── types/                      # Tipos TypeScript globales
+└── supabase/                   # Configuración y migraciones de Supabase
+    ├── config.toml             # Configuración local
+    └── migrations/             # Migraciones de base de datos
 ```
 
 ## Flujo de Eventos en Fletestereo
@@ -176,11 +203,65 @@ class MercadoPagoGateway {
 
 ## Uso en Componentes React
 
+### Integración con Next.js App Router
+
 ```tsx
+// app/layout.tsx - Configuración de proveedores
+'use client'
+
+import { EventBusProvider } from "@/components/EventBusProvider";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import "./globals.css";
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="es" className="light">
+      <body>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <EventBusProvider>
+              {children}
+            </EventBusProvider>
+          </ThemeProvider>
+        </QueryClientProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+### Uso en Páginas de Next.js
+
+```tsx
+// app/solicitar-flete/page.tsx
+'use client'
+
+import { AnimatePresence } from "framer-motion";
+import PageTransition from "@/components/PageTransition";
+import SolicitarFlete from "@/components/pages/SolicitarFlete";
+
+export default function SolicitarFletePage() {
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <PageTransition>
+        <SolicitarFlete />
+      </PageTransition>
+    </AnimatePresence>
+  );
+}
+```
+
+### Uso del Event Bus en Componentes
+
+```tsx
+// components/pages/SolicitarFlete.tsx
 import { freightService } from '@/modules/freight';
 import { useEventBus } from '@/components/EventBusProvider';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
 
-function FreightComponent() {
+function SolicitarFlete() {
   const eventBus = useEventBus();
   
   // Escuchar eventos específicos
@@ -196,6 +277,18 @@ function FreightComponent() {
   const handleSubmit = async () => {
     await freightService.createFreightRequest(clientData, quoteData, quote);
   };
+  
+  return (
+    <Card>
+      <form onSubmit={handleSubmit}>
+        <Input placeholder="Dirección de origen" />
+        <Input placeholder="Dirección de destino" />
+        <Button variant="hero" type="submit">
+          Solicitar Flete Ahora
+        </Button>
+      </form>
+    </Card>
+  );
 }
 ```
 
@@ -220,13 +313,3 @@ const submitRequest = async () => {
   // Las notificaciones y persistencia ocurren automáticamente via eventos
 };
 ```
-
-## Próximos Pasos
-
-1. **Bandeja del Dueño**: Crear módulo que escuche `freight.request.created`
-2. **Sistema de Agenda**: Módulo que maneje `schedule.*` events
-3. **Dashboard Admin**: Vista que agregue múltiples eventos
-4. **Push Notifications**: Servicio que escuche `notification.created`
-5. **Analytics**: Módulo para tracking de eventos de negocio
-
-Esta arquitectura posiciona a Fletestereo para crecer de manera sostenible y maintener la simplicidad operacional mientras se agregan nuevas funcionalidades.

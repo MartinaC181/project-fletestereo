@@ -2,7 +2,7 @@
 
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
-import Nosotros from "@/src/pages/Nosotros";
+import Nosotros from "@/components/pages/Nosotros";
 
 export default function NosotrosPage() {
   return (

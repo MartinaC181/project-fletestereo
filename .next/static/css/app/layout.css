@@ -1,6 +1,6 @@
-/*!***********************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[12].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[12].use[3]!./src/index.css ***!
-  \***********************************************************************************************************************************************************************************************************************************************************/
+/*!*************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[12].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[12].use[3]!./app/globals.css ***!
+  \*************************************************************************************************************************************************************************************************************************************************************/
 *, ::before, ::after {
   --tw-border-spacing-x: 0;
   --tw-border-spacing-y: 0;
@@ -503,33 +503,34 @@ video {
   display: none;
 }
   :root {
+    /* Paleta de colores según STYLEGUIDE.md */
     --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
+    --foreground: 222.2 47.4% 11.2%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
+    --card-foreground: 222.2 47.4% 11.2%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
+    --popover-foreground: 222.2 47.4% 11.2%;
 
-    --primary: 0 0% 0%;
+    --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 220 13% 96%;
-    --secondary-foreground: 0 0% 0%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
     --muted: 220 13% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
     --accent: 48 100% 60%;
-    --accent-foreground: 0 0% 0%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 0 0% 0%;
+    --ring: 222.2 47.4% 11.2%;
 
     /* Custom Fletestereo design tokens */
     --primary-deep: 222.2 84% 25%;
@@ -554,56 +555,50 @@ video {
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
+    /* Paleta de colores oscuros según STYLEGUIDE.md */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 5%;
-    --card-foreground: 0 0% 100%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 5%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 0 0% 100%;
-    --primary-foreground: 0 0% 0%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 84% 4.9%;
 
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 0 0% 10%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
     --accent: 48 100% 60%;
-    --accent-foreground: 0 0% 0%;
+    --accent-foreground: 222.2 84% 4.9%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 48 100% 60%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 217.2 91.2% 59.8%;
 
     /* Custom Fletestereo dark mode tokens */
-    --primary-deep: 0 0% 15%;
-    --primary-light: 0 0% 75%;
-    --accent-orange: 24 96% 53%;
-    --accent-orange-light: 24 95% 25%;
+    --primary-deep: 217.2 91.2% 59.8%;
+    --primary-light: 210 40% 80%;
+    --accent-yellow: 48 100% 60%;
+    --accent-yellow-light: 48 95% 25%;
     --sidebar-background: 0 0% 5%;
     --sidebar-foreground: 0 0% 95%;
     --sidebar-primary: 0 0% 100%;
@@ -3747,4 +3742,3 @@ All colors MUST be HSL.
 [data-side=right] .\[\[data-side\=right\]_\&\]\:cursor-e-resize {
   cursor: e-resize;
 }
-

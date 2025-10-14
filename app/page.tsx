@@ -2,7 +2,7 @@
 
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
-import Index from "@/src/pages/Index";
+import Index from "@/components/pages/Index";
 
 export default function HomePage() {
   return (

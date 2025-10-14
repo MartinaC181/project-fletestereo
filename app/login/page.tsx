@@ -2,7 +2,7 @@
 
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
-import Login from "@/src/pages/Login";
+import Login from "@/components/pages/Login";
 
 export default function LoginPage() {
   return (

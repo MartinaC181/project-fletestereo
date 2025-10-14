@@ -8,6 +8,8 @@ import type {
   PaymentEvent,
   NotificationCreatedEvent 
 } from '@/core/events/domain-events';
+import type { RealtimeChannel } from '@supabase/supabase-js';
+import type { EventSubscription } from '@/core/events/types';
 
 /**
  * Servicio que integra el Event Bus con Supabase para persistir
@@ -15,6 +17,8 @@ import type {
  */
 export class SupabaseEventHandler {
   private isInitialized = false;
+  private realtimeChannels: RealtimeChannel[] = [];
+  private eventSubscriptions: EventSubscription[] = [];
 
   /**
    * Inicializa el handler suscribiéndose a eventos relevantes
@@ -22,27 +26,41 @@ export class SupabaseEventHandler {
   initialize(): void {
     if (this.isInitialized) return;
 
-    // Suscribirse a eventos de solicitudes de flete
-    eventBus.subscribe('freight.request.created', this.handleFreightRequestCreated.bind(this));
-    eventBus.subscribe('freight.confirmed', this.handleFreightConfirmed.bind(this));
-    eventBus.subscribe('freight.rejected', this.handleFreightRejected.bind(this));
-    
-    // Suscribirse a eventos de cambio de estado
-    eventBus.subscribe('freight.in_progress', this.handleFreightStatusChanged.bind(this));
-    eventBus.subscribe('freight.completed', this.handleFreightStatusChanged.bind(this));
-    eventBus.subscribe('freight.cancelled', this.handleFreightStatusChanged.bind(this));
-    
-    // Suscribirse a eventos de pago
-    eventBus.subscribe('payment.initiated', this.handlePaymentEvent.bind(this));
-    eventBus.subscribe('payment.completed', this.handlePaymentEvent.bind(this));
-    eventBus.subscribe('payment.failed', this.handlePaymentEvent.bind(this));
-    eventBus.subscribe('payment.refunded', this.handlePaymentEvent.bind(this));
-    
-    // Suscribirse a eventos de notificaciones
-    eventBus.subscribe('notification.created', this.handleNotificationCreated.bind(this));
+    // Almacenar las suscripciones para poder desuscribirse después
+    this.eventSubscriptions.push(
+      eventBus.subscribe('freight.request.created', this.handleFreightRequestCreated.bind(this)),
+      eventBus.subscribe('freight.confirmed', this.handleFreightConfirmed.bind(this)),
+      eventBus.subscribe('freight.rejected', this.handleFreightRejected.bind(this)),
+      eventBus.subscribe('freight.in_progress', this.handleFreightStatusChanged.bind(this)),
+      eventBus.subscribe('freight.completed', this.handleFreightStatusChanged.bind(this)),
+      eventBus.subscribe('freight.cancelled', this.handleFreightStatusChanged.bind(this)),
+      eventBus.subscribe('payment.initiated', this.handlePaymentEvent.bind(this)),
+      eventBus.subscribe('payment.completed', this.handlePaymentEvent.bind(this)),
+      eventBus.subscribe('payment.failed', this.handlePaymentEvent.bind(this)),
+      eventBus.subscribe('payment.refunded', this.handlePaymentEvent.bind(this)),
+      eventBus.subscribe('notification.created', this.handleNotificationCreated.bind(this))
+    );
 
     this.isInitialized = true;
     console.log('[SupabaseEventHandler] Handler inicializado y suscrito a eventos');
+  }
+
+  private async retryOperation<T>(
+    operation: () => Promise<T>,
+    maxRetries: number = 3,
+    delay: number = 1000
+  ): Promise<T> {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        if (attempt === maxRetries) throw error;
+        console.warn(`[SupabaseEventHandler] Intento ${attempt} falló, reintentando en ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 2; // Backoff exponencial
+      }
+    }
+    throw new Error('Max retries exceeded');
   }
 
   private async handleFreightRequestCreated(event: FreightRequestCreatedEvent): Promise<void> {
@@ -70,28 +88,42 @@ export class SupabaseEventHandler {
       }
 
       // Crear solicitud de flete
-      const { error: freightError } = await supabase
-        .from('freight_requests')
+      const { data: requestData, error: requestError } = await supabase
+        .from('requests')
         .insert({
           id: freightRequest.id,
           client_id: clientData.id,
           origen: freightRequest.quote.origen,
           destino: freightRequest.quote.destino,
-          fecha_servicio: freightRequest.quote.fecha,
-          franja_horaria: freightRequest.quote.franja,
-          tipo_carga: freightRequest.quote.cargaTipo,
-          volumen_carga: freightRequest.quote.cargaVolumen,
-          notas: freightRequest.quote.notas,
-          kilometros: freightRequest.calculatedQuote.km,
-          tarifa_base: freightRequest.calculatedQuote.tarifaBase,
-          precio_km: freightRequest.calculatedQuote.precioKm,
-          extras: freightRequest.calculatedQuote.extras,
-          precio_total: freightRequest.calculatedQuote.total,
-          estado: freightRequest.status
+          fecha: freightRequest.quote.fecha,
+          franja: freightRequest.quote.franja || '',
+          carga_tipo: freightRequest.quote.cargaTipo || '',
+          carga_volumen: freightRequest.quote.cargaVolumen || '',
+          notas: freightRequest.quote.notas || '',
+          estado: 'Solicitada' // Mapear al enum correcto
+        })
+        .select()
+        .single();
+
+      if (requestError) {
+        console.error('[SupabaseEventHandler] Error creando solicitud:', requestError);
+        return;
+      }
+
+      // Crear cotización asociada
+      const { error: quoteError } = await supabase
+        .from('quotes')
+        .insert({
+          request_id: requestData.id,
+          km: freightRequest.calculatedQuote.km || 0,
+          tarifa_base: freightRequest.calculatedQuote.tarifaBase || 0,
+          precio_km: freightRequest.calculatedQuote.precioKm || 0,
+          extras_json: freightRequest.calculatedQuote.extras || {},
+          total: freightRequest.calculatedQuote.total
         });
 
-      if (freightError) {
-        console.error('[SupabaseEventHandler] Error creando solicitud de flete:', freightError);
+      if (quoteError) {
+        console.error('[SupabaseEventHandler] Error creando cotización:', quoteError);
         return;
       }
 
@@ -104,13 +136,9 @@ export class SupabaseEventHandler {
   private async handleFreightConfirmed(event: FreightConfirmedEvent): Promise<void> {
     try {
       const { error } = await supabase
-        .from('freight_requests')
+        .from('requests')
         .update({
-          estado: 'confirmed',
-          fecha_confirmacion: event.payload.confirmedAt.toISOString(),
-          confirmado_por: event.payload.confirmedBy,
-          fecha_programada: event.payload.scheduledDate?.toISOString(),
-          notas_confirmacion: event.payload.notes
+          estado: 'Confirmada' // Usar el enum correcto
         })
         .eq('id', event.payload.freightRequestId);
 
@@ -128,12 +156,9 @@ export class SupabaseEventHandler {
   private async handleFreightRejected(event: FreightRejectedEvent): Promise<void> {
     try {
       const { error } = await supabase
-        .from('freight_requests')
+        .from('requests')
         .update({
-          estado: 'rejected',
-          fecha_rechazo: event.payload.rejectedAt.toISOString(),
-          rechazado_por: event.payload.rejectedBy,
-          motivo_rechazo: event.payload.reason
+          estado: 'Rechazada' // Usar el enum correcto
         })
         .eq('id', event.payload.freightRequestId);
 
@@ -150,12 +175,26 @@ export class SupabaseEventHandler {
 
   private async handleFreightStatusChanged(event: FreightStatusChangedEvent): Promise<void> {
     try {
+      // Mapear el estado a los valores del enum
+      let estadoDb: string;
+      switch (event.payload.newStatus) {
+        case 'in_progress':
+          estadoDb = 'Confirmada';
+          break;
+        case 'completed':
+          estadoDb = 'Completada';
+          break;
+        case 'cancelled':
+          estadoDb = 'Cancelada';
+          break;
+        default:
+          estadoDb = 'Solicitada';
+      }
+
       const { error } = await supabase
-        .from('freight_requests')
+        .from('requests')
         .update({
-          estado: event.payload.newStatus,
-          updated_at: event.payload.updatedAt.toISOString(),
-          notas_estado: event.payload.notes
+          estado: estadoDb as any // Cast para evitar error de tipos
         })
         .eq('id', event.payload.freightRequestId);
 
@@ -175,15 +214,12 @@ export class SupabaseEventHandler {
       const { error } = await supabase
         .from('payments')
         .upsert({
-          id: event.payload.paymentId,
-          freight_request_id: event.payload.freightRequestId,
-          amount: event.payload.amount,
-          currency: event.payload.currency,
-          payment_method: event.payload.paymentMethod,
-          status: event.payload.status,
-          provider_id: event.payload.providerId,
-          error_message: event.payload.error,
-          processed_at: event.payload.processedAt?.toISOString()
+          payment_id: event.payload.paymentId,
+          request_id: event.payload.freightRequestId, // Usar request_id según el esquema
+          monto: event.payload.amount,
+          moneda: event.payload.currency || 'ARS',
+          provider: event.payload.paymentMethod || '',
+          status: event.payload.status
         });
 
       if (error) {
@@ -199,27 +235,28 @@ export class SupabaseEventHandler {
 
   private async handleNotificationCreated(event: NotificationCreatedEvent): Promise<void> {
     try {
+      // La tabla notifications tiene un esquema específico para plantillas
+      // Por ahora, solo logueamos el evento hasta que se defina mejor el esquema
+      console.log('[SupabaseEventHandler] Notificación creada (no persistida por ahora):', {
+        recipientId: event.payload.recipientId,
+        title: event.payload.title,
+        message: event.payload.message
+      });
+      
+      /* Esquema actual de notifications requiere:
       const { error } = await supabase
         .from('notifications')
         .insert({
-          recipient_id: event.payload.recipientId,
-          recipient_type: event.payload.recipientType,
-          title: event.payload.title,
-          message: event.payload.message,
-          category: event.payload.category,
-          priority: event.payload.priority,
-          related_entity_id: event.payload.relatedEntityId,
-          related_entity_type: event.payload.relatedEntityType,
-          action_url: event.payload.actionUrl,
-          is_read: false
+          canal: 'email', // o 'whatsapp'
+          plantilla: event.payload.title,
+          request_id: event.payload.relatedEntityId, // si está relacionado a una request
+          payload_json: {
+            title: event.payload.title,
+            message: event.payload.message,
+            recipient: event.payload.recipientId
+          }
         });
-
-      if (error) {
-        console.error('[SupabaseEventHandler] Error creando notificación:', error);
-        return;
-      }
-
-      console.log('[SupabaseEventHandler] Notificación guardada en Supabase');
+      */
     } catch (error) {
       console.error('[SupabaseEventHandler] Error procesando NotificationCreated:', error);
     }
@@ -229,30 +266,30 @@ export class SupabaseEventHandler {
    * Configura real-time subscriptions para cambios desde la base de datos
    */
   setupRealtimeSubscriptions(): void {
-    // Escuchar cambios en solicitudes de flete desde otros clientes/aplicaciones
-    supabase
-      .channel('freight_requests')
+    // Escuchar cambios en solicitudes desde otros clientes/aplicaciones
+    const requestsChannel = supabase
+      .channel('requests_channel')
       .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'freight_requests' }, 
+          { event: '*', schema: 'public', table: 'requests' }, 
           (payload) => {
-            console.log('[SupabaseEventHandler] Cambio en freight_requests desde DB:', payload);
+            console.log('[SupabaseEventHandler] Cambio en requests desde DB:', payload);
             // Aquí se podrían emitir eventos internos basados en cambios externos
           }
       )
       .subscribe();
 
-    // Escuchar nuevas notificaciones desde la base de datos
-    supabase
-      .channel('notifications')
+    // Escuchar cambios en pagos
+    const paymentsChannel = supabase
+      .channel('payments_channel')
       .on('postgres_changes', 
-          { event: 'INSERT', schema: 'public', table: 'notifications' }, 
+          { event: '*', schema: 'public', table: 'payments' }, 
           (payload) => {
-            console.log('[SupabaseEventHandler] Nueva notificación desde DB:', payload);
-            // Emitir evento interno para mostrar notificación en UI
+            console.log('[SupabaseEventHandler] Cambio en payments desde DB:', payload);
           }
       )
       .subscribe();
 
+    this.realtimeChannels.push(requestsChannel, paymentsChannel);
     console.log('[SupabaseEventHandler] Suscripciones real-time configuradas');
   }
 
@@ -260,20 +297,20 @@ export class SupabaseEventHandler {
    * Limpia las suscripciones del handler
    */
   destroy(): void {
-    eventBus.unsubscribeAll('freight.request.created');
-    eventBus.unsubscribeAll('freight.confirmed');
-    eventBus.unsubscribeAll('freight.rejected');
-    eventBus.unsubscribeAll('freight.in_progress');
-    eventBus.unsubscribeAll('freight.completed');
-    eventBus.unsubscribeAll('freight.cancelled');
-    eventBus.unsubscribeAll('payment.initiated');
-    eventBus.unsubscribeAll('payment.completed');
-    eventBus.unsubscribeAll('payment.failed');
-    eventBus.unsubscribeAll('payment.refunded');
-    eventBus.unsubscribeAll('notification.created');
+    // Limpiar suscripciones de eventos usando las referencias almacenadas
+    this.eventSubscriptions.forEach(subscription => {
+      subscription.unsubscribe();
+    });
+    this.eventSubscriptions = [];
+
+    // Limpiar canales real-time
+    this.realtimeChannels.forEach(channel => {
+      supabase.removeChannel(channel);
+    });
+    this.realtimeChannels = [];
     
     this.isInitialized = false;
-    console.log('[SupabaseEventHandler] Handler destruido');
+    console.log('[SupabaseEventHandler] Handler destruido correctamente');
   }
 }
 

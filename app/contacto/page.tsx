@@ -2,7 +2,7 @@
 
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
-import Contacto from "@/src/pages/Contacto";
+import Contacto from "@/components/pages/Contacto";
 
 export default function ContactoPage() {
   return (

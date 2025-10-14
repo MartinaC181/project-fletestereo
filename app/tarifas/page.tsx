@@ -2,7 +2,7 @@
 
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
-import Tarifas from "@/src/pages/Tarifas";
+import Tarifas from "@/components/pages/Tarifas";
 
 export default function TarifasPage() {
   return (
