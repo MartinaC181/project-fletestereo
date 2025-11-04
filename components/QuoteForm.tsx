@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { freightService } from "@/modules/freight";
 import { geolocationService } from "@/lib/services/geolocation.service";
 import GooglePlacesInput from "@/components/GooglePlacesInput";
+import type { QuoteData, QuoteResult, ServiceType } from "@/core/events/domain-events";
 import { MapView } from "@/components/MapView";
 import type { QuoteData, QuoteResult } from "@/core/events/domain-events";
 import type { Coordinates } from "@/lib/services/geolocation.service";
@@ -21,8 +22,8 @@ const QuoteForm = () => {
     destino: "",
     fecha: "",
     franja: "",
-    cargaTipo: "",
-    cargaVolumen: "",
+    tipoServicio: "" as ServiceType,
+    pisosEscalera: 0,
     notas: ""
   });
   const [quote, setQuote] = useState<QuoteResult | null>(null);
@@ -35,6 +36,12 @@ const QuoteForm = () => {
     distance: number;
   } | null>(null);
 
+  const handleInputChange = (field: keyof QuoteData, value: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      [field]: field === 'pisosEscalera' ? parseInt(value) || 0 : value 
+    }));
+  };
   const handleInputChange = useCallback((field: keyof QuoteData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
@@ -143,7 +150,7 @@ const QuoteForm = () => {
   const handleNotasChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange("notas", e.target.value), [handleInputChange]);
 
   const calculateQuote = async () => {
-    if (!formData.origen || !formData.destino || !formData.fecha || !formData.franja || !formData.cargaTipo) {
+    if (!formData.origen || !formData.destino || !formData.fecha || !formData.franja || !formData.tipoServicio) {
       toast({
         title: "Campos requeridos",
         description: "Por favor completa todos los campos obligatorios",
@@ -257,19 +264,30 @@ const QuoteForm = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
+                  <Label htmlFor="tipoServicio">Tipo de Servicio *</Label>
+                  <Select value={formData.tipoServicio} onValueChange={(value) => handleInputChange("tipoServicio", value as ServiceType)}>
                   <Label htmlFor="cargaTipo">Tipo de Carga *</Label>
                   <Select value={formData.cargaTipo} onValueChange={handleCargaTipoChange}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Tipo de carga" />
+                      <SelectValue placeholder="Tipo de servicio" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="liviana">Liviana (hasta 500kg)</SelectItem>
-                      <SelectItem value="media">Media (500kg - 1000kg)</SelectItem>
-                      <SelectItem value="pesada">Pesada (más de 1000kg)</SelectItem>
+                      <SelectItem value="mudanza_completa">Mudanza Completa</SelectItem>
+                      <SelectItem value="mini_mudanza">Mini Mudanza</SelectItem>
+                      <SelectItem value="flete_liviano">Flete Liviano</SelectItem>
+                      <SelectItem value="viaje_largo">Viaje Interurbano</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
+                  <Label htmlFor="pisosEscalera">Pisos por Escalera</Label>
+                  <Input
+                    id="pisosEscalera"
+                    type="number"
+                    min="0"
+                    value={formData.pisosEscalera}
+                    onChange={(e) => handleInputChange("pisosEscalera", e.target.value)}
+                  />
                   <Label htmlFor="cargaVolumen">Volumen</Label>
                   <Select value={formData.cargaVolumen} onValueChange={handleCargaVolumenChange}>
                     <SelectTrigger>
@@ -414,16 +432,10 @@ const QuoteForm = () => {
                         <span>Distancia ({quote.km} km):</span>
                         <span>${(quote.km * quote.precioKm).toLocaleString()}</span>
                       </div>
-                      {quote.extras.cargaPesada > 0 && (
+                      {quote.extras.escaleras > 0 && (
                         <div className="flex justify-between">
-                          <span>Carga pesada:</span>
-                          <span>${quote.extras.cargaPesada.toLocaleString()}</span>
-                        </div>
-                      )}
-                      {quote.extras.ayudanteExtra > 0 && (
-                        <div className="flex justify-between">
-                          <span>Ayudante extra:</span>
-                          <span>${quote.extras.ayudanteExtra.toLocaleString()}</span>
+                          <span>Escaleras:</span>
+                          <span>${quote.extras.escaleras.toLocaleString()}</span>
                         </div>
                       )}
                       <hr />
@@ -434,12 +446,12 @@ const QuoteForm = () => {
                     </div>
                   </div>
 
-                  {quote.km > 100 && (
-                    <div className="bg-accent-yellow-light/20 p-4 rounded-lg border border-accent-yellow/20">
-                      <h5 className="font-semibold text-black mb-2">Seña Requerida</h5>
-                      <p className="text-sm text-black">
-                        Para viajes mayores a 100km se requiere una seña del 30% 
-                        (${Math.round(quote.total * 0.3).toLocaleString()})
+                  {quote.requiereSenia && (
+                    <div className="bg-destructive/10 p-4 rounded-lg border border-destructive/20">
+                      <h5 className="font-semibold text-destructive mb-2">Seña Requerida</h5>
+                      <p className="text-sm">
+                        Este viaje requiere una seña de 
+                        (${quote.montoSenia.toLocaleString()})
                       </p>
                     </div>
                   )}
