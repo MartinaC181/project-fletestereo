@@ -4,6 +4,9 @@ import type { BaseEvent } from '../events/types';
  * Eventos específicos del dominio de Fletestereo
  */
 
+// Tipos de servicios disponibles
+export type ServiceType = 'mudanza_completa' | 'mini_mudanza' | 'flete_liviano' | 'flete_pesado' | 'urgente' | 'viaje_largo';
+
 // Tipos de eventos del dominio
 export const FreightEventTypes = {
   // Eventos de solicitud de flete
@@ -41,8 +44,8 @@ export interface QuoteData {
   destino: string;
   fecha: string;
   franja: string;
-  cargaTipo: string;
-  cargaVolumen: string;
+  tipoServicio: ServiceType;
+  pisosEscalera?: number;
   notas?: string;
 }
 
@@ -52,6 +55,8 @@ export interface QuoteResult {
   precioKm: number;
   extras: Record<string, number>;
   total: number;
+  requiereSenia: boolean;
+  montoSenia: number;
 }
 
 export interface ClientInfo {

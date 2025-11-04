@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import GooglePlacesInput from "@/components/GooglePlacesInput";
 import { freightService } from "@/modules/freight";
 import { geolocationService } from "@/lib/services/geolocation.service";
-import type { ClientInfo, QuoteData, QuoteResult } from "@/core/events/domain-events";
+import type { ClientInfo, QuoteData, QuoteResult, ServiceType } from "@/core/events/domain-events";
 
 export interface ExtraQuoteResult extends QuoteResult { precioKm: number; }
 
@@ -30,11 +30,11 @@ export default function SolicitarFletePage() {
   const [calculatingQuote, setCalculatingQuote] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [clientData, setClientData] = useState<ClientInfo>({ nombre: "", apellido: "", telefono: "", email: "", dni: "" });
-  const [requestData, setRequestData] = useState<QuoteData>({ origen: "", destino: "", fecha: "", franja: "", cargaTipo: "", cargaVolumen: "", notas: "" });
+  const [requestData, setRequestData] = useState<QuoteData>({ origen: "", destino: "", fecha: "", franja: "", tipoServicio: "" as ServiceType, pisosEscalera: 0, notas: "" });
   const [quote, setQuote] = useState<ExtraQuoteResult | null>(null);
 
   const handleClientDataChange = (field: keyof ClientInfo, value: string) => setClientData(p => ({ ...p, [field]: value }));
-  const handleRequestDataChange = (field: keyof QuoteData, value: string) => setRequestData(p => ({ ...p, [field]: value }));
+  const handleRequestDataChange = (field: keyof QuoteData, value: string) => setRequestData(p => ({ ...p, [field]: field === 'pisosEscalera' ? parseInt(value) || 0 : value }));
 
   const calculateQuote = async () => {
     setCalculatingQuote(true);
@@ -117,7 +117,7 @@ export default function SolicitarFletePage() {
         toast({ title: "Campos requeridos", description: "Nombre y teléfono son obligatorios", variant: "destructive" }); return; }
       setStep(2);
     } else if (step === 2) {
-      if (!requestData.origen || !requestData.destino || !requestData.fecha || !requestData.franja || !requestData.cargaTipo) {
+      if (!requestData.origen || !requestData.destino || !requestData.fecha || !requestData.franja || !requestData.tipoServicio) {
         toast({ title: "Campos requeridos", description: "Completa todos los campos", variant: "destructive" }); return; }
       calculateQuote();
     }
@@ -178,8 +178,30 @@ export default function SolicitarFletePage() {
                       <div><Label htmlFor="franja">Franja Horaria *</Label><Select value={requestData.franja} onValueChange={v=>handleRequestDataChange('franja', v)}><SelectTrigger><SelectValue placeholder="Seleccionar horario" /></SelectTrigger><SelectContent><SelectItem value="mañana">Mañana (8:00 - 12:00)</SelectItem><SelectItem value="tarde">Tarde (12:00 - 18:00)</SelectItem><SelectItem value="completo">Día completo</SelectItem></SelectContent></Select></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div><Label htmlFor="cargaTipo">Tipo de Carga *</Label><Select value={requestData.cargaTipo} onValueChange={v=>handleRequestDataChange('cargaTipo', v)}><SelectTrigger><SelectValue placeholder="Tipo de carga" /></SelectTrigger><SelectContent><SelectItem value="mudanza-completa">Mudanza Completa ($80.000)</SelectItem><SelectItem value="mini-mudanza-larga">Mini Mudanza (+10 cuadras - $40.000)</SelectItem><SelectItem value="mini-mudanza-corta">Mini Mudanza (-10 cuadras - $30.000)</SelectItem><SelectItem value="flete-largo">Flete Liviano Largo ($25.000)</SelectItem><SelectItem value="flete-corto">Flete Liviano Corto ($20.000)</SelectItem></SelectContent></Select></div>
-                      <div><Label htmlFor="cargaVolumen">Volumen Aproximado</Label><Select value={requestData.cargaVolumen} onValueChange={v=>handleRequestDataChange('cargaVolumen', v)}><SelectTrigger><SelectValue placeholder="Tamaño de carga" /></SelectTrigger><SelectContent><SelectItem value="1-objeto">1 objeto</SelectItem><SelectItem value="2-4-objetos">2 a 4 objetos</SelectItem><SelectItem value="electrodomesticos">Electrodomésticos básicos</SelectItem><SelectItem value="muebles-basicos">Muebles básicos (cama, comedor)</SelectItem><SelectItem value="camioneta-completa">Hasta llenar camioneta</SelectItem></SelectContent></Select></div>
+                      <div>
+                        <Label htmlFor="tipoServicio">Tipo de Servicio *</Label>
+                        <Select value={requestData.tipoServicio} onValueChange={(value) => handleRequestDataChange("tipoServicio", value as ServiceType)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Tipo de servicio" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="mudanza_completa">Mudanza Completa</SelectItem>
+                            <SelectItem value="mini_mudanza">Mini Mudanza</SelectItem>
+                            <SelectItem value="flete_liviano">Flete Liviano</SelectItem>
+                            <SelectItem value="viaje_largo">Viaje Interurbano</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="pisosEscalera">Pisos por Escalera</Label>
+                        <Input
+                          id="pisosEscalera"
+                          type="number"
+                          min="0"
+                          value={requestData.pisosEscalera}
+                          onChange={(e) => handleRequestDataChange("pisosEscalera", e.target.value)}
+                        />
+                      </div>
                     </div>
                     <div><Label htmlFor="notas">Información Adicional</Label><Textarea id="notas" value={requestData.notas} onChange={e=>handleRequestDataChange('notas', e.target.value)} placeholder="Describe tu carga, instrucciones especiales, etc." /></div>
                     <div className="flex gap-4">
@@ -206,12 +228,25 @@ export default function SolicitarFletePage() {
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between"><span>Tarifa base:</span><span>${quote.tarifaBase.toLocaleString()}</span></div>
                         <div className="flex justify-between"><span>Distancia ({quote.km} km):</span><span>${(quote.km * (quote as any).precioKm).toLocaleString()}</span></div>
-                        {Object.entries(quote.extras).map(([k,v]) => v>0 && (<div key={k} className="flex justify-between"><span className="capitalize">{k.replace(/([A-Z])/g,' $1').toLowerCase()}:</span><span>${(v as number).toLocaleString()}</span></div>))}
+                        {Object.entries(quote.extras).map(([key, value]) => (
+                          value > 0 && (
+                            <div key={key} className="flex justify-between">
+                              <span className="capitalize">{key === 'escaleras' ? 'Escaleras' : key}:</span>
+                              <span>${value.toLocaleString()}</span>
+                            </div>
+                          )
+                        ))}
                         <hr />
                         <div className="flex justify-between font-bold text-lg"><span>Total estimado:</span><span className="text-accent-yellow">${quote.total.toLocaleString()}</span></div>
                       </div>
-                      {quote.km > 100 && (
-                        <div className="mt-4 bg-accent-yellow-light/20 p-4 rounded-lg border border-accent-yellow/20"><h5 className="font-semibold text-black mb-2">Seña Requerida</h5><p className="text-sm text-black">Para viajes mayores a 100km se requiere una seña del 30% (${Math.round(quote.total*0.3).toLocaleString()})</p></div>
+                      {quote.requiereSenia && (
+                        <div className="mt-4 bg-destructive/10 p-4 rounded-lg border border-destructive/20">
+                          <h5 className="font-semibold text-destructive mb-2">Seña Requerida</h5>
+                          <p className="text-sm">
+                            Este viaje requiere una seña de 
+                            (${quote.montoSenia.toLocaleString()})
+                          </p>
+                        </div>
                       )}
                     </div>
                     <div className="flex items-start space-x-2">

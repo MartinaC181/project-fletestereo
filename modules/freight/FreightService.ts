@@ -70,8 +70,8 @@ export class FreightService {
 
     await eventBus.emit(quoteRequestEvent);
 
-    // Calcular cotización con distancia real
-    const calculatedQuote = await this.calculateQuoteWithDistance(quoteData, realDistance);
+    // Calcular cotización (la nueva lógica maneja la distancia internamente)
+    const calculatedQuote = await this.calculateQuote(quoteData);
 
     // Emitir evento de cotización calculada
     const quoteCalculatedEvent = createEvent<Omit<QuoteCalculatedEvent, 'id' | 'timestamp'>>({
@@ -89,75 +89,122 @@ export class FreightService {
   }
 
   /**
-   * Calcula el precio del flete basado en los datos proporcionados
+   * (M2) Calcula el precio del flete basado en las reglas de negocio definidas.
+   * REGLA CORREGIDA: Los extras (escaleras) SOLO aplican a viajes locales.
    */
   private async calculateQuote(quoteData: QuoteData): Promise<QuoteResult> {
-    // Simulación de cálculo (en la implementación real esto podría consultar APIs externas)
-    const kmDistance = Math.floor(Math.random() * 100) + 10;
-    return this.calculateQuoteWithDistance(quoteData, kmDistance);
+    
+    // (Simulación M1 - Martina)
+    const { km, isLocal } = this.simularGeocodificacion(quoteData.origen, quoteData.destino);
+    
+    // (Simulación M15 - Esteban)
+    const reglas = this.simularReglasDeNegocio();
+
+    let tarifaBase = 0;
+    let precioKm = 0;
+    const extras: Record<string, number> = {};
+    const distanciaKm = Math.floor(km); // "el km se redondea para abajo"
+    let total = 0;
+
+    if (isLocal) {
+      // --- 1. LÓGICA DE COMBOS (Dentro de Corrientes) ---
+      const esRecorridoCorto = distanciaKm <= reglas.LIMITE_KM_CORTA; // 1km = 10 cuadras
+
+      switch (quoteData.tipoServicio) {
+        case 'mudanza_completa':
+          tarifaBase = reglas.COMBO_MUDANZA_COMPLETA; // 80.000
+          break;
+        case 'mini_mudanza':
+          tarifaBase = esRecorridoCorto 
+            ? reglas.COMBO_MINI_MUDANZA_CORTA // 30.000
+            : reglas.COMBO_MINI_MUDANZA_LARGA; // 40.000
+          break;
+        case 'flete_liviano':
+          tarifaBase = esRecorridoCorto
+            ? reglas.COMBO_FLETE_LIVIANO_CORTO // 20.000
+            : reglas.COMBO_FLETE_LIVIANO_LARGO; // 25.000
+          break;
+        case 'viaje_largo':
+          // Es local pero seleccionó 'viaje_largo', usamos km
+          precioKm = reglas.PRECIO_COMBUSTIBLE_KM_LOCAL; 
+          break;
+      }
+
+      // --- 2. LÓGICA DE EXTRAS (SOLO PARA LOCALES) ---
+      // "por cada piso de escalera... se suma una variable (10.000 pesos)"
+      const pisos = quoteData.pisosEscalera || 0;
+      if (pisos > 0) {
+        extras.escaleras = pisos * reglas.EXTRA_PISO_ESCALERA;
+      }
+
+      const extrasTotal = Object.values(extras).reduce((sum, value) => sum + value, 0);
+      total = tarifaBase + (distanciaKm * precioKm) + extrasTotal;
+
+    } else {
+      // --- 3. LÓGICA FUERA DE CORRIENTES (SIN EXTRAS) ---
+      // "la cotización es combustible*km"
+      precioKm = reglas.PRECIO_COMBUSTIBLE_KM_LARGA;
+      total = distanciaKm * precioKm;
+      // tarifaBase es 0 y extras es {}
+    }
+
+    // --- 4. CÁLCULO PRECIO MÍNIMO (Aplica a AMBOS) ---
+    // "ningun flete puede ser menor a 20mil pesos"
+    if (total < reglas.PRECIO_MINIMO_FLETE) {
+      // Ajustamos la tarifa base para que el desglose siga sumando correctamente
+      const diferencia = reglas.PRECIO_MINIMO_FLETE - total;
+      tarifaBase += diferencia;
+      total = reglas.PRECIO_MINIMO_FLETE;
+    }
+
+    // --- 5. LÓGICA DE SEÑA (RF-06) (Aplica a AMBOS) ---
+    let requiereSenia = false;
+    let montoSenia = 0;
+
+    // "si es fuera de la ciudad, se debe una seña del 50%"
+    if (!isLocal) {
+      requiereSenia = true;
+      montoSenia = total * (reglas.PORCENTAJE_SENIA_LARGA / 100); 
+    }
+
+    // --- 6. DEVOLVER DESGLOSE COMPLETO (RF-05) ---
+    return {
+      km: distanciaKm,
+      tarifaBase: tarifaBase,
+      precioKm: precioKm,
+      extras: extras, // (estará vacío si !isLocal)
+      total: total,
+      requiereSenia: requiereSenia,
+      montoSenia: Math.round(montoSenia)
+    };
   }
 
-  /**
-   * Calcula el precio del flete con distancia específica
-   */
-  private async calculateQuoteWithDistance(quoteData: QuoteData, kmDistance: number): Promise<QuoteResult> {
-    const tarifaBase = 5000;
-    const precioKm = 50;
-    
-    const extras: Record<string, number> = {};
-    
-    // Aplicar recargos según tipo de carga
-    switch (quoteData.cargaTipo) {
-      case 'mudanza-completa':
-        extras.mudanzaCompleta = 30000; // $80.000 - $50.000 base
-        break;
-      case 'mini-mudanza-larga':
-        extras.miniMudanzaLarga = 15000; // $40.000 - $25.000 base
-        break;
-      case 'mini-mudanza-corta':
-        extras.miniMudanzaCorta = 5000; // $30.000 - $25.000 base
-        break;
-      case 'flete-largo':
-        // Ya incluido en tarifa base
-        break;
-      case 'flete-corto':
-        extras.fleteCorto = -5000; // $20.000 - $25.000 base
-        break;
-      case 'pesada':
-        extras.cargaPesada = 2000;
-        break;
-    }
-    
-    // Aplicar recargos por volumen
-    switch (quoteData.cargaVolumen) {
-      case 'camioneta-completa':
-        extras.volumenCompleto = 3000;
-        break;
-      case 'muebles-basicos':
-        extras.mueblesBasicos = 1500;
-        break;
-      case 'electrodomesticos':
-        extras.electrodomesticos = 1000;
-        break;
-      case 'grande':
-        extras.ayudanteExtra = 1500;
-        break;
-    }
+  // --- MÉTODOS SIMULADOS (Prerrequisitos M1 y M15) ---
 
-    // Recargo por franja horaria
-    if (quoteData.franja === 'noche' || quoteData.franja?.includes('noche')) {
-      extras.franjaHoraria = 1000;
+  private simularGeocodificacion(origen: string, destino: string): { km: number, isLocal: boolean } {
+    if (destino.toLowerCase().includes('resistencia') || origen.toLowerCase().includes('resistencia')) {
+      return { km: 25, isLocal: false }; // Viaje largo
     }
+    if (destino.toLowerCase().includes('campus')) {
+      return { km: 12, isLocal: true }; // > 10 cuadras (1km)
+    }
+    return { km: 0.8, isLocal: true }; // < 10 cuadras (1km)
+  }
 
-    const extrasTotal = Object.values(extras).reduce((sum, value) => sum + value, 0);
-    const total = tarifaBase + (Math.round(kmDistance) * precioKm) + extrasTotal;
-
+  private simularReglasDeNegocio() {
+    // Esto vendría de M15 (Base de Datos)
     return {
-      km: Math.round(kmDistance),
-      tarifaBase,
-      precioKm,
-      extras,
-      total
+      COMBO_MUDANZA_COMPLETA: 80000,
+      COMBO_MINI_MUDANZA_LARGA: 40000,
+      COMBO_MINI_MUDANZA_CORTA: 30000,
+      COMBO_FLETE_LIVIANO_LARGO: 25000,
+      COMBO_FLETE_LIVIANO_CORTO: 20000,
+      PRECIO_COMBUSTIBLE_KM_LARGA: 300, // Precio por KM para viajes largos
+      PRECIO_COMBUSTIBLE_KM_LOCAL: 150, // Precio por KM si es local pero no es combo
+      EXTRA_PISO_ESCALERA: 10000,
+      PRECIO_MINIMO_FLETE: 20000,
+      LIMITE_KM_CORTA: 1, // 1km = 10 cuadras
+      PORCENTAJE_SENIA_LARGA: 50 // 50%
     };
   }
 
