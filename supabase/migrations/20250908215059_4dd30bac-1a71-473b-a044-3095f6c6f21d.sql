@@ -5,8 +5,7 @@ CREATE TABLE public.clients (
   apellido TEXT,
   telefono TEXT NOT NULL,
   email TEXT,
-  dni TEXT,
-  es_temporal BOOLEAN DEFAULT false,
+  password TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -64,16 +63,6 @@ CREATE TABLE public.payments (
 
 
 
-
-
-
-
-
-
-
-
-
-
 -- Create zones table
 CREATE TABLE public.zones (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -87,9 +76,6 @@ ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.quotes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
-
-
-
 
 
 
