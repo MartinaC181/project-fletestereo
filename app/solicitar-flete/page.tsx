@@ -4,7 +4,7 @@ import { AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,8 @@ import GooglePlacesInput from "@/components/GooglePlacesInput";
 import { freightService } from "@/modules/freight";
 import { geolocationService } from "@/lib/services/geolocation.service";
 import type { ClientInfo, QuoteData, QuoteResult } from "@/core/events/domain-events";
+import { MapView } from "@/components/MapView";
+import type { Coordinates } from "@/lib/services/geolocation.service";
 
 export interface ExtraQuoteResult extends QuoteResult { precioKm: number; }
 
@@ -28,57 +30,100 @@ export default function SolicitarFletePage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [calculatingQuote, setCalculatingQuote] = useState(false);
+  const [calculatingRoute, setCalculatingRoute] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [clientData, setClientData] = useState<ClientInfo>({ nombre: "", apellido: "", telefono: "", email: "", dni: "" });
   const [requestData, setRequestData] = useState<QuoteData>({ origen: "", destino: "", fecha: "", franja: "", cargaTipo: "", cargaVolumen: "", notas: "" });
   const [quote, setQuote] = useState<ExtraQuoteResult | null>(null);
+  const [routeData, setRouteData] = useState<{
+    originCoords: Coordinates;
+    destinationCoords: Coordinates;
+    polyline?: string;
+    distance: number;
+  } | null>(null);
 
   const handleClientDataChange = (field: keyof ClientInfo, value: string) => setClientData(p => ({ ...p, [field]: value }));
-  const handleRequestDataChange = (field: keyof QuoteData, value: string) => setRequestData(p => ({ ...p, [field]: value }));
+  
+  const handleRequestDataChange = (field: keyof QuoteData, value: string) => {
+    setRequestData(p => ({ ...p, [field]: value }));
+    
+    // Si cambió origen o destino, limpiar ruta anterior
+    if (field === 'origen' || field === 'destino') {
+      setRouteData(null);
+    }
+  };
 
-  const calculateQuote = async () => {
-    setCalculatingQuote(true);
-    try {
+  const handleCalculateRoute = () => {
+    if (requestData.origen && requestData.destino && requestData.origen !== requestData.destino) {
+      calculateRoutePreview(requestData.origen, requestData.destino);
+    } else {
       toast({ 
-        title: "Calculando cotización...", 
-        description: "Obteniendo ubicaciones y calculando distancia real." 
+        title: "Campos requeridos", 
+        description: "Completa las direcciones de origen y destino", 
+        variant: "destructive" 
       });
+    }
+  };
 
-      // Primero geocodificar las direcciones para obtener coordenadas
+  const calculateRoutePreview = async (origen: string, destino: string) => {
+    if (!origen || !destino || origen === destino) return;
+    
+    setCalculatingRoute(true);
+    try {
+      // Geocodificar las direcciones
       const [originResult, destinationResult] = await Promise.all([
-        geolocationService.geocodeAddress(requestData.origen),
-        geolocationService.geocodeAddress(requestData.destino)
+        geolocationService.geocodeAddress(origen),
+        geolocationService.geocodeAddress(destino)
       ]);
 
       if (!originResult || !destinationResult) {
-        toast({ 
-          title: "Error de ubicación", 
-          description: "No pudimos encontrar las direcciones. Verifica que estén correctamente escritas.", 
-          variant: "destructive" 
-        });
-        return;
+        return; // No mostrar error, solo no mostrar mapa
       }
 
-      // Calcular la ruta real entre las dos ubicaciones
+      // Calcular la ruta
       const routeInfo = await geolocationService.calculateRoute(
         originResult.coordinates, 
         destinationResult.coordinates
       );
 
-      if (!routeInfo) {
-        toast({ 
-          title: "Error de ruta", 
-          description: "No pudimos calcular la ruta entre las ubicaciones.", 
-          variant: "destructive" 
+      if (routeInfo) {
+        setRouteData({
+          originCoords: originResult.coordinates,
+          destinationCoords: destinationResult.coordinates,
+          polyline: routeInfo.polyline,
+          distance: routeInfo.distance
         });
-        return;
       }
+    } catch (error) {
+      console.error('Error calculating route preview:', error);
+      // No mostrar error al usuario, solo no mostrar el mapa
+    } finally {
+      setCalculatingRoute(false);
+    }
+  };
 
-      // Calcular cotización con la distancia real
+  const calculateQuote = async () => {
+    if (!routeData) {
+      toast({ 
+        title: "Error", 
+        description: "Primero debe calcularse la ruta entre las ubicaciones.", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    setCalculatingQuote(true);
+    try {
+      toast({ 
+        title: "Calculando cotización...", 
+        description: "Procesando tarifa basada en la ruta calculada." 
+      });
+
+      // Calcular cotización con la distancia ya calculada
       const calculated = await freightService.requestQuoteWithDistance(
         requestData, 
         clientData, 
-        routeInfo.distance, // Distancia real en km
+        routeData.distance, // Usar distancia ya calculada
         `formal_quote_${Date.now()}`
       ) as ExtraQuoteResult;
       
@@ -87,7 +132,7 @@ export default function SolicitarFletePage() {
       
       toast({ 
         title: "¡Cotización calculada!", 
-        description: `Distancia: ${routeInfo.distance.toFixed(1)} km - Total: $${calculated.total.toLocaleString()}` 
+        description: `Distancia: ${routeData.distance.toFixed(1)} km - Total: $${calculated.total.toLocaleString()}` 
       });
     } catch (e) {
       console.error('Error calculating quote:', e);
@@ -182,6 +227,96 @@ export default function SolicitarFletePage() {
                       <div><Label htmlFor="cargaVolumen">Volumen Aproximado</Label><Select value={requestData.cargaVolumen} onValueChange={v=>handleRequestDataChange('cargaVolumen', v)}><SelectTrigger><SelectValue placeholder="Tamaño de carga" /></SelectTrigger><SelectContent><SelectItem value="1-objeto">1 objeto</SelectItem><SelectItem value="2-4-objetos">2 a 4 objetos</SelectItem><SelectItem value="electrodomesticos">Electrodomésticos básicos</SelectItem><SelectItem value="muebles-basicos">Muebles básicos (cama, comedor)</SelectItem><SelectItem value="camioneta-completa">Hasta llenar camioneta</SelectItem></SelectContent></Select></div>
                     </div>
                     <div><Label htmlFor="notas">Información Adicional</Label><Textarea id="notas" value={requestData.notas} onChange={e=>handleRequestDataChange('notas', e.target.value)} placeholder="Describe tu carga, instrucciones especiales, etc." /></div>
+                    
+                    {/* Botón para calcular ruta */}
+                    {requestData.origen && requestData.destino && !routeData && !calculatingRoute && (
+                      <div className="text-center">
+                        <Button 
+                          onClick={handleCalculateRoute}
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                          disabled={calculatingRoute}
+                        >
+                          <MapPin className="h-4 w-4 mr-2" />
+                          Calcular Ruta
+                        </Button>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Calcula la ruta y distancia entre las direcciones
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Mapa de vista previa de la ruta */}
+                    {(calculatingRoute || routeData) && (
+                      <div className="border rounded-lg p-4 bg-muted/20">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="font-semibold flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-accent-yellow" />
+                            Vista Previa de la Ruta
+                          </h4>
+                          {calculatingRoute && (
+                            <span className="text-sm text-muted-foreground">Calculando...</span>
+                          )}
+                        </div>
+                        
+                        {calculatingRoute ? (
+                          <div className="h-64 bg-muted rounded-lg flex items-center justify-center">
+                            <div className="text-center">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                              <p className="text-sm text-muted-foreground">Calculando ruta...</p>
+                            </div>
+                          </div>
+                        ) : routeData ? (
+                          <div>
+                            <MapView
+                              center={{
+                                lat: (routeData.originCoords.lat + routeData.destinationCoords.lat) / 2,
+                                lng: (routeData.originCoords.lng + routeData.destinationCoords.lng) / 2
+                              }}
+                              markers={[
+                                {
+                                  position: routeData.originCoords,
+                                  title: "Origen: " + requestData.origen,
+                                  color: 'green'
+                                },
+                                {
+                                  position: routeData.destinationCoords,
+                                  title: "Destino: " + requestData.destino,
+                                  color: 'red'
+                                }
+                              ]}
+                              polyline={routeData.polyline}
+                              zoom={10}
+                              height="250px"
+                            />
+                            <div className="mt-3 flex justify-between items-center">
+                              <div className="flex-1">
+                                <p className="text-xs text-muted-foreground">
+                                  🟢 <strong>Origen:</strong> {requestData.origen}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  🔴 <strong>Destino:</strong> {requestData.destino}
+                                </p>
+                              </div>
+                              <div className="flex gap-2 items-center">
+                                <span className="text-sm font-medium bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
+                                  📏 {routeData.distance.toFixed(1)} km
+                                </span>
+                                <Button 
+                                  onClick={handleCalculateRoute}
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs"
+                                  disabled={calculatingRoute}
+                                >
+                                  Recalcular
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
+                    
                     <div className="flex gap-4">
                       <Button onClick={()=>setStep(1)} className="flex-1 border border-gray-300" disabled={calculatingQuote}>
                         Volver
@@ -189,7 +324,7 @@ export default function SolicitarFletePage() {
                       <Button 
                         onClick={nextStep} 
                         className="flex-1 bg-black text-white hover:bg-gray-800" 
-                        disabled={calculatingQuote}
+                        disabled={calculatingQuote || !routeData}
                       >
                         {calculatingQuote ? 'Calculando...' : 'Calcular Cotización'}
                       </Button>
@@ -197,30 +332,79 @@ export default function SolicitarFletePage() {
                   </CardContent>
                 </Card>
               )}
-              {step === 3 && quote && (
-                <Card className="shadow-lg">
-                  <CardHeader><CardTitle className="flex items-center gap-2"><Calculator className="h-5 w-5 text-accent-yellow" />Confirmación de Solicitud</CardTitle></CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="bg-muted/50 p-6 rounded-lg">
-                      <h4 className="font-semibold mb-4">Tu Cotización</h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between"><span>Tarifa base:</span><span>${quote.tarifaBase.toLocaleString()}</span></div>
-                        <div className="flex justify-between"><span>Distancia ({quote.km} km):</span><span>${(quote.km * (quote as any).precioKm).toLocaleString()}</span></div>
-                        {Object.entries(quote.extras).map(([k,v]) => v>0 && (<div key={k} className="flex justify-between"><span className="capitalize">{k.replace(/([A-Z])/g,' $1').toLowerCase()}:</span><span>${(v as number).toLocaleString()}</span></div>))}
-                        <hr />
-                        <div className="flex justify-between font-bold text-lg"><span>Total estimado:</span><span className="text-accent-yellow">${quote.total.toLocaleString()}</span></div>
+              {step === 3 && quote && routeData && (
+                <div className="space-y-6">
+                  {/* Mapa con la ruta calculada */}
+                  <Card className="shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <MapPin className="h-5 w-5 text-accent-yellow" />
+                        Ruta Calculada
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="mb-4">
+                        <p className="text-sm text-muted-foreground mb-2">
+                          <strong>Origen:</strong> {requestData.origen}
+                        </p>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          <strong>Destino:</strong> {requestData.destino}
+                        </p>
+                        <MapView
+                          center={{
+                            lat: (routeData.originCoords.lat + routeData.destinationCoords.lat) / 2,
+                            lng: (routeData.originCoords.lng + routeData.destinationCoords.lng) / 2
+                          }}
+                          markers={[
+                            {
+                              position: routeData.originCoords,
+                              title: "Origen: " + requestData.origen,
+                              color: 'green'
+                            },
+                            {
+                              position: routeData.destinationCoords,
+                              title: "Destino: " + requestData.destino,
+                              color: 'red'
+                            }
+                          ]}
+                          polyline={routeData.polyline}
+                          zoom={10}
+                          height="300px"
+                        />
+                        <div className="mt-3 text-center">
+                          <span className="text-sm font-medium bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
+                            📏 Distancia: {routeData.distance.toFixed(1)} km
+                          </span>
+                        </div>
                       </div>
-                      {quote.km > 100 && (
-                        <div className="mt-4 bg-accent-yellow-light/20 p-4 rounded-lg border border-accent-yellow/20"><h5 className="font-semibold text-black mb-2">Seña Requerida</h5><p className="text-sm text-black">Para viajes mayores a 100km se requiere una seña del 30% (${Math.round(quote.total*0.3).toLocaleString()})</p></div>
-                      )}
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Checkbox id="terms" checked={acceptTerms} onCheckedChange={c=>setAcceptTerms(c as boolean)} />
-                      <div className="grid gap-1.5 leading-none"><label htmlFor="terms" className="text-sm font-medium">Acepto los términos y condiciones</label><p className="text-xs text-muted-foreground">Al enviar esta solicitud acepto las políticas de servicio y privacidad.</p></div>
-                    </div>
-                    <div className="flex gap-4"><Button onClick={()=>setStep(2)} className="flex-1 border border-gray-300">Modificar</Button><Button onClick={submitRequest} disabled={loading || !acceptTerms} className="flex-1">{loading? 'Enviando...':'Confirmar Solicitud'}</Button></div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+
+                  {/* Cotización */}
+                  <Card className="shadow-lg">
+                    <CardHeader><CardTitle className="flex items-center gap-2"><Calculator className="h-5 w-5 text-accent-yellow" />Confirmación de Solicitud</CardTitle></CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="bg-muted/50 p-6 rounded-lg">
+                        <h4 className="font-semibold mb-4">Tu Cotización</h4>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between"><span>Tarifa base:</span><span>${quote.tarifaBase.toLocaleString()}</span></div>
+                          <div className="flex justify-between"><span>Distancia ({quote.km} km):</span><span>${(quote.km * (quote as any).precioKm).toLocaleString()}</span></div>
+                          {Object.entries(quote.extras).map(([k,v]) => v>0 && (<div key={k} className="flex justify-between"><span className="capitalize">{k.replace(/([A-Z])/g,' $1').toLowerCase()}:</span><span>${(v as number).toLocaleString()}</span></div>))}
+                          <hr />
+                          <div className="flex justify-between font-bold text-lg"><span>Total estimado:</span><span className="text-accent-yellow">${quote.total.toLocaleString()}</span></div>
+                        </div>
+                        {quote.km > 100 && (
+                          <div className="mt-4 bg-accent-yellow-light/20 p-4 rounded-lg border border-accent-yellow/20"><h5 className="font-semibold text-black mb-2">Seña Requerida</h5><p className="text-sm text-black">Para viajes mayores a 100km se requiere una seña del 30% (${Math.round(quote.total*0.3).toLocaleString()})</p></div>
+                        )}
+                      </div>
+                      <div className="flex items-start space-x-2">
+                        <Checkbox id="terms" checked={acceptTerms} onCheckedChange={c=>setAcceptTerms(c as boolean)} />
+                        <div className="grid gap-1.5 leading-none"><label htmlFor="terms" className="text-sm font-medium">Acepto los términos y condiciones</label><p className="text-xs text-muted-foreground">Al enviar esta solicitud acepto las políticas de servicio y privacidad.</p></div>
+                      </div>
+                      <div className="flex gap-4"><Button onClick={()=>setStep(2)} className="flex-1 border border-gray-300">Modificar</Button><Button onClick={submitRequest} disabled={loading || !acceptTerms} className="flex-1">{loading? 'Enviando...':'Confirmar Solicitud'}</Button></div>
+                    </CardContent>
+                  </Card>
+                </div>
               )}
             </div>
           </main>
