@@ -22,20 +22,14 @@ export const FreightEventTypes = {
   FREIGHT_COMPLETED: 'freight.completed',
   FREIGHT_CANCELLED: 'freight.cancelled',
   
-  // Eventos de notificaciones
+  // Eventos de notificaciones (mantenidos para futuro uso)
   NOTIFICATION_CREATED: 'notification.created',
-  NOTIFICATION_READ: 'notification.read',
-  NOTIFICATION_DELETED: 'notification.deleted',
   
-  // Eventos de pagos
+  // Eventos de pagos (mantenidos para futuro uso)
   PAYMENT_INITIATED: 'payment.initiated',
   PAYMENT_COMPLETED: 'payment.completed',
   PAYMENT_FAILED: 'payment.failed',
   PAYMENT_REFUNDED: 'payment.refunded',
-  
-  // Eventos de agenda
-  SCHEDULE_UPDATED: 'schedule.updated',
-  AVAILABILITY_CHANGED: 'schedule.availability.changed',
 } as const;
 
 export type FreightEventType = typeof FreightEventTypes[keyof typeof FreightEventTypes];
@@ -175,17 +169,6 @@ export interface PaymentEvent extends BaseEvent {
   };
 }
 
-export interface ScheduleUpdatedEvent extends BaseEvent {
-  type: typeof FreightEventTypes.SCHEDULE_UPDATED;
-  payload: {
-    ownerId: string;
-    date: Date;
-    availableSlots: string[];
-    bookedSlots: string[];
-    updatedBy: string;
-  };
-}
-
 // Union type de todos los eventos del dominio
 export type FreightDomainEvent = 
   | QuoteRequestedEvent
@@ -195,5 +178,4 @@ export type FreightDomainEvent =
   | FreightRejectedEvent
   | FreightStatusChangedEvent
   | NotificationCreatedEvent
-  | PaymentEvent
-  | ScheduleUpdatedEvent;
+  | PaymentEvent;

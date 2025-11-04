@@ -1,12 +1,8 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useEventBus } from '@/components/EventBusProvider';
-import { freightService } from '@/modules/freight';
-import { paymentService } from '@/modules/payments';
 import type { 
-  FreightRequestCreatedEvent, 
   FreightRequest,
   PaymentEvent 
 } from '@/core/events/domain-events';
@@ -22,65 +18,134 @@ interface PendingRequest extends FreightRequest {
 export const OwnerDashboard: React.FC = () => {
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
   const [recentPayments, setRecentPayments] = useState<PaymentEvent[]>([]);
-  const eventBus = useEventBus();
 
   useEffect(() => {
-    // Escuchar nuevas solicitudes de flete
-    const freightSubscription = eventBus.subscribe('freight.request.created', 
-      (event: FreightRequestCreatedEvent) => {
-        const newRequest: PendingRequest = {
-          ...event.payload.freightRequest,
-          receivedAt: event.timestamp
-        };
-        
-        setPendingRequests(prev => [newRequest, ...prev]);
-        
-        // Opcional: Mostrar notificación al dueño
-        console.log('🔔 Nueva solicitud de flete recibida:', newRequest.id);
+    // Cargar datos mockeados para demostración (estructura real de la BD)
+    const mockPendingRequests: PendingRequest[] = [
+      {
+        id: '1',
+        clientId: 'client1',
+        client: {
+          id: 'client1',
+          nombre: 'Juan',
+          apellido: 'Pérez',
+          telefono: '379-123-4567',
+          email: 'juan@email.com',
+          dni: '12345678'
+        },
+        quote: {
+          origen: 'Corrientes Capital',
+          destino: 'Mburucuyá',
+          fecha: '2025-11-04',
+          cargaTipo: 'media',
+          cargaVolumen: 'medio',
+          franja: 'dia',
+          notas: 'Carga frágil, manejar con cuidado'
+        },
+        calculatedQuote: {
+          km: 45,
+          tarifaBase: 5000,
+          precioKm: 50,
+          extras: {},
+          total: 15000
+        },
+        status: 'pending',
+        createdAt: new Date('2025-11-02T10:30:00'),
+        updatedAt: new Date('2025-11-02T10:30:00'),
+        receivedAt: new Date('2025-11-02T10:30:00')
+      },
+      {
+        id: '2', 
+        clientId: 'client2',
+        client: {
+          id: 'client2',
+          nombre: 'María',
+          apellido: 'García',
+          telefono: '379-765-4321', 
+          email: 'maria@email.com',
+          dni: '87654321'
+        },
+        quote: {
+          origen: 'Goya',
+          destino: 'Resistencia',
+          fecha: '2025-11-05',
+          cargaTipo: 'pesada',
+          cargaVolumen: 'grande',
+          franja: 'dia',
+          notas: 'Mudanza completa - muebles y electrodomésticos'
+        },
+        calculatedQuote: {
+          km: 120,
+          tarifaBase: 5000,
+          precioKm: 50,
+          extras: { cargaPesada: 2000, ayudanteExtra: 1500 },
+          total: 22000
+        },
+        status: 'pending',
+        createdAt: new Date('2025-11-02T14:15:00'),
+        updatedAt: new Date('2025-11-02T14:15:00'), 
+        receivedAt: new Date('2025-11-02T14:15:00')
+      },
+      {
+        id: '3',
+        clientId: 'client3', 
+        client: {
+          id: 'client3',
+          nombre: 'Carlos',
+          apellido: 'Rodríguez',
+          telefono: '379-555-9876',
+          email: 'carlos@email.com',
+          dni: '11223344'
+        },
+        quote: {
+          origen: 'Paso de los Libres',
+          destino: 'Corrientes Capital',
+          fecha: '2025-11-06',
+          cargaTipo: 'liviana',
+          cargaVolumen: 'pequeño',
+          franja: 'noche'
+        },
+        calculatedQuote: {
+          km: 85,
+          tarifaBase: 5000,
+          precioKm: 50,
+          extras: { franjaHoraria: 1000 },
+          total: 10250
+        },
+        status: 'pending',
+        createdAt: new Date('2025-11-03T08:45:00'),
+        updatedAt: new Date('2025-11-03T08:45:00'),
+        receivedAt: new Date('2025-11-03T08:45:00')
       }
-    );
+    ];
 
-    // Escuchar pagos completados
-    const paymentSubscription = eventBus.subscribe('payment.completed',
-      (event: PaymentEvent) => {
-        setRecentPayments(prev => [event, ...prev.slice(0, 4)]); // Mantener solo 5 más recientes
+    const mockPayments: PaymentEvent[] = [
+      {
+        id: '1',
+        type: 'payment.completed',
+        payload: {
+          paymentId: 'pay1',
+          freightRequestId: 'req1',
+          amount: 18000,
+          currency: 'ARS',
+          paymentMethod: 'transfer',
+          status: 'completed'
+        },
+        timestamp: new Date()
       }
-    );
+    ];
 
-    // Escuchar confirmaciones para remover de pendientes
-    const confirmSubscription = eventBus.subscribe('freight.confirmed',
-      (event) => {
-        setPendingRequests(prev => 
-          prev.filter(req => req.id !== event.payload.freightRequestId)
-        );
-      }
-    );
-
-    const rejectSubscription = eventBus.subscribe('freight.rejected',
-      (event) => {
-        setPendingRequests(prev => 
-          prev.filter(req => req.id !== event.payload.freightRequestId)
-        );
-      }
-    );
-
-    // Cleanup
-    return () => {
-      freightSubscription.unsubscribe();
-      paymentSubscription.unsubscribe();
-      confirmSubscription.unsubscribe();
-      rejectSubscription.unsubscribe();
-    };
-  }, [eventBus]);
+    setPendingRequests(mockPendingRequests);
+    setRecentPayments(mockPayments);
+  }, []);
 
   const handleConfirmRequest = async (requestId: string) => {
     try {
-      await freightService.confirmFreightRequest(
-        requestId,
-        'owner_manual',
-        new Date(Date.now() + 24 * 60 * 60 * 1000), // Mañana
-        'Confirmado manualmente por el dueño'
+      // Simular confirmación - en una aplicación real actualizarías la base de datos
+      setPendingRequests(prev => 
+        prev.filter(req => req.id !== requestId)
       );
+      console.log(`✅ Solicitud ${requestId} confirmada`);
     } catch (error) {
       console.error('Error confirmando solicitud:', error);
     }
@@ -88,11 +153,11 @@ export const OwnerDashboard: React.FC = () => {
 
   const handleRejectRequest = async (requestId: string) => {
     try {
-      await freightService.rejectFreightRequest(
-        requestId,
-        'owner_manual',
-        'No disponible en esa fecha'
+      // Simular rechazo - en una aplicación real actualizarías la base de datos
+      setPendingRequests(prev => 
+        prev.filter(req => req.id !== requestId)
       );
+      console.log(`❌ Solicitud ${requestId} rechazada`);
     } catch (error) {
       console.error('Error rechazando solicitud:', error);
     }
@@ -100,13 +165,8 @@ export const OwnerDashboard: React.FC = () => {
 
   const handleInitiatePayment = async (request: PendingRequest) => {
     try {
-      await paymentService.initiatePayment({
-        freightRequestId: request.id,
-        amount: request.calculatedQuote.total,
-        currency: 'CLP',
-        paymentMethod: 'credit_card',
-        clientId: request.clientId
-      });
+      // Simular inicio de pago
+      console.log(`💰 Iniciando pago para solicitud ${request.id} por $${request.calculatedQuote.total}`);
     } catch (error) {
       console.error('Error iniciando pago:', error);
     }
@@ -121,7 +181,7 @@ export const OwnerDashboard: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             Solicitudes Pendientes
-            <Badge variant="secondary">{pendingRequests.length}</Badge>
+            <Badge>{pendingRequests.length}</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -139,8 +199,11 @@ export const OwnerDashboard: React.FC = () => {
                       <p className="text-sm text-muted-foreground">
                         {request.client.telefono} • {request.client.email}
                       </p>
+                      <p className="text-xs text-muted-foreground">
+                        DNI: {request.client.dni}
+                      </p>
                     </div>
-                    <Badge variant="outline">
+                    <Badge>
                       ${request.calculatedQuote.total.toLocaleString()}
                     </Badge>
                   </div>
@@ -153,7 +216,9 @@ export const OwnerDashboard: React.FC = () => {
                       <span className="font-medium">Destino:</span> {request.quote.destino}
                     </div>
                     <div>
-                      <span className="font-medium">Fecha:</span> {request.quote.fecha}
+                      <span className="font-medium">Fecha:</span> {
+                        new Date(request.quote.fecha).toLocaleDateString('es-AR')
+                      }
                     </div>
                     <div>
                       <span className="font-medium">Franja:</span> {request.quote.franja}
@@ -174,13 +239,12 @@ export const OwnerDashboard: React.FC = () => {
                       Confirmar
                     </Button>
                     <Button 
-                      variant="destructive"
+                      className="bg-red-600 hover:bg-red-700 text-white"
                       onClick={() => handleRejectRequest(request.id)}
                     >
                       Rechazar
                     </Button>
                     <Button 
-                      variant="outline"
                       onClick={() => handleInitiatePayment(request)}
                     >
                       Solicitar Pago
@@ -211,7 +275,7 @@ export const OwnerDashboard: React.FC = () => {
                       {payment.payload.paymentMethod}
                     </span>
                   </div>
-                  <Badge variant={payment.payload.status === 'completed' ? 'default' : 'destructive'}>
+                  <Badge>
                     {payment.payload.status}
                   </Badge>
                 </div>

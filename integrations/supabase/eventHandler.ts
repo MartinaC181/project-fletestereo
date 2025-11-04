@@ -26,23 +26,27 @@ export class SupabaseEventHandler {
   initialize(): void {
     if (this.isInitialized) return;
 
-    // Almacenar las suscripciones para poder desuscribirse después
-    this.eventSubscriptions.push(
-      eventBus.subscribe('freight.request.created', this.handleFreightRequestCreated.bind(this)),
-      eventBus.subscribe('freight.confirmed', this.handleFreightConfirmed.bind(this)),
-      eventBus.subscribe('freight.rejected', this.handleFreightRejected.bind(this)),
-      eventBus.subscribe('freight.in_progress', this.handleFreightStatusChanged.bind(this)),
-      eventBus.subscribe('freight.completed', this.handleFreightStatusChanged.bind(this)),
-      eventBus.subscribe('freight.cancelled', this.handleFreightStatusChanged.bind(this)),
-      eventBus.subscribe('payment.initiated', this.handlePaymentEvent.bind(this)),
-      eventBus.subscribe('payment.completed', this.handlePaymentEvent.bind(this)),
-      eventBus.subscribe('payment.failed', this.handlePaymentEvent.bind(this)),
-      eventBus.subscribe('payment.refunded', this.handlePaymentEvent.bind(this)),
-      eventBus.subscribe('notification.created', this.handleNotificationCreated.bind(this))
-    );
+    try {
+      // Almacenar las suscripciones para poder desuscribirse después
+      this.eventSubscriptions.push(
+        eventBus.subscribe('freight.request.created', this.handleFreightRequestCreated.bind(this)),
+        eventBus.subscribe('freight.confirmed', this.handleFreightConfirmed.bind(this)),
+        eventBus.subscribe('freight.rejected', this.handleFreightRejected.bind(this)),
+        eventBus.subscribe('freight.in_progress', this.handleFreightStatusChanged.bind(this)),
+        eventBus.subscribe('freight.completed', this.handleFreightStatusChanged.bind(this)),
+        eventBus.subscribe('freight.cancelled', this.handleFreightStatusChanged.bind(this)),
+        eventBus.subscribe('payment.initiated', this.handlePaymentEvent.bind(this)),
+        eventBus.subscribe('payment.completed', this.handlePaymentEvent.bind(this)),
+        eventBus.subscribe('payment.failed', this.handlePaymentEvent.bind(this)),
+        eventBus.subscribe('payment.refunded', this.handlePaymentEvent.bind(this)),
+        eventBus.subscribe('notification.created', this.handleNotificationCreated.bind(this))
+      );
 
-    this.isInitialized = true;
-    console.log('[SupabaseEventHandler] Handler inicializado y suscrito a eventos');
+      this.isInitialized = true;
+      console.log('[SupabaseEventHandler] Handler inicializado y suscrito a eventos');
+    } catch (error) {
+      console.error('[SupabaseEventHandler] Error al inicializar:', error);
+    }
   }
 
   private async retryOperation<T>(

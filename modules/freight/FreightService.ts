@@ -50,34 +50,110 @@ export class FreightService {
   }
 
   /**
+   * Solicita una cotización con distancia real calculada
+   */
+  async requestQuoteWithDistance(
+    quoteData: QuoteData, 
+    clientInfo: Partial<ClientInfo>, 
+    realDistance: number, 
+    sessionId?: string
+  ): Promise<QuoteResult> {
+    // Emitir evento de solicitud de cotización
+    const quoteRequestEvent = createEvent<Omit<QuoteRequestedEvent, 'id' | 'timestamp'>>({
+      type: 'freight.quote.requested',
+      payload: {
+        quoteData,
+        clientInfo,
+        sessionId
+      }
+    });
+
+    await eventBus.emit(quoteRequestEvent);
+
+    // Calcular cotización con distancia real
+    const calculatedQuote = await this.calculateQuoteWithDistance(quoteData, realDistance);
+
+    // Emitir evento de cotización calculada
+    const quoteCalculatedEvent = createEvent<Omit<QuoteCalculatedEvent, 'id' | 'timestamp'>>({
+      type: 'freight.quote.calculated',
+      payload: {
+        quoteData,
+        calculatedQuote,
+        sessionId
+      }
+    });
+
+    await eventBus.emit(quoteCalculatedEvent);
+
+    return calculatedQuote;
+  }
+
+  /**
    * Calcula el precio del flete basado en los datos proporcionados
    */
   private async calculateQuote(quoteData: QuoteData): Promise<QuoteResult> {
     // Simulación de cálculo (en la implementación real esto podría consultar APIs externas)
     const kmDistance = Math.floor(Math.random() * 100) + 10;
+    return this.calculateQuoteWithDistance(quoteData, kmDistance);
+  }
+
+  /**
+   * Calcula el precio del flete con distancia específica
+   */
+  private async calculateQuoteWithDistance(quoteData: QuoteData, kmDistance: number): Promise<QuoteResult> {
     const tarifaBase = 5000;
     const precioKm = 50;
     
     const extras: Record<string, number> = {};
     
-    if (quoteData.cargaTipo === 'pesada') {
-      extras.cargaPesada = 2000;
+    // Aplicar recargos según tipo de carga
+    switch (quoteData.cargaTipo) {
+      case 'mudanza-completa':
+        extras.mudanzaCompleta = 30000; // $80.000 - $50.000 base
+        break;
+      case 'mini-mudanza-larga':
+        extras.miniMudanzaLarga = 15000; // $40.000 - $25.000 base
+        break;
+      case 'mini-mudanza-corta':
+        extras.miniMudanzaCorta = 5000; // $30.000 - $25.000 base
+        break;
+      case 'flete-largo':
+        // Ya incluido en tarifa base
+        break;
+      case 'flete-corto':
+        extras.fleteCorto = -5000; // $20.000 - $25.000 base
+        break;
+      case 'pesada':
+        extras.cargaPesada = 2000;
+        break;
     }
     
-    if (quoteData.cargaVolumen === 'grande') {
-      extras.ayudanteExtra = 1500;
+    // Aplicar recargos por volumen
+    switch (quoteData.cargaVolumen) {
+      case 'camioneta-completa':
+        extras.volumenCompleto = 3000;
+        break;
+      case 'muebles-basicos':
+        extras.mueblesBasicos = 1500;
+        break;
+      case 'electrodomesticos':
+        extras.electrodomesticos = 1000;
+        break;
+      case 'grande':
+        extras.ayudanteExtra = 1500;
+        break;
     }
 
-    // Recargo por franja horaria nocturna
-    if (quoteData.franja === 'noche') {
+    // Recargo por franja horaria
+    if (quoteData.franja === 'noche' || quoteData.franja?.includes('noche')) {
       extras.franjaHoraria = 1000;
     }
 
     const extrasTotal = Object.values(extras).reduce((sum, value) => sum + value, 0);
-    const total = tarifaBase + (kmDistance * precioKm) + extrasTotal;
+    const total = tarifaBase + (Math.round(kmDistance) * precioKm) + extrasTotal;
 
     return {
-      km: kmDistance,
+      km: Math.round(kmDistance),
       tarifaBase,
       precioKm,
       extras,

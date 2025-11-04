@@ -18,6 +18,8 @@ export class EventBus implements IEventBus {
   private onceHandlers: Map<EventType, Set<EventHandler<any>>> = new Map();
   private isEmitting = false;
   private eventQueue: BaseEvent[] = [];
+  private eventStack: Set<string> = new Set(); // Para detectar bucles recursivos
+  private maxStackDepth = 10; // Límite de profundidad de stack
 
   constructor(private logger?: (message: string, data?: any) => void) {}
 
@@ -25,15 +27,33 @@ export class EventBus implements IEventBus {
    * Emite un evento a todos los suscriptores
    */
   async emit<T extends BaseEvent>(event: T): Promise<void> {
+    // Detectar bucles recursivos
+    const eventKey = `${event.type}-${event.id}`;
+    if (this.eventStack.has(eventKey)) {
+      this.log(`⚠️  Bucle recursivo detectado para evento: ${event.type}`, event);
+      return;
+    }
+
+    // Verificar límite de profundidad
+    if (this.eventStack.size >= this.maxStackDepth) {
+      this.log(`⚠️  Límite de profundidad excedido para evento: ${event.type}`, event);
+      return;
+    }
+
     this.log(`Emitiendo evento: ${event.type}`, event);
 
     // Si ya estamos emitiendo, agregamos a la cola para evitar recursión
     if (this.isEmitting) {
-      this.eventQueue.push(event);
+      if (this.eventQueue.length < 50) { // Límite de cola
+        this.eventQueue.push(event);
+      } else {
+        this.log(`⚠️  Cola de eventos llena, descartando evento: ${event.type}`);
+      }
       return;
     }
 
     this.isEmitting = true;
+    this.eventStack.add(eventKey);
 
     try {
       await this.processEvent(event);
@@ -41,9 +61,16 @@ export class EventBus implements IEventBus {
       // Procesar eventos en cola
       while (this.eventQueue.length > 0) {
         const queuedEvent = this.eventQueue.shift()!;
-        await this.processEvent(queuedEvent);
+        const queuedEventKey = `${queuedEvent.type}-${queuedEvent.id}`;
+        
+        if (!this.eventStack.has(queuedEventKey)) {
+          this.eventStack.add(queuedEventKey);
+          await this.processEvent(queuedEvent);
+          this.eventStack.delete(queuedEventKey);
+        }
       }
     } finally {
+      this.eventStack.delete(eventKey);
       this.isEmitting = false;
     }
   }
@@ -166,6 +193,40 @@ export class EventBus implements IEventBus {
     const regular = this.handlers.get(eventType)?.size || 0;
     const once = this.onceHandlers.get(eventType)?.size || 0;
     return regular + once;
+  }
+
+  /**
+   * Limpia completamente el EventBus
+   */
+  reset(): void {
+    this.handlers.clear();
+    this.onceHandlers.clear();
+    this.eventQueue = [];
+    this.eventStack.clear();
+    this.isEmitting = false;
+    this.log('EventBus completamente reiniciado');
+  }
+
+  /**
+   * Obtiene estadísticas del EventBus
+   */
+  getStats(): {
+    totalHandlers: number;
+    totalOnceHandlers: number;
+    queueSize: number;
+    stackSize: number;
+    isEmitting: boolean;
+  } {
+    const totalHandlers = Array.from(this.handlers.values()).reduce((sum, set) => sum + set.size, 0);
+    const totalOnceHandlers = Array.from(this.onceHandlers.values()).reduce((sum, set) => sum + set.size, 0);
+    
+    return {
+      totalHandlers,
+      totalOnceHandlers,
+      queueSize: this.eventQueue.length,
+      stackSize: this.eventStack.size,
+      isEmitting: this.isEmitting
+    };
   }
 
   private log(message: string, data?: any): void {

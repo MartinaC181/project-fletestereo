@@ -3,13 +3,10 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { EventBusProvider } from "@/components/EventBusProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import ScrollToTop from "@/components/ScrollToTop";
 import "./globals.css";
-
-const queryClient = new QueryClient();
 
 export default function RootLayout({
   children,
@@ -25,18 +22,16 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider>
-            <EventBusProvider>
-              <TooltipProvider>
-                {children}
-                <ScrollToTop />
-                <Toaster />
-                <Sonner />
-              </TooltipProvider>
-            </EventBusProvider>
-          </ThemeProvider>
-        </QueryClientProvider>
+        <ThemeProvider>
+          <EventBusProvider>
+            <TooltipProvider>
+              {children}
+              <ScrollToTop />
+              <Toaster />
+              <Sonner />
+            </TooltipProvider>
+          </EventBusProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

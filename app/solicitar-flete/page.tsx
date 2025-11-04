@@ -17,6 +17,7 @@ import { MapPin, Calculator, User, Phone, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import GooglePlacesInput from "@/components/GooglePlacesInput";
 import { freightService } from "@/modules/freight";
+import { geolocationService } from "@/lib/services/geolocation.service";
 import type { ClientInfo, QuoteData, QuoteResult } from "@/core/events/domain-events";
 
 export interface ExtraQuoteResult extends QuoteResult { precioKm: number; }
@@ -26,6 +27,7 @@ export default function SolicitarFletePage() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [calculatingQuote, setCalculatingQuote] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [clientData, setClientData] = useState<ClientInfo>({ nombre: "", apellido: "", telefono: "", email: "", dni: "" });
   const [requestData, setRequestData] = useState<QuoteData>({ origen: "", destino: "", fecha: "", franja: "", cargaTipo: "", cargaVolumen: "", notas: "" });
@@ -35,12 +37,63 @@ export default function SolicitarFletePage() {
   const handleRequestDataChange = (field: keyof QuoteData, value: string) => setRequestData(p => ({ ...p, [field]: value }));
 
   const calculateQuote = async () => {
+    setCalculatingQuote(true);
     try {
-      const calculated = await freightService.requestQuote(requestData, clientData, `formal_quote_${Date.now()}`) as ExtraQuoteResult;
+      toast({ 
+        title: "Calculando cotización...", 
+        description: "Obteniendo ubicaciones y calculando distancia real." 
+      });
+
+      // Primero geocodificar las direcciones para obtener coordenadas
+      const [originResult, destinationResult] = await Promise.all([
+        geolocationService.geocodeAddress(requestData.origen),
+        geolocationService.geocodeAddress(requestData.destino)
+      ]);
+
+      if (!originResult || !destinationResult) {
+        toast({ 
+          title: "Error de ubicación", 
+          description: "No pudimos encontrar las direcciones. Verifica que estén correctamente escritas.", 
+          variant: "destructive" 
+        });
+        return;
+      }
+
+      // Calcular la ruta real entre las dos ubicaciones
+      const routeInfo = await geolocationService.calculateRoute(
+        originResult.coordinates, 
+        destinationResult.coordinates
+      );
+
+      if (!routeInfo) {
+        toast({ 
+          title: "Error de ruta", 
+          description: "No pudimos calcular la ruta entre las ubicaciones.", 
+          variant: "destructive" 
+        });
+        return;
+      }
+
+      // Calcular cotización con la distancia real
+      const calculated = await freightService.requestQuoteWithDistance(
+        requestData, 
+        clientData, 
+        routeInfo.distance, // Distancia real en km
+        `formal_quote_${Date.now()}`
+      ) as ExtraQuoteResult;
+      
       setQuote(calculated);
       setStep(3);
+      
+      toast({ 
+        title: "¡Cotización calculada!", 
+        description: `Distancia: ${routeInfo.distance.toFixed(1)} km - Total: $${calculated.total.toLocaleString()}` 
+      });
     } catch (e) {
+      console.error('Error calculating quote:', e);
       toast({ title: "Error", description: "No pudimos calcular la cotización. Intenta nuevamente.", variant: "destructive" });
+    } finally {
+      setCalculatingQuote(false);
     }
   };
 
@@ -106,7 +159,7 @@ export default function SolicitarFletePage() {
                       <div><Label htmlFor="email">Email</Label><Input id="email" type="email" value={clientData.email} onChange={e=>handleClientDataChange('email', e.target.value)} placeholder="tu@email.com" /></div>
                     </div>
                     <div><Label htmlFor="dni">DNI (opcional)</Label><Input id="dni" value={clientData.dni} onChange={e=>handleClientDataChange('dni', e.target.value)} placeholder="12.345.678" /></div>
-                    <Button onClick={nextStep} className="w-full" variant="cta" size="lg">Continuar</Button>
+                    <Button onClick={nextStep} className="w-full">Continuar</Button>
                   </CardContent>
                 </Card>
               )}
@@ -114,9 +167,11 @@ export default function SolicitarFletePage() {
                 <Card className="shadow-lg">
                   <CardHeader><CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5 text-accent-yellow" />Detalles del Flete</CardTitle></CardHeader>
                   <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 gap-4">
-                      <GooglePlacesInput id="origen" label="Dirección de Origen" placeholder="Escriba la dirección de origen..." value={requestData.origen} onChange={v=>handleRequestDataChange('origen', v)} required />
-                      <GooglePlacesInput id="destino" label="Dirección de Destino" placeholder="Escriba la dirección de destino..." value={requestData.destino} onChange={v=>handleRequestDataChange('destino', v)} required />
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 gap-4">
+                        <GooglePlacesInput id="origen" label="Dirección de Origen" placeholder="Escriba la dirección de origen..." value={requestData.origen} onChange={v=>handleRequestDataChange('origen', v)} />
+                        <GooglePlacesInput id="destino" label="Dirección de Destino" placeholder="Escriba la dirección de destino..." value={requestData.destino} onChange={v=>handleRequestDataChange('destino', v)} />
+                      </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div><Label htmlFor="fecha">Fecha del Servicio *</Label><Input id="fecha" type="date" value={requestData.fecha} onChange={e=>handleRequestDataChange('fecha', e.target.value)} /></div>
@@ -127,7 +182,18 @@ export default function SolicitarFletePage() {
                       <div><Label htmlFor="cargaVolumen">Volumen Aproximado</Label><Select value={requestData.cargaVolumen} onValueChange={v=>handleRequestDataChange('cargaVolumen', v)}><SelectTrigger><SelectValue placeholder="Tamaño de carga" /></SelectTrigger><SelectContent><SelectItem value="1-objeto">1 objeto</SelectItem><SelectItem value="2-4-objetos">2 a 4 objetos</SelectItem><SelectItem value="electrodomesticos">Electrodomésticos básicos</SelectItem><SelectItem value="muebles-basicos">Muebles básicos (cama, comedor)</SelectItem><SelectItem value="camioneta-completa">Hasta llenar camioneta</SelectItem></SelectContent></Select></div>
                     </div>
                     <div><Label htmlFor="notas">Información Adicional</Label><Textarea id="notas" value={requestData.notas} onChange={e=>handleRequestDataChange('notas', e.target.value)} placeholder="Describe tu carga, instrucciones especiales, etc." /></div>
-                    <div className="flex gap-4"><Button variant="outline" onClick={()=>setStep(1)} className="flex-1">Volver</Button><Button onClick={nextStep} className="flex-1 bg-black text-white hover:bg-gray-800" variant="cta">Calcular Cotización</Button></div>
+                    <div className="flex gap-4">
+                      <Button onClick={()=>setStep(1)} className="flex-1 border border-gray-300" disabled={calculatingQuote}>
+                        Volver
+                      </Button>
+                      <Button 
+                        onClick={nextStep} 
+                        className="flex-1 bg-black text-white hover:bg-gray-800" 
+                        disabled={calculatingQuote}
+                      >
+                        {calculatingQuote ? 'Calculando...' : 'Calcular Cotización'}
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               )}
@@ -152,7 +218,7 @@ export default function SolicitarFletePage() {
                       <Checkbox id="terms" checked={acceptTerms} onCheckedChange={c=>setAcceptTerms(c as boolean)} />
                       <div className="grid gap-1.5 leading-none"><label htmlFor="terms" className="text-sm font-medium">Acepto los términos y condiciones</label><p className="text-xs text-muted-foreground">Al enviar esta solicitud acepto las políticas de servicio y privacidad.</p></div>
                     </div>
-                    <div className="flex gap-4"><Button variant="outline" onClick={()=>setStep(2)} className="flex-1">Modificar</Button><Button onClick={submitRequest} disabled={loading || !acceptTerms} className="flex-1" variant="hero" size="lg">{loading? 'Enviando...':'Confirmar Solicitud'}</Button></div>
+                    <div className="flex gap-4"><Button onClick={()=>setStep(2)} className="flex-1 border border-gray-300">Modificar</Button><Button onClick={submitRequest} disabled={loading || !acceptTerms} className="flex-1">{loading? 'Enviando...':'Confirmar Solicitud'}</Button></div>
                   </CardContent>
                 </Card>
               )}
