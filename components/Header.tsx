@@ -50,12 +50,6 @@ const Header = () => {
               Servicios
             </Link>
             <Link
-              href="/zonas"
-              className="text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 transition-colors"
-            >
-              Zonas
-            </Link>
-            <Link
               href="/tarifas"
               className="text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 transition-colors"
             >
@@ -189,13 +183,6 @@ const Header = () => {
                 onClick={toggleMenu}
               >
                 Servicios
-              </Link>
-              <Link
-                href="/zonas"
-                className="text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 transition-colors py-2"
-                onClick={toggleMenu}
-              >
-                Zonas
               </Link>
               <Link
                 href="/tarifas"
