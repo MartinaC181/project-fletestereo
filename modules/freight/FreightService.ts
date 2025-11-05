@@ -1,4 +1,5 @@
 import { eventBus, createEvent } from '@/core/events';
+import { configService } from '@/modules/config/ConfigService';
 import type { 
   QuoteRequestedEvent,
   QuoteCalculatedEvent,
@@ -89,84 +90,77 @@ export class FreightService {
   }
 
   /**
-   * (M2) Calcula el precio del flete basado en las reglas de negocio definidas.
-   * REGLA CORREGIDA: Los extras (escaleras) SOLO aplican a viajes locales.
+   * (M2) Calcula el precio del flete basado en las reglas de negocio de M15.
+   * REGLA: Extras (escaleras) SOLO aplican a viajes locales.
+   * REGLA: Precio por KM SOLO aplica a viajes interurbanos.
    */
   private async calculateQuote(quoteData: QuoteData): Promise<QuoteResult> {
-    
+
     // (Simulación M1 - Martina)
     const { km, isLocal } = this.simularGeocodificacion(quoteData.origen, quoteData.destino);
-    
-    // (Simulación M15 - Esteban)
-    const reglas = this.simularReglasDeNegocio();
 
+    // (M15 Real - Esteban)
+    // Ya no es una simulación, es una llamada async a la BD
+    const reglas = await this.getPricingRules();
     let tarifaBase = 0;
     let precioKm = 0;
     const extras: Record<string, number> = {};
     const distanciaKm = Math.floor(km); // "el km se redondea para abajo"
     let total = 0;
-
+    
     if (isLocal) {
       // --- 1. LÓGICA DE COMBOS (Dentro de Corrientes) ---
-      const esRecorridoCorto = distanciaKm <= reglas.LIMITE_KM_CORTA; // 1km = 10 cuadras
-
+      const esRecorridoCorto = distanciaKm <= reglas.LIMITE_KM_CORTA;
       switch (quoteData.tipoServicio) {
         case 'mudanza_completa':
-          tarifaBase = reglas.COMBO_MUDANZA_COMPLETA; // 80.000
+          tarifaBase = reglas.COMBO_MUDANZA_COMPLETA;
           break;
         case 'mini_mudanza':
           tarifaBase = esRecorridoCorto 
-            ? reglas.COMBO_MINI_MUDANZA_CORTA // 30.000
-            : reglas.COMBO_MINI_MUDANZA_LARGA; // 40.000
+            ? reglas.COMBO_MINI_MUDANZA_CORTA
+            : reglas.COMBO_MINI_MUDANZA_LARGA;
           break;
         case 'flete_liviano':
           tarifaBase = esRecorridoCorto
-            ? reglas.COMBO_FLETE_LIVIANO_CORTO // 20.000
-            : reglas.COMBO_FLETE_LIVIANO_LARGO; // 25.000
+            ? reglas.COMBO_FLETE_LIVIANO_CORTO
+            : reglas.COMBO_FLETE_LIVIANO_LARGO;
           break;
         case 'viaje_largo':
-          // Es local pero seleccionó 'viaje_largo', usamos km
-          precioKm = reglas.PRECIO_COMBUSTIBLE_KM_LOCAL; 
+          // El usuario seleccionó "Viaje Interurbano" pero es local.
+          // Es una inconsistencia. No se cobra por KM.
+          // Se asigna 0 y será atrapado por el PRECIO_MINIMO_FLETE.
+          tarifaBase = 0; 
           break;
       }
-
       // --- 2. LÓGICA DE EXTRAS (SOLO PARA LOCALES) ---
-      // "por cada piso de escalera... se suma una variable (10.000 pesos)"
       const pisos = quoteData.pisosEscalera || 0;
       if (pisos > 0) {
         extras.escaleras = pisos * reglas.EXTRA_PISO_ESCALERA;
       }
-
       const extrasTotal = Object.values(extras).reduce((sum, value) => sum + value, 0);
-      total = tarifaBase + (distanciaKm * precioKm) + extrasTotal;
-
+      total = tarifaBase + (distanciaKm * precioKm) + extrasTotal; // precioKm es 0 aquí
     } else {
       // --- 3. LÓGICA FUERA DE CORRIENTES (SIN EXTRAS) ---
-      // "la cotización es combustible*km"
-      precioKm = reglas.PRECIO_COMBUSTIBLE_KM_LARGA;
+      // "solo se calcula el litro de combustible * los km"
+      precioKm = reglas.PRECIO_COMBUSTIBLE_KM;
       total = distanciaKm * precioKm;
       // tarifaBase es 0 y extras es {}
     }
-
     // --- 4. CÁLCULO PRECIO MÍNIMO (Aplica a AMBOS) ---
-    // "ningun flete puede ser menor a 20mil pesos"
     if (total < reglas.PRECIO_MINIMO_FLETE) {
       // Ajustamos la tarifa base para que el desglose siga sumando correctamente
       const diferencia = reglas.PRECIO_MINIMO_FLETE - total;
       tarifaBase += diferencia;
       total = reglas.PRECIO_MINIMO_FLETE;
     }
-
-    // --- 5. LÓGICA DE SEÑA (RF-06) (Aplica a AMBOS) ---
+    // --- 5. LÓGICA DE SEÑA (RF-06) (SOLO INTERURBANOS) ---
     let requiereSenia = false;
     let montoSenia = 0;
-
     // "si es fuera de la ciudad, se debe una seña del 50%"
     if (!isLocal) {
       requiereSenia = true;
       montoSenia = total * (reglas.PORCENTAJE_SENIA_LARGA / 100); 
     }
-
     // --- 6. DEVOLVER DESGLOSE COMPLETO (RF-05) ---
     return {
       km: distanciaKm,
@@ -191,21 +185,14 @@ export class FreightService {
     return { km: 0.8, isLocal: true }; // < 10 cuadras (1km)
   }
 
-  private simularReglasDeNegocio() {
-    // Esto vendría de M15 (Base de Datos)
-    return {
-      COMBO_MUDANZA_COMPLETA: 80000,
-      COMBO_MINI_MUDANZA_LARGA: 40000,
-      COMBO_MINI_MUDANZA_CORTA: 30000,
-      COMBO_FLETE_LIVIANO_LARGO: 25000,
-      COMBO_FLETE_LIVIANO_CORTO: 20000,
-      PRECIO_COMBUSTIBLE_KM_LARGA: 300, // Precio por KM para viajes largos
-      PRECIO_COMBUSTIBLE_KM_LOCAL: 150, // Precio por KM si es local pero no es combo
-      EXTRA_PISO_ESCALERA: 10000,
-      PRECIO_MINIMO_FLETE: 20000,
-      LIMITE_KM_CORTA: 1, // 1km = 10 cuadras
-      PORCENTAJE_SENIA_LARGA: 50 // 50%
-    };
+  /**
+   * (M15) Obtiene las reglas de negocio desde el ConfigService.
+   * Ya no es una simulación.
+   */
+  private async getPricingRules() {
+    // Usamos 'await' porque esto ahora es una llamada real a la API
+    const reglas = await configService.getPricingRules();
+    return reglas;
   }
 
   /**
