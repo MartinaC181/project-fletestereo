@@ -1,6 +1,7 @@
 import { eventBus, createEvent } from '@/core/events/EventBus';
 import { FreightRequestCreatedEvent, FreightConfirmedEvent, QuoteData, QuoteResult, FreightRequest, ClientInfo } from '@/core/events/domain-events';
 import { configService } from '@/modules/config/ConfigService';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Servicio principal de manejo de fletes con integración M15
@@ -13,13 +14,17 @@ export class FreightService {
   /**
    * Calcula cotización con integración M15 (configuración desde base de datos)
    */
-  async calculateQuote(quoteData: QuoteData): Promise<QuoteResult> {
+  async calculateQuote(quoteData: QuoteData & { distance?: number }): Promise<QuoteResult> {
     try {
       // Obtener configuración desde M15
       const pricingRules = await configService.getPricingRules();
       
       console.log('[FreightService] Configuración M15 cargada:', pricingRules);
       console.log('[FreightService] Calculando cotización para:', quoteData);
+
+      // Obtener distancia real o usar valor por defecto
+      const distanciaReal = quoteData.distance || 20;
+      console.log('[FreightService] 📏 Distancia utilizada:', distanciaReal, 'km');
 
       // Validar tipo de servicio
       if (!this.isValidServiceType(quoteData.tipoServicio)) {
@@ -34,22 +39,19 @@ export class FreightService {
           precioBase = pricingRules.COMBO_MUDANZA_COMPLETA;
           break;
         case 'mini_mudanza':
-          // Usar distancia ficticia o límite para determinar si es corta/larga
-          const isLongDistance = 20; // TODO: obtener distancia real
-          precioBase = isLongDistance > pricingRules.LIMITE_KM_CORTA 
+          // Usar distancia real para determinar si es corta/larga
+          precioBase = distanciaReal > pricingRules.LIMITE_KM_CORTA 
             ? pricingRules.COMBO_MINI_MUDANZA_LARGA 
             : pricingRules.COMBO_MINI_MUDANZA_CORTA;
           break;
         case 'flete_liviano':
-          const isLongFreight = 20; // TODO: obtener distancia real
-          precioBase = isLongFreight > pricingRules.LIMITE_KM_CORTA
+          precioBase = distanciaReal > pricingRules.LIMITE_KM_CORTA
             ? pricingRules.COMBO_FLETE_LIVIANO_LARGO
             : pricingRules.COMBO_FLETE_LIVIANO_CORTO;
           break;
         case 'viaje_largo':
           // Para viajes largos, usar precio mínimo + combustible por km
-          const estimatedKm = 50; // TODO: obtener distancia real
-          precioBase = pricingRules.PRECIO_MINIMO_FLETE + (estimatedKm * pricingRules.PRECIO_COMBUSTIBLE_KM);
+          precioBase = pricingRules.PRECIO_MINIMO_FLETE + (distanciaReal * pricingRules.PRECIO_COMBUSTIBLE_KM);
           break;
       }
 
@@ -62,14 +64,13 @@ export class FreightService {
       }
 
       // Determinar si requiere seña (viajes largos)
-      const estimatedDistance = 20; // TODO: obtener distancia real
-      const requiereSenia = estimatedDistance > pricingRules.LIMITE_KM_CORTA;
+      const requiereSenia = distanciaReal > pricingRules.LIMITE_KM_CORTA;
       const montoSenia = requiereSenia ? totalPrice * (pricingRules.PORCENTAJE_SENIA_LARGA / 100) : 0;
 
       // TODO: Aplicar descuentos por volumen/promociones (implementación futura)
 
       const quoteResult: QuoteResult = {
-        km: 20, // TODO: obtener distancia real  
+        km: distanciaReal,  // Usar distancia real
         tarifaBase: precioBase,
         extras: quoteData.pisosEscalera ? { 'pisos_escalera': quoteData.pisosEscalera * pricingRules.EXTRA_PISO_ESCALERA } : {},
         total: Math.round(totalPrice),
@@ -195,39 +196,162 @@ export class FreightService {
   ): Promise<QuoteResult> {
     console.log('[FreightService] Cotización con distancia específica:', quoteData);
     
-    // Para mantener compatibilidad, usar el método calculateQuote
-    return await this.calculateQuote(quoteData);
+    // Calcular cotización usando la distancia real
+    const result = await this.calculateQuote(quoteData);
+    
+    // Sobrescribir con la distancia real calculada
+    return {
+      ...result,
+      km: quoteData.distance
+    };
   }
 
   /**
-   * Crea una solicitud formal de flete
+   * Crea una solicitud formal de flete (ESTRUCTURA SIMPLIFICADA)
    */
   async createFreightRequest(
     clientInfo: ClientInfo,
     quoteData: QuoteData,
     calculatedQuote: QuoteResult
   ): Promise<FreightRequest> {
-    const freightRequest: FreightRequest = {
-      id: `freight_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      clientId: clientInfo.id || `client_${Date.now()}`,
-      client: clientInfo,
-      quote: quoteData,
-      calculatedQuote,
-      status: 'pending',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+    try {
+      console.log('[FreightService] 🚀 Iniciando createFreightRequest (SIMPLIFICADO)');
+      console.log('[FreightService] 📋 ClientInfo:', clientInfo);
+      console.log('[FreightService] 📋 QuoteData:', quoteData);
+      console.log('[FreightService] 💰 CalculatedQuote:', calculatedQuote);
+      
+      // 1. Crear o encontrar cliente en la base de datos
+      let clientId = clientInfo.id;
+      
+      if (!clientId) {
+        console.log('[FreightService] 👤 Buscando cliente existente...');
+        // Buscar cliente existente por teléfono/email
+        const { data: existingClient, error: searchError } = await supabase
+          .from('clients')
+          .select('id')
+          .or(`telefono.eq.${clientInfo.telefono}${clientInfo.email ? `,email.eq.${clientInfo.email}` : ''}`)
+          .single();
 
-    const freightCreatedEvent = createEvent<Omit<FreightRequestCreatedEvent, 'id' | 'timestamp'>>({
-      type: 'freight.request.created',
-      payload: {
-        freightRequest
+        if (searchError && searchError.code !== 'PGRST116') {
+          console.error('[FreightService] ❌ Error buscando cliente:', searchError);
+        }
+
+        if (existingClient) {
+          console.log('[FreightService] ✅ Cliente encontrado:', existingClient.id);
+          clientId = existingClient.id;
+        } else {
+          console.log('[FreightService] 👤 Creando nuevo cliente...');
+          // Crear nuevo cliente
+          const clientData = {
+            nombre: clientInfo.nombre,
+            apellido: clientInfo.apellido || '',
+            telefono: clientInfo.telefono,
+            email: clientInfo.email || null
+          };
+          
+          console.log('[FreightService] 📋 Datos del cliente a insertar:', clientData);
+          
+          const { data: newClient, error: clientError } = await supabase
+            .from('clients')
+            .insert(clientData)
+            .select('id')
+            .single();
+
+          if (clientError) {
+            console.error('[FreightService] ❌ Error creando cliente:', clientError);
+            throw new Error('Error al crear cliente: ' + clientError.message);
+          }
+
+          console.log('[FreightService] ✅ Cliente creado exitosamente:', newClient.id);
+          clientId = newClient.id;
+        }
       }
-    });
 
-    await eventBus.emit(freightCreatedEvent);
-    console.log('[FreightService] Solicitud de flete creada:', freightRequest);
-    return freightRequest;
+      // 2. Crear solicitud CON cotización integrada (ESTRUCTURA SIMPLIFICADA)
+      console.log('[FreightService] 📝 Creando solicitud completa...');
+      const insertData = {
+        client_id: clientId,
+        origen: quoteData.origen,
+        destino: quoteData.destino,
+        fecha: quoteData.fecha,
+        franja: quoteData.franja,
+        carga_tipo: quoteData.tipoServicio,
+        notas: quoteData.notas || null,
+        estado: 'Solicitada' as const,
+        
+        // Campos de cotización integrados directamente
+        km: calculatedQuote.km,
+        tarifa_base: calculatedQuote.tarifaBase,
+        precio_km: Math.round((calculatedQuote.total - calculatedQuote.tarifaBase) / calculatedQuote.km) || 150,
+        extras_json: calculatedQuote.extras || {},
+        total: calculatedQuote.total
+      };
+      
+      console.log('[FreightService] 📋 Datos completos a insertar:', insertData);
+      
+      const { data: request, error: requestError } = await supabase
+        .from('requests')
+        .insert(insertData)
+        .select(`
+          *,
+          client:clients(
+            id,
+            nombre,
+            apellido,
+            telefono,
+            email
+          )
+        `)
+        .single();
+
+      if (requestError) {
+        console.error('[FreightService] ❌ Error creando solicitud completa:', requestError);
+        throw new Error('Error al crear solicitud: ' + requestError.message);
+      }
+
+      console.log('[FreightService] ✅ Solicitud completa creada exitosamente:', request.id);
+
+      // 3. Crear objeto FreightRequest adaptado para compatibilidad con la interfaz existente
+      const requestData = request as any; // Cast para acceder a los nuevos campos
+      const freightRequest: FreightRequest = {
+        id: requestData.id,
+        clientId: requestData.client_id,
+        client: requestData.client,
+        quote: quoteData,
+        calculatedQuote: {
+          km: requestData.km || calculatedQuote.km,
+          tarifaBase: requestData.tarifa_base || calculatedQuote.tarifaBase,
+          extras: requestData.extras_json || calculatedQuote.extras || {},
+          total: requestData.total || calculatedQuote.total,
+          requiereSenia: (requestData.total || calculatedQuote.total) > 50000,
+          montoSenia: (requestData.total || calculatedQuote.total) > 50000 ? Math.round((requestData.total || calculatedQuote.total) * 0.3) : 0
+        },
+        status: 'pending',
+        createdAt: new Date(requestData.created_at),
+        updatedAt: new Date(requestData.updated_at)
+      };
+
+      // 4. Emitir eventos
+      const freightCreatedEvent = createEvent<Omit<FreightRequestCreatedEvent, 'id' | 'timestamp'>>({
+        type: 'freight.request.created',
+        payload: {
+          freightRequest
+        }
+      });
+
+      await eventBus.emit(freightCreatedEvent);
+      console.log('[FreightService] 🎉 ¡Solicitud completa creada exitosamente!');
+      console.log('[FreightService] 📊 Resumen:', {
+        freightRequestId: freightRequest.id,
+        clientId: freightRequest.clientId,
+        total: freightRequest.calculatedQuote.total
+      });
+      return freightRequest;
+
+    } catch (error) {
+      console.error('[FreightService] Error en createFreightRequest:', error);
+      throw error;
+    }
   }
 
   /**
@@ -267,11 +391,123 @@ export class FreightService {
   }
 
   /**
+   * Obtiene todas las solicitudes pendientes (ESTRUCTURA SIMPLIFICADA)
+   */
+  async getPendingRequests(): Promise<FreightRequest[]> {
+    try {
+      console.log('[FreightService] 📋 Obteniendo solicitudes pendientes (simplificado)...');
+      
+      const { data: requests, error } = await supabase
+        .from('requests')
+        .select(`
+          *,
+          clients(
+            id,
+            nombre,
+            apellido,
+            telefono,
+            email
+          )
+        `)
+        .eq('estado', 'Solicitada')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('[FreightService] Error obteniendo solicitudes pendientes:', error);
+        throw new Error('Error al obtener solicitudes: ' + error.message);
+      }
+
+      // Transformar datos simplificados al formato FreightRequest
+      const freightRequests: FreightRequest[] = requests?.map((request: any) => {
+        // Cast para acceder a los nuevos campos de cotización
+        const req = request as any;
+        return {
+          id: req.id,
+          clientId: req.client_id,
+          client: req.clients, // Accediendo a la tabla clients
+          quote: {
+            origen: req.origen,
+            destino: req.destino,
+            fecha: req.fecha,
+            franja: req.franja,
+            tipoServicio: req.carga_tipo,
+            pisosEscalera: req.pisosEscalera || 0,
+            notas: req.notas || ''
+          },
+          // Usar datos directamente de la tabla requests (estructura simplificada)
+          calculatedQuote: {
+            km: req.km || 0,
+            tarifaBase: req.tarifa_base || 0,
+            extras: req.extras_json || {},
+            total: req.total || 0,
+            requiereSenia: (req.total || 0) > 50000,
+            montoSenia: (req.total || 0) > 50000 ? Math.round((req.total || 0) * 0.3) : 0
+          },
+          status: 'pending',
+          createdAt: new Date(req.created_at),
+          updatedAt: new Date(req.updated_at)
+        };
+      }) || [];
+
+      console.log('[FreightService] Solicitudes pendientes obtenidas:', freightRequests.length);
+      return freightRequests;
+
+    } catch (error) {
+      console.error('[FreightService] Error en getPendingRequests:', error);
+      return [];
+    }
+  }
+
+  /**
    * Actualiza el estado de un flete
    */
-  async updateFreightStatus(freightId: string, status: string): Promise<void> {
-    console.log('[FreightService] Actualizando estado del flete:', freightId, 'a:', status);
-    // Implementar lógica de actualización de estado y eventos
+  async updateFreightStatus(freightId: string, newStatus: 'Confirmada' | 'Rechazada', reason?: string): Promise<void> {
+    try {
+      console.log('[FreightService] Actualizando estado del flete:', freightId, 'a:', newStatus);
+      
+      const { error } = await supabase
+        .from('requests')
+        .update({ 
+          estado: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', freightId);
+
+      if (error) {
+        console.error('[FreightService] Error actualizando estado:', error);
+        throw new Error('Error al actualizar estado: ' + error.message);
+      }
+
+      // Emitir eventos según el estado
+      if (newStatus === 'Confirmada') {
+        const freightConfirmedEvent = createEvent<Omit<FreightConfirmedEvent, 'id' | 'timestamp'>>({
+          type: 'freight.confirmed',
+          payload: {
+            freightRequestId: freightId,
+            confirmedBy: 'admin',
+            confirmedAt: new Date()
+          }
+        });
+        await eventBus.emit(freightConfirmedEvent);
+      } else if (newStatus === 'Rechazada') {
+        const freightRejectedEvent = createEvent<any>({
+          type: 'freight.rejected',
+          payload: {
+            freightRequestId: freightId,
+            rejectedBy: 'admin',
+            rejectedAt: new Date(),
+            reason: reason || 'Sin especificar'
+          }
+        });
+        await eventBus.emit(freightRejectedEvent);
+      }
+
+      console.log('[FreightService] Estado actualizado exitosamente');
+
+    } catch (error) {
+      console.error('[FreightService] Error en updateFreightStatus:', error);
+      throw error;
+    }
   }
 }
 

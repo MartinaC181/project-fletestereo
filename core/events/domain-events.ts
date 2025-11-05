@@ -49,6 +49,34 @@ export interface QuoteData {
   notas?: string;
 }
 
+// Estructura simplificada para requests con cotización integrada
+export interface SimplifiedFreightRequest {
+  id: string;
+  client_id: string;
+  origen: string;
+  destino: string;
+  fecha: string;
+  franja: string;
+  carga_tipo: ServiceType;
+  carga_volumen?: string;
+  notas?: string;
+  estado: 'Solicitada' | 'Confirmada' | 'Rechazada' | 'En Proceso' | 'Completada';
+  
+  // Campos de cotización integrados
+  km?: number;
+  tarifa_base?: number;
+  precio_km?: number;
+  extras_json?: Record<string, any>;
+  total?: number;
+  motivo_rechazo?: string;
+  
+  created_at: string;
+  updated_at: string;
+  
+  // Relación con cliente
+  client?: ClientInfo;
+}
+
 export interface QuoteResult {
   km: number;
   tarifaBase: number;

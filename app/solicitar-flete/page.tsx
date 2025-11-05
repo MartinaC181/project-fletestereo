@@ -159,12 +159,26 @@ export default function SolicitarFletePage() {
     if (!quote) { toast({ title: "Error", description: "No hay cotización disponible", variant: "destructive" }); return; }
     setLoading(true);
     try {
+      console.log('🚀 Iniciando envío de solicitud...');
+      console.log('👤 Datos del cliente:', clientData);
+      console.log('📦 Datos de la solicitud:', requestData);
+      console.log('💰 Cotización:', quote);
+      
       const freightRequest = await freightService.createFreightRequest(clientData, requestData, quote);
-      toast({ title: "¡Solicitud enviada exitosamente!", description: `Tu solicitud #${freightRequest.id.slice(0,8)} ha sido registrada.` });
-      setTimeout(()=> router.push('/'), 2000);
+      
+      console.log('✅ Solicitud creada exitosamente:', freightRequest);
+      toast({ 
+        title: "¡Solicitud enviada exitosamente!", 
+        description: `Tu solicitud #${freightRequest.id.slice(0,8)} ha sido registrada y aparecerá en el dashboard administrativo.` 
+      });
+      setTimeout(()=> router.push('/'), 3000);
     } catch (e) {
-      console.error(e);
-      toast({ title: "Error al enviar", description: "Hubo un problema al procesar tu solicitud.", variant: "destructive" });
+      console.error('❌ Error completo:', e);
+      toast({ 
+        title: "Error al enviar", 
+        description: `Hubo un problema al procesar tu solicitud: ${(e as Error).message}`, 
+        variant: "destructive" 
+      });
     } finally { setLoading(false); }
   };
 

@@ -4,130 +4,109 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
-import { LogOut, TrendingUp, Users, CheckCircle, Clock } from 'lucide-react';
+import { LogOut, TrendingUp, Users, CheckCircle, Clock, X, Phone, Mail } from 'lucide-react';
 import { FreightHistory } from '@/components/FreightHistory';
 import { FreightHistoryStats } from '@/components/FreightHistoryStats';
+import { freightService } from '@/modules/freight';
+import { useToast } from '@/hooks/use-toast';
 import type { 
   FreightRequest,
   PaymentEvent 
 } from '@/core/events/domain-events';
 
-interface PendingRequest extends FreightRequest {
-  receivedAt: Date;
-}
+
 
 /**
- * Ejemplo de Bandeja del Dueño - Nueva funcionalidad agregada
- * sin modificar código existente, solo suscribiéndose a eventos
+ * Dashboard del Administrador - Gestión de solicitudes de flete
  */
 export const OwnerDashboard: React.FC = () => {
-  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<FreightRequest[]>([]);
   const [recentPayments, setRecentPayments] = useState<PaymentEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [processingRequest, setProcessingRequest] = useState<string | null>(null);
   const { user, signOut } = useAuth();
+  const { toast } = useToast();
+
+  // Cargar solicitudes pendientes de la base de datos
+  const loadPendingRequests = async () => {
+    try {
+      setLoading(true);
+      // Usar el servicio directamente para mejor rendimiento
+      const requests = await freightService.getPendingRequests();
+      setPendingRequests(requests);
+    } catch (error) {
+      console.error('Error cargando solicitudes:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar las solicitudes pendientes",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Cargar datos mockeados para demostración (estructura real de la BD)
-    const mockPendingRequests: PendingRequest[] = [
-      {
-        id: '1',
-        clientId: 'client1',
-        client: {
-          id: 'client1',
-          nombre: 'Juan',
-          apellido: 'Pérez',
-          telefono: '379-123-4567',
-          email: 'juan@email.com',
-          dni: '12345678'
-        },
-        quote: {
-          origen: 'Corrientes Capital',
-          destino: 'Mburucuyá',
-          fecha: '2025-11-04',
-          tipoServicio: 'mudanza_completa' as const,
-          pisosEscalera: 1,
-          franja: 'dia',
-          notas: 'Carga frágil, manejar con cuidado'
-        },
-        calculatedQuote: {
-          km: 45,
-          tarifaBase: 5000,
-          extras: { pisos_escalera: 5000 },
-          total: 15000,
-          requiereSenia: true,
-          montoSenia: 4500
-        },
-        status: 'pending',
-        createdAt: new Date('2025-11-02T10:30:00'),
-        updatedAt: new Date('2025-11-02T10:30:00'),
-        receivedAt: new Date('2025-11-02T10:30:00')
-      },
-      {
-        id: '2', 
-        clientId: 'client2',
-        client: {
-          id: 'client2',
-          nombre: 'María',
-          apellido: 'García',
-          telefono: '379-765-4321', 
-          email: 'maria@email.com',
-          dni: '87654321'
-        },
-        quote: {
-          origen: 'Goya',
-          destino: 'Resistencia',
-          fecha: '2025-11-05',
-          tipoServicio: 'viaje_largo' as const,
-          pisosEscalera: 2,
-          franja: 'dia',
-          notas: 'Mudanza completa - muebles y electrodomésticos'
-        },
-        calculatedQuote: {
-          km: 120,
-          tarifaBase: 5000,
-          extras: { cargaPesada: 2000, ayudanteExtra: 1500 },
-          total: 22000,
-          requiereSenia: true,
-          montoSenia: 6600
-        },
-        status: 'pending',
-        createdAt: new Date('2025-11-02T14:15:00'),
-        updatedAt: new Date('2025-11-02T14:15:00'), 
-        receivedAt: new Date('2025-11-02T14:15:00')
-      },
-      {
-        id: '3',
-        clientId: 'client3', 
-        client: {
-          id: 'client3',
-          nombre: 'Carlos',
-          apellido: 'Rodríguez',
-          telefono: '379-555-9876',
-          email: 'carlos@email.com',
-          dni: '11223344'
-        },
-        quote: {
-          origen: 'Paso de los Libres',
-          destino: 'Corrientes Capital',
-          fecha: '2025-11-06',
-          tipoServicio: 'flete_liviano' as const,
-          pisosEscalera: 0,
-          franja: 'noche'
-        },
-        calculatedQuote: {
-          km: 85,
-          tarifaBase: 5000,
-          extras: { franjaHoraria: 1000 },
-          total: 10250,
-          requiereSenia: false,
-          montoSenia: 0
-        },
-        status: 'pending',
-        createdAt: new Date('2025-11-03T08:45:00'),
-        updatedAt: new Date('2025-11-03T08:45:00'),
-        receivedAt: new Date('2025-11-03T08:45:00')
-      }
-    ];
+    loadPendingRequests();
+    
+    // Recargar cada 30 segundos
+    const interval = setInterval(loadPendingRequests, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
+  // Función para confirmar solicitud
+  const handleConfirmRequest = async (requestId: string) => {
+    try {
+      setProcessingRequest(requestId);
+      await freightService.updateFreightStatus(requestId, 'Confirmada');
+      
+      toast({
+        title: "Solicitud Confirmada",
+        description: "La solicitud ha sido confirmada exitosamente",
+      });
+      
+      // Recargar lista
+      await loadPendingRequests();
+    } catch (error) {
+      console.error('Error confirmando solicitud:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo confirmar la solicitud",
+        variant: "destructive"
+      });
+    } finally {
+      setProcessingRequest(null);
+    }
+  };
+
+  // Función para rechazar solicitud
+  const handleRejectRequest = async (requestId: string) => {
+    try {
+      setProcessingRequest(requestId);
+      await freightService.updateFreightStatus(requestId, 'Rechazada', 'Rechazada por administrador');
+      
+      toast({
+        title: "Solicitud Rechazada",
+        description: "La solicitud ha sido rechazada",
+        variant: "destructive"
+      });
+      
+      // Recargar lista
+      await loadPendingRequests();
+    } catch (error) {
+      console.error('Error rechazando solicitud:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo rechazar la solicitud",
+        variant: "destructive"
+      });
+    } finally {
+      setProcessingRequest(null);
+    }
+  };
+
+  useEffect(() => {
+    // Cargar datos mockeados de pagos para demostración
     const mockPayments: PaymentEvent[] = [
       {
         id: '1',
@@ -144,42 +123,10 @@ export const OwnerDashboard: React.FC = () => {
       }
     ];
 
-    setPendingRequests(mockPendingRequests);
     setRecentPayments(mockPayments);
   }, []);
 
-  const handleConfirmRequest = async (requestId: string) => {
-    try {
-      // Simular confirmación - en una aplicación real actualizarías la base de datos
-      setPendingRequests(prev => 
-        prev.filter(req => req.id !== requestId)
-      );
-      console.log(`✅ Solicitud ${requestId} confirmada`);
-    } catch (error) {
-      console.error('Error confirmando solicitud:', error);
-    }
-  };
 
-  const handleRejectRequest = async (requestId: string) => {
-    try {
-      // Simular rechazo - en una aplicación real actualizarías la base de datos
-      setPendingRequests(prev => 
-        prev.filter(req => req.id !== requestId)
-      );
-      console.log(`❌ Solicitud ${requestId} rechazada`);
-    } catch (error) {
-      console.error('Error rechazando solicitud:', error);
-    }
-  };
-
-  const handleInitiatePayment = async (request: PendingRequest) => {
-    try {
-      // Simular inicio de pago
-      console.log(`💰 Iniciando pago para solicitud ${request.id} por $${request.calculatedQuote.total}`);
-    } catch (error) {
-      console.error('Error iniciando pago:', error);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -295,12 +242,65 @@ export const OwnerDashboard: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  Solicitudes Pendientes
-                  <Badge>{pendingRequests.length}</Badge>
+                  <span>Solicitudes Pendientes</span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          console.log('🧪 Probando conexión directa...');
+                          const { supabase } = await import('@/integrations/supabase/client');
+                          const { count, error } = await supabase
+                            .from('clients')
+                            .select('*', { count: 'exact', head: true });
+                          
+                          if (error) {
+                            console.error('❌ Error de conexión:', error);
+                            toast({
+                              title: "Error de Conexión",
+                              description: error.message,
+                              variant: "destructive"
+                            });
+                          } else {
+                            console.log('✅ Conexión OK, clientes:', count);
+                            toast({
+                              title: "Conexión OK",
+                              description: `Base de datos conectada. ${count} clientes registrados.`
+                            });
+                          }
+                        } catch (e) {
+                          console.error('❌ Error:', e);
+                          toast({
+                            title: "Error",
+                            description: "Error de conexión: " + (e as Error).message,
+                            variant: "destructive"
+                          });
+                        }
+                      }}
+                      className="text-xs"
+                    >
+                      Test BD
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={loadPendingRequests}
+                      disabled={loading}
+                    >
+                      {loading ? 'Cargando...' : 'Actualizar'}
+                    </Button>
+                    <Badge>{pendingRequests.length}</Badge>
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {pendingRequests.length === 0 ? (
+                {loading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-muted-foreground font-medium">Cargando solicitudes...</p>
+                  </div>
+                ) : pendingRequests.length === 0 ? (
                   <div className="text-center py-8">
                     <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                     <p className="text-muted-foreground font-medium">No hay solicitudes pendientes</p>
@@ -319,9 +319,6 @@ export const OwnerDashboard: React.FC = () => {
                             </h3>
                             <p className="text-sm text-muted-foreground">
                               {request.client.telefono} • {request.client.email}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              DNI: {request.client.dni}
                             </p>
                           </div>
                           <Badge>
@@ -344,6 +341,39 @@ export const OwnerDashboard: React.FC = () => {
                           <div>
                             <span className="font-medium">Franja:</span> {request.quote.franja}
                           </div>
+                          <div>
+                            <span className="font-medium">Tipo:</span> {request.quote.tipoServicio.replace('_', ' ')}
+                          </div>
+                          <div>
+                            <span className="font-medium">Distancia:</span> {request.calculatedQuote.km} km
+                          </div>
+                        </div>
+
+                        {/* Detalles de Cotización (Estructura Simplificada) */}
+                        <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                          <h4 className="font-semibold text-sm text-gray-700">Detalles de Cotización</h4>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="flex justify-between">
+                              <span>Tarifa base:</span>
+                              <span>${request.calculatedQuote.tarifaBase?.toLocaleString()}</span>
+                            </div>
+                            {Object.entries(request.calculatedQuote.extras || {}).map(([key, value]) => (
+                              <div key={key} className="flex justify-between">
+                                <span className="capitalize">{key.replace(/([A-Z])/g, ' $1').toLowerCase()}:</span>
+                                <span>${(value as number).toLocaleString()}</span>
+                              </div>
+                            ))}
+                            <div className="flex justify-between font-semibold border-t pt-1 col-span-2">
+                              <span>Total:</span>
+                              <span className="text-green-600">${request.calculatedQuote.total.toLocaleString()}</span>
+                            </div>
+                            {request.calculatedQuote.requiereSenia && (
+                              <div className="flex justify-between text-orange-600 col-span-2">
+                                <span>Seña requerida:</span>
+                                <span>${request.calculatedQuote.montoSenia?.toLocaleString()}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         {request.quote.notas && (
@@ -355,20 +385,27 @@ export const OwnerDashboard: React.FC = () => {
                         <div className="flex gap-2 pt-2">
                           <Button 
                             onClick={() => handleConfirmRequest(request.id)}
-                            className="bg-green-600 hover:bg-green-700"
+                            disabled={processingRequest === request.id}
+                            className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
                           >
-                            Confirmar
+                            <CheckCircle className="h-4 w-4" />
+                            {processingRequest === request.id ? 'Confirmando...' : 'Confirmar'}
                           </Button>
                           <Button 
-                            className="bg-red-600 hover:bg-red-700 text-white"
                             onClick={() => handleRejectRequest(request.id)}
+                            disabled={processingRequest === request.id}
+                            className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
                           >
-                            Rechazar
+                            <X className="h-4 w-4" />
+                            {processingRequest === request.id ? 'Rechazando...' : 'Rechazar'}
                           </Button>
                           <Button 
-                            onClick={() => handleInitiatePayment(request)}
+                            variant="outline"
+                            disabled
+                            className="flex items-center gap-2"
                           >
-                            Solicitar Pago
+                            <Phone className="h-4 w-4" />
+                            Contactar
                           </Button>
                         </div>
                       </div>
