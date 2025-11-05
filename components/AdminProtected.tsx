@@ -2,37 +2,39 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AdminProtectedProps {
   children: React.ReactNode;
   redirectTo?: string;
+  requireAdmin?: boolean;
 }
 
 export const AdminProtected: React.FC<AdminProtectedProps> = ({ 
   children, 
-  redirectTo = '/dashboard' 
+  redirectTo = '/login',
+  requireAdmin = false
 }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, loading, isAdmin } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = () => {
-      const isLoggedIn = sessionStorage.getItem('adminAuth') === 'true';
-      
-      if (!isLoggedIn) {
+    if (!loading) {
+      // Si no hay usuario, redirigir al login
+      if (!user) {
         router.push(redirectTo);
         return;
       }
-      
-      setIsAuthenticated(true);
-      setIsLoading(false);
-    };
 
-    checkAuth();
-  }, [router, redirectTo]);
+      // Si se requiere admin y el usuario no es admin
+      if (requireAdmin && !isAdmin) {
+        router.push('/?error=access_denied');
+        return;
+      }
+    }
+  }, [user, loading, isAdmin, requireAdmin, router, redirectTo]);
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -40,50 +42,22 @@ export const AdminProtected: React.FC<AdminProtectedProps> = ({
     );
   }
 
-  if (!isAuthenticated) {
+  if (!user || (requireAdmin && !isAdmin)) {
     return null; // El redirect ya se ejecutó
   }
 
   return <>{children}</>;
 };
 
-// Hook para verificar autenticación
+// Hook para verificar autenticación (deprecated, usar useAuth en su lugar)
 export const useAdminAuth = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const checkAuth = () => {
-      const isLoggedIn = sessionStorage.getItem('adminAuth') === 'true';
-      setIsAuthenticated(isLoggedIn);
-      setIsLoading(false);
-    };
-
-    checkAuth();
-
-    // Escuchar cambios en el sessionStorage
-    const handleStorageChange = () => {
-      checkAuth();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  const login = () => {
-    sessionStorage.setItem('adminAuth', 'true');
-    setIsAuthenticated(true);
-  };
-
-  const logout = () => {
-    sessionStorage.removeItem('adminAuth');
-    setIsAuthenticated(false);
-  };
-
+  const { user, loading, isAdmin, signOut } = useAuth();
+  
   return {
-    isAuthenticated,
-    isLoading,
-    login,
-    logout
+    isAuthenticated: !!user,
+    isLoading: loading,
+    isAdmin,
+    login: () => {}, // Deprecated
+    logout: signOut
   };
 };

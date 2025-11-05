@@ -68,7 +68,7 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        'fredoka': ['Fredoka One', 'sans-serif'],
+        'fredoka': ['var(--font-fredoka)', 'sans-serif'],
       },
       keyframes: {
         "accordion-down": {

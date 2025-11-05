@@ -1,12 +1,25 @@
-'use client'
-
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { EventBusProvider } from "@/components/EventBusProvider";
-import { ThemeProvider } from "@/components/ThemeProvider";
-import ScrollToTop from "@/components/ScrollToTop";
+import type { Metadata } from 'next';
+import { Providers } from "@/components/Providers";
+import { Inter, Fredoka } from 'next/font/google';
 import "./globals.css";
+
+export const metadata: Metadata = {
+  title: 'Fletestereo - Servicio de Fletes en Corrientes',
+  description: 'Servicio profesional de fletes y mudanzas en Corrientes. Cotizaciones online, seguimiento en tiempo real.',
+};
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter'
+});
+
+const fredoka = Fredoka({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-fredoka',
+  weight: ['400', '500', '600', '700']
+});
 
 export default function RootLayout({
   children,
@@ -15,23 +28,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className="light" suppressHydrationWarning>
-      <head>
-        <link 
-          href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" 
-          rel="stylesheet" 
-        />
-      </head>
-      <body>
-        <ThemeProvider>
-          <EventBusProvider>
-            <TooltipProvider>
-              {children}
-              <ScrollToTop />
-              <Toaster />
-              <Sonner />
-            </TooltipProvider>
-          </EventBusProvider>
-        </ThemeProvider>
+      <body className={`${inter.variable} ${fredoka.variable}`}>
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

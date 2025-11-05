@@ -166,12 +166,10 @@ const QuoteForm = () => {
     
     try {
       // Usar el servicio de fletes con la distancia real calculada
-      const calculatedQuote = await freightService.requestQuoteWithDistance(
-        formData,
-        undefined, // clientInfo opcional para cotización rápida
-        routeData.distance, // Distancia real calculada
-        `quote_session_${Date.now()}` // sessionId para tracking
-      );
+      const calculatedQuote = await freightService.requestQuoteWithDistance({
+        ...formData,
+        distance: routeData.distance // Distancia real calculada
+      });
 
       setQuote(calculatedQuote);
       

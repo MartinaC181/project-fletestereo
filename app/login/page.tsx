@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/hooks/useAuth';
+import { LoginRedirect } from '@/components/LoginRedirect';
 import PageTransition from '@/components/PageTransition';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -19,6 +21,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  
+  const { signIn, resetPassword } = useAuth();
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -26,19 +32,46 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
 
-    // Credenciales del admin
-    if (email === 'admin@fletestereo.com' && password === 'fletestereo2024') {
-      // Guardar sesión del admin
-      sessionStorage.setItem('adminAuth', 'true');
-      sessionStorage.setItem('adminEmail', email);
+    try {
+      const result = await signIn(email, password);
       
-      // Redirigir al dashboard
-      router.push('/dashboard');
-    } else {
-      setError('Credenciales incorrectas. Por favor, verifica tu email y contraseña.');
+      if (result.success) {
+        // El hook useAuth se encargará de la redirección apropiada
+        // No necesitamos hacer router.push aquí
+      } else {
+        setError(result.error || 'Error al iniciar sesión');
+      }
+    } catch (error) {
+      setError('Error inesperado al iniciar sesión');
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      setError('Por favor, ingresa tu email');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const result = await resetPassword(email);
+      
+      if (result.success) {
+        setResetEmailSent(true);
+        setShowForgotPassword(false);
+      } else {
+        setError(result.error || 'Error al enviar email de recuperación');
+      }
+    } catch (error) {
+      setError('Error inesperado al enviar email de recuperación');
+    } finally {
+      setIsLoading(false);
+    }
   };
   return (
     <AnimatePresence mode="wait" initial={false}>
@@ -50,13 +83,27 @@ export default function LoginPage() {
               <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
                 <div className="max-w-md mx-auto">
                   <div className="text-center mb-8">
-                    <h1 className="text-4xl lg:text-5xl font-bold text-primary mb-4">Acceso <span className="block text-accent-orange">Administrador</span></h1>
-                    <p className="text-lg text-muted-foreground">Ingresa tus credenciales para acceder al dashboard administrativo</p>
+                    <h1 className="text-4xl lg:text-5xl font-bold text-primary mb-4">
+                      {showForgotPassword ? 'Recuperar' : 'Iniciar'} 
+                      <span className="block text-accent-orange">
+                        {showForgotPassword ? 'Contraseña' : 'Sesión'}
+                      </span>
+                    </h1>
+                    <p className="text-lg text-muted-foreground">
+                      {showForgotPassword 
+                        ? 'Ingresa tu email para recuperar tu contraseña'
+                        : 'Ingresa tus credenciales para acceder'
+                      }
+                    </p>
                   </div>
                   <Card className="shadow-lg border-0">
                     <CardHeader className="text-center pb-4">
-                      <div className="bg-primary/10 p-3 rounded-full w-fit mx-auto mb-4"><LogIn className="h-8 w-8 text-primary" /></div>
-                      <CardTitle className="text-2xl text-primary">Bienvenido</CardTitle>
+                      <div className="bg-primary/10 p-3 rounded-full w-fit mx-auto mb-4">
+                        <LogIn className="h-8 w-8 text-primary" />
+                      </div>
+                      <CardTitle className="text-2xl text-primary">
+                        {showForgotPassword ? 'Recuperar Contraseña' : 'Bienvenido'}
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
                       {error && (
@@ -65,8 +112,17 @@ export default function LoginPage() {
                           <AlertDescription>{error}</AlertDescription>
                         </Alert>
                       )}
+
+                      {resetEmailSent && (
+                        <Alert className="mb-6 border-green-200 bg-green-50 text-green-800">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription>
+                            Se ha enviado un email de recuperación a tu dirección de correo.
+                          </AlertDescription>
+                        </Alert>
+                      )}
                       
-                      <form onSubmit={handleLogin} className="space-y-6">
+                      <form onSubmit={showForgotPassword ? handleForgotPassword : handleLogin} className="space-y-6">
                         <div className="space-y-2">
                           <Label htmlFor="email">Email</Label>
                           <div className="relative">
@@ -75,7 +131,7 @@ export default function LoginPage() {
                               id="email" 
                               name="email" 
                               type="email" 
-                              placeholder="admin@fletestereo.com" 
+                              placeholder="tu@email.com" 
                               className="pl-10" 
                               value={email}
                               onChange={(e) => setEmail(e.target.value)}
@@ -83,55 +139,75 @@ export default function LoginPage() {
                             />
                           </div>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="password">Contraseña</Label>
-                          <div className="relative">
-                            <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input 
-                              id="password" 
-                              name="password" 
-                              type="password" 
-                              placeholder="Tu contraseña" 
-                              className="pl-10" 
-                              value={password}
-                              onChange={(e) => setPassword(e.target.value)}
-                              required 
-                            />
+                        
+                        {!showForgotPassword && (
+                          <div className="space-y-2">
+                            <Label htmlFor="password">Contraseña</Label>
+                            <div className="relative">
+                              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input 
+                                id="password" 
+                                name="password" 
+                                type="password" 
+                                placeholder="Tu contraseña" 
+                                className="pl-10" 
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required 
+                              />
+                            </div>
                           </div>
+                        )}
+                        {!showForgotPassword && (
+                          <div className="flex items-center justify-between text-sm">
+                            <label className="flex items-center space-x-2">
+                              <input type="checkbox" className="rounded" />
+                              <span className="text-muted-foreground">Recordarme</span>
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => setShowForgotPassword(true)}
+                              className="text-primary hover:text-primary/80 transition-colors"
+                            >
+                              ¿Olvidaste tu contraseña?
+                            </button>
+                          </div>
+                        )}
+                        <div className="space-y-3">
+                          <Button 
+                            type="submit" 
+                            className="w-full bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-md"
+                            disabled={isLoading}
+                          >
+                            <LogIn className="mr-2 h-5 w-5" />
+                            {isLoading ? 
+                              (showForgotPassword ? 'Enviando...' : 'Iniciando sesión...') : 
+                              (showForgotPassword ? 'Enviar Email' : 'Iniciar Sesión')
+                            }
+                          </Button>
+
+                          {showForgotPassword && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="w-full"
+                              onClick={() => {
+                                setShowForgotPassword(false);
+                                setError('');
+                                setResetEmailSent(false);
+                              }}
+                            >
+                              Volver al Login
+                            </Button>
+                          )}
                         </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <label className="flex items-center space-x-2">
-                            <input type="checkbox" className="rounded" />
-                            <span className="text-muted-foreground">Recordarme</span>
-                          </label>
-                          <Link href="#" className="text-primary hover:text-primary/80 transition-colors">¿Olvidaste tu contraseña?</Link>
-                        </div>
-                        <Button 
-                          type="submit" 
-                          className="w-full bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-md"
-                          disabled={isLoading}
-                        >
-                          <LogIn className="mr-2 h-5 w-5" />
-                          {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-                        </Button>
                       </form>
-                      <div className="mt-6 pt-6 border-t">
-                        <div className="bg-primary/5 rounded-lg p-4 mb-4">
-                          <p className="text-sm text-muted-foreground mb-2">
-                            <strong>Acceso Administrador:</strong>
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Email: admin@fletestereo.com
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Contraseña: fletestereo2024
-                          </p>
+
+                      {!showForgotPassword && (
+                        <div className="mt-6 text-center">
+                          <p className="text-muted-foreground">¿No tienes una cuenta? <Link href="/register" className="text-primary hover:text-primary/80 font-medium transition-colors">Regístrate aquí</Link></p>
                         </div>
-                      </div>
-                      
-                      <div className="mt-6 text-center">
-                        <p className="text-muted-foreground">¿No tienes una cuenta? <Link href="/register" className="text-primary hover:text-primary/80 font-medium transition-colors">Regístrate aquí</Link></p>
-                      </div>
+                      )}
                       
                       <div className="mt-6 pt-6 border-t">
                         <div className="text-center">
@@ -150,6 +226,7 @@ export default function LoginPage() {
             </section>
           </main>
           <Footer />
+          <LoginRedirect />
         </div>
       </PageTransition>
     </AnimatePresence>

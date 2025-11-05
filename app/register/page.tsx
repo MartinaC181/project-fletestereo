@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import Header from "@/components/Header";
@@ -8,10 +10,76 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuth } from '@/hooks/useAuth';
 import Link from "next/link";
-import { Mail, Lock, User, Phone, UserPlus } from "lucide-react";
+import { Mail, Lock, User, Phone, UserPlus, AlertCircle } from "lucide-react";
 
 export default function RegisterPage() {
+  const [formData, setFormData] = useState({
+    nombre: '',
+    apellido: '',
+    email: '',
+    telefono: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  
+  const { signUp } = useAuth();
+  const router = useRouter();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    // Validaciones
+    if (formData.password !== formData.confirmPassword) {
+      setError('Las contraseñas no coinciden');
+      setIsLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const result = await signUp({
+        email: formData.email,
+        password: formData.password,
+        nombre: formData.nombre,
+        apellido: formData.apellido,
+        telefono: formData.telefono
+      });
+
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
+      } else {
+        setError(result.error || 'Error al registrarse');
+      }
+    } catch (error) {
+      setError('Error inesperado al registrarse');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <AnimatePresence mode="wait" initial={false}>
       <PageTransition>
@@ -31,53 +99,129 @@ export default function RegisterPage() {
                       <CardTitle className="text-2xl text-primary">Registro</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <form onSubmit={(e)=>{e.preventDefault();}} className="space-y-6">
+                      {error && (
+                        <Alert className="mb-6 border-red-200 bg-red-50 text-red-800">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription>{error}</AlertDescription>
+                        </Alert>
+                      )}
+
+                      {success && (
+                        <Alert className="mb-6 border-green-200 bg-green-50 text-green-800">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription>
+                            ¡Cuenta creada exitosamente! Revisa tu email para confirmar tu cuenta. Serás redirigido al login...
+                          </AlertDescription>
+                        </Alert>
+                      )}
+
+                      <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label htmlFor="firstName">Nombre</Label>
+                            <Label htmlFor="nombre">Nombre</Label>
                             <div className="relative">
                               <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                              <Input id="firstName" name="firstName" type="text" placeholder="Tu nombre" className="pl-10" required />
+                              <Input 
+                                id="nombre" 
+                                name="nombre" 
+                                type="text" 
+                                placeholder="Tu nombre" 
+                                className="pl-10" 
+                                value={formData.nombre}
+                                onChange={handleChange}
+                                required 
+                              />
                             </div>
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="lastName">Apellido</Label>
-                            <Input id="lastName" name="lastName" type="text" placeholder="Tu apellido" required />
+                            <Label htmlFor="apellido">Apellido</Label>
+                            <Input 
+                              id="apellido" 
+                              name="apellido" 
+                              type="text" 
+                              placeholder="Tu apellido" 
+                              value={formData.apellido}
+                              onChange={handleChange}
+                              required 
+                            />
                           </div>
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="email">Email</Label>
                           <div className="relative">
                             <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input id="email" name="email" type="email" placeholder="tu@email.com" className="pl-10" required />
+                            <Input 
+                              id="email" 
+                              name="email" 
+                              type="email" 
+                              placeholder="tu@email.com" 
+                              className="pl-10" 
+                              value={formData.email}
+                              onChange={handleChange}
+                              required 
+                            />
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="phone">Teléfono</Label>
+                          <Label htmlFor="telefono">Teléfono</Label>
                           <div className="relative">
                             <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input id="phone" name="phone" type="tel" placeholder="+54 11 1234-5678" className="pl-10" required />
+                            <Input 
+                              id="telefono" 
+                              name="telefono" 
+                              type="tel" 
+                              placeholder="+54 11 1234-5678" 
+                              className="pl-10" 
+                              value={formData.telefono}
+                              onChange={handleChange}
+                              required 
+                            />
                           </div>
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="password">Contraseña</Label>
                           <div className="relative">
                             <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input id="password" name="password" type="password" placeholder="Mínimo 8 caracteres" className="pl-10" required />
+                            <Input 
+                              id="password" 
+                              name="password" 
+                              type="password" 
+                              placeholder="Mínimo 6 caracteres" 
+                              className="pl-10" 
+                              value={formData.password}
+                              onChange={handleChange}
+                              required 
+                            />
                           </div>
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
                           <div className="relative">
                             <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input id="confirmPassword" name="confirmPassword" type="password" placeholder="Repite tu contraseña" className="pl-10" required />
+                            <Input 
+                              id="confirmPassword" 
+                              name="confirmPassword" 
+                              type="password" 
+                              placeholder="Repite tu contraseña" 
+                              className="pl-10" 
+                              value={formData.confirmPassword}
+                              onChange={handleChange}
+                              required 
+                            />
                           </div>
                         </div>
                         <div className="flex items-start space-x-2">
                           <input type="checkbox" className="mt-1 rounded" required />
                           <label className="text-sm text-muted-foreground">Acepto los <Link href="/politicas" className="text-primary hover:text-primary/80 transition-colors">términos y condiciones</Link> y la <Link href="/politicas" className="text-primary hover:text-primary/80 transition-colors">política de privacidad</Link></label>
                         </div>
-                        <Button type="submit" variant="hero" size="lg" className="w-full"><UserPlus className="mr-2 h-5 w-5" />Crear Cuenta</Button>
+                        <Button 
+                          type="submit" 
+                          className="w-full bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-md"
+                          disabled={isLoading}
+                        >
+                          <UserPlus className="mr-2 h-5 w-5" />
+                          {isLoading ? 'Creando cuenta...' : 'Crear Cuenta'}
+                        </Button>
                       </form>
                       <div className="mt-6 text-center">
                         <p className="text-muted-foreground">¿Ya tienes una cuenta? <Link href="/login" className="text-primary hover:text-primary/80 font-medium transition-colors">Inicia sesión aquí</Link></p>

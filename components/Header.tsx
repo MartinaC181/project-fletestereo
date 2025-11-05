@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Moon, Sun } from "lucide-react";
+import { Menu, X, Moon, Sun, LogOut, User, Settings } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from '@/hooks/useAuth';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, isAdmin, signOut } = useAuth();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -59,6 +61,15 @@ const Header = () => {
             >
               Tarifas
             </Link>
+            {/* Solo mostrar historial para administradores */}
+            {isAdmin && (
+              <Link
+                href="/historial"
+                className="text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 transition-colors"
+              >
+                Historial
+              </Link>
+            )}
             <Link
               href="/contacto"
               className="text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 transition-colors"
@@ -83,24 +94,55 @@ const Header = () => {
               <Moon className="h-4 w-4 dark:hidden" />
               <Sun className="h-4 w-4 hidden dark:block" />
             </Button>
-            <Link href="/login">
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-accent-yellow dark:bg-black border-transparent dark:border-transparent text-primary dark:text-white hover:opacity-80 dark:hover:bg-black transition-all"
-              >
-                Iniciar Sesión
-              </Button>
-            </Link>
-            <Link href="/solicitar-flete">
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-accent-yellow dark:bg-background border-transparent dark:border-transparent text-primary dark:text-white hover:opacity-80 dark:hover:bg-background transition-all"
-              >
-                Solicitar Flete
-              </Button>
-            </Link>
+            
+            {/* Mostrar diferentes botones según el estado del usuario */}
+            {user ? (
+              <div className="flex items-center gap-2">
+                {isAdmin && (
+                  <Link href="/dashboard">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-blue-600 dark:bg-blue-600 border-transparent text-white hover:bg-blue-700 transition-all"
+                    >
+                      <Settings className="h-4 w-4 mr-1" />
+                      Admin
+                    </Button>
+                  </Link>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={signOut}
+                  className="bg-red-600 dark:bg-red-600 border-transparent text-white hover:bg-red-700 transition-all"
+                >
+                  <LogOut className="h-4 w-4 mr-1" />
+                  Salir
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link href="/login">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-accent-yellow dark:bg-black border-transparent dark:border-transparent text-primary dark:text-white hover:opacity-80 dark:hover:bg-black transition-all"
+                  >
+                    <User className="h-4 w-4 mr-1" />
+                    Iniciar Sesión
+                  </Button>
+                </Link>
+                <Link href="/solicitar-flete">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-accent-yellow dark:bg-background border-transparent dark:border-transparent text-primary dark:text-white hover:opacity-80 dark:hover:bg-background transition-all"
+                  >
+                    Solicitar Flete
+                  </Button>
+                </Link>
+              </div>
+            )}
           </nav>
 
           {/* Theme toggle and Mobile menu button */}
@@ -162,6 +204,16 @@ const Header = () => {
               >
                 Tarifas
               </Link>
+              {/* Solo mostrar historial para administradores */}
+              {isAdmin && (
+                <Link
+                  href="/historial"
+                  className="text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 transition-colors py-2"
+                  onClick={toggleMenu}
+                >
+                  Historial
+                </Link>
+              )}
               <Link
                 href="/contacto"
                 className="text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 transition-colors py-2"
@@ -169,17 +221,47 @@ const Header = () => {
               >
                 Contacto
               </Link>
+              
+              {/* Botones según el estado del usuario */}
               <div className="flex flex-col space-y-2 pt-4">
-                <Link href="/login" onClick={toggleMenu}>
-                  <Button variant="outline" size="sm" className="w-full">
-                    Iniciar Sesión
-                  </Button>
-                </Link>
-                <Link href="/solicitar-flete" onClick={toggleMenu}>
-                  <Button variant="hero" size="sm" className="w-full">
-                    Solicitar Flete
-                  </Button>
-                </Link>
+                {user ? (
+                  <>
+                    {isAdmin && (
+                      <Link href="/dashboard" onClick={toggleMenu}>
+                        <Button variant="outline" size="sm" className="w-full bg-blue-600 text-white hover:bg-blue-700">
+                          <Settings className="h-4 w-4 mr-2" />
+                          Panel Admin
+                        </Button>
+                      </Link>
+                    )}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full bg-red-600 text-white hover:bg-red-700"
+                      onClick={() => {
+                        signOut();
+                        toggleMenu();
+                      }}
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Cerrar Sesión
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/login" onClick={toggleMenu}>
+                      <Button variant="outline" size="sm" className="w-full">
+                        <User className="h-4 w-4 mr-2" />
+                        Iniciar Sesión
+                      </Button>
+                    </Link>
+                    <Link href="/solicitar-flete" onClick={toggleMenu}>
+                      <Button variant="hero" size="sm" className="w-full">
+                        Solicitar Flete
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </nav>
           </div>

@@ -47,9 +47,9 @@ export type Database = {
           created_at: string
           dni: string | null
           email: string | null
-          es_temporal: boolean | null
           id: string
           nombre: string
+          role: Database['public']['Enums']['user_role'] | null
           telefono: string
           updated_at: string
         }
@@ -58,9 +58,9 @@ export type Database = {
           created_at?: string
           dni?: string | null
           email?: string | null
-          es_temporal?: boolean | null
           id?: string
           nombre: string
+          role?: Database['public']['Enums']['user_role'] | null
           telefono: string
           updated_at?: string
         }
@@ -72,10 +72,51 @@ export type Database = {
           es_temporal?: boolean | null
           id?: string
           nombre?: string
+          role?: Database['public']['Enums']['user_role'] | null
           telefono?: string
           updated_at?: string
         }
         Relationships: []
+      }
+      admin_users: {
+        Row: {
+          id: string
+          permissions: Json | null
+          last_login: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          permissions?: Json | null
+          last_login?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          permissions?: Json | null
+          last_login?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_users_id_fkey"
+            columns: ["id"]
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_users_created_by_fkey"
+            columns: ["created_by"]
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       config: {
         Row: {
@@ -398,6 +439,67 @@ export type Database = {
         }
         Relationships: []
       }
+      freight_history: {
+        Row: {
+          id: string
+          client_id: string
+          request_id: string | null
+          fecha_flete: string
+          origen: string
+          destino: string
+          peso: number | null
+          volumen: number | null
+          precio: number
+          estado: string
+          observaciones: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          client_id: string
+          request_id?: string | null
+          fecha_flete: string
+          origen: string
+          destino: string
+          peso?: number | null
+          volumen?: number | null
+          precio: number
+          estado?: string
+          observaciones?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          client_id?: string
+          request_id?: string | null
+          fecha_flete?: string
+          origen?: string
+          destino?: string
+          peso?: number | null
+          volumen?: number | null
+          precio?: number
+          estado?: string
+          observaciones?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "freight_history_client_id_fkey"
+            columns: ["client_id"]
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "freight_history_request_id_fkey"
+            columns: ["request_id"]
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       zones: {
         Row: {
           created_at: string
@@ -428,6 +530,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      create_admin_user: {
+        Args: {
+          user_id: string
+          user_email: string
+          user_name?: string
+          user_lastname?: string
+          user_phone?: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       notification_channel: "email" | "whatsapp"
@@ -438,6 +550,7 @@ export type Database = {
         | "Rechazada"
         | "Completada"
         | "Cancelada"
+      user_role: "admin" | "client"
     }
     CompositeTypes: {
       [_ in never]: never
