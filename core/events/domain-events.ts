@@ -5,7 +5,7 @@ import type { BaseEvent } from '../events/types';
  */
 
 // Tipos de servicios disponibles
-export type ServiceType = 'mudanza_completa' | 'mini_mudanza' | 'flete_liviano' | 'flete_pesado' | 'urgente' | 'viaje_largo';
+export type ServiceType = 'mudanza_completa' | 'mini_mudanza' | 'flete_liviano' | 'viaje_largo';
 
 // Tipos de eventos del dominio
 export const FreightEventTypes = {
@@ -52,7 +52,6 @@ export interface QuoteData {
 export interface QuoteResult {
   km: number;
   tarifaBase: number;
-  precioKm: number;
   extras: Record<string, number>;
   total: number;
   requiereSenia: boolean;

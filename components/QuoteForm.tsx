@@ -205,7 +205,7 @@ const QuoteForm = () => {
                       </div>
                       <div className="flex justify-between">
                         <span>Distancia ({quote.km} km):</span>
-                        <span>${(quote.km * quote.precioKm).toLocaleString()}</span>
+                        <span>Incluido en tarifa base</span>
                       </div>
                       {quote.extras.escaleras > 0 && (
                         <div className="flex justify-between">

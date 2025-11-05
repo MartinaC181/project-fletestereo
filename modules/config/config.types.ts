@@ -12,25 +12,22 @@ export interface PricingRules {
   COMBO_FLETE_LIVIANO_CORTO: number;
 
   // --- Variables Dinámicas (Globales) ---
-
-  /** (Monto mínimo) El precio piso para cualquier flete. */
   PRECIO_MINIMO_FLETE: number;
-
-  /** (Extra por piso) Costo adicional por piso de escalera (solo local). */
   EXTRA_PISO_ESCALERA: number;
-
-  /**
-   * (Litro combustible)
-   * Precio por KM solo para viajes interurbanos (!isLocal).
-   */
   PRECIO_COMBUSTIBLE_KM: number;
-
-  /** (Porcentaje de seña) Porcentaje (ej: 50) para viajes interurbanos. */
   PORCENTAJE_SENIA_LARGA: number;
-
-  /**
-   * Límite en KM para diferenciar fletes "cortos" vs "largos"
-   * dentro de Corrientes Capital (ej: 1km = 10 cuadras).
-   */
   LIMITE_KM_CORTA: number;
+}
+
+/**
+ * Representa la fila ÚNICA en la tabla 'config' de Supabase
+ */
+export interface ConfigRow {
+  id: string;
+  umbral_km: number; // Para seña (lógica antigua, podemos reusar)
+  porcentaje_senia: number; // (ej: 30)
+  tarifa_base: number; // (ej: 5000)
+  precio_km: number; // (ej: 50)
+  extras_json: Record<string, number>; // (ej: {"carga_pesada": 2000})
+  // ... otras columnas
 }

@@ -37,17 +37,18 @@ export const OwnerDashboard: React.FC = () => {
           origen: 'Corrientes Capital',
           destino: 'Mburucuyá',
           fecha: '2025-11-04',
-          cargaTipo: 'media',
-          cargaVolumen: 'medio',
+          tipoServicio: 'mudanza_completa' as const,
+          pisosEscalera: 1,
           franja: 'dia',
           notas: 'Carga frágil, manejar con cuidado'
         },
         calculatedQuote: {
           km: 45,
           tarifaBase: 5000,
-          precioKm: 50,
-          extras: {},
-          total: 15000
+          extras: { pisos_escalera: 5000 },
+          total: 15000,
+          requiereSenia: true,
+          montoSenia: 4500
         },
         status: 'pending',
         createdAt: new Date('2025-11-02T10:30:00'),
@@ -69,17 +70,18 @@ export const OwnerDashboard: React.FC = () => {
           origen: 'Goya',
           destino: 'Resistencia',
           fecha: '2025-11-05',
-          cargaTipo: 'pesada',
-          cargaVolumen: 'grande',
+          tipoServicio: 'viaje_largo' as const,
+          pisosEscalera: 2,
           franja: 'dia',
           notas: 'Mudanza completa - muebles y electrodomésticos'
         },
         calculatedQuote: {
           km: 120,
           tarifaBase: 5000,
-          precioKm: 50,
           extras: { cargaPesada: 2000, ayudanteExtra: 1500 },
-          total: 22000
+          total: 22000,
+          requiereSenia: true,
+          montoSenia: 6600
         },
         status: 'pending',
         createdAt: new Date('2025-11-02T14:15:00'),
@@ -101,16 +103,17 @@ export const OwnerDashboard: React.FC = () => {
           origen: 'Paso de los Libres',
           destino: 'Corrientes Capital',
           fecha: '2025-11-06',
-          cargaTipo: 'liviana',
-          cargaVolumen: 'pequeño',
+          tipoServicio: 'flete_liviano' as const,
+          pisosEscalera: 0,
           franja: 'noche'
         },
         calculatedQuote: {
           km: 85,
           tarifaBase: 5000,
-          precioKm: 50,
           extras: { franjaHoraria: 1000 },
-          total: 10250
+          total: 10250,
+          requiereSenia: false,
+          montoSenia: 0
         },
         status: 'pending',
         createdAt: new Date('2025-11-03T08:45:00'),

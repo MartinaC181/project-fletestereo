@@ -101,8 +101,8 @@ export class SupabaseEventHandler {
           destino: freightRequest.quote.destino,
           fecha: freightRequest.quote.fecha,
           franja: freightRequest.quote.franja || '',
-          carga_tipo: freightRequest.quote.cargaTipo || '',
-          carga_volumen: freightRequest.quote.cargaVolumen || '',
+          carga_tipo: freightRequest.quote.tipoServicio || '',
+          carga_volumen: freightRequest.quote.pisosEscalera?.toString() || '0',
           notas: freightRequest.quote.notas || '',
           estado: 'Solicitada' // Mapear al enum correcto
         })
@@ -121,7 +121,7 @@ export class SupabaseEventHandler {
           request_id: requestData.id,
           km: freightRequest.calculatedQuote.km || 0,
           tarifa_base: freightRequest.calculatedQuote.tarifaBase || 0,
-          precio_km: freightRequest.calculatedQuote.precioKm || 0,
+          precio_km: 0, // Campo legacy, no se usa en la nueva implementación
           extras_json: freightRequest.calculatedQuote.extras || {},
           total: freightRequest.calculatedQuote.total
         });
