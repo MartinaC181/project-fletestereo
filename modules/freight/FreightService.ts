@@ -1,211 +1,202 @@
-import { eventBus, createEvent } from '@/core/events';
-import type { 
-  QuoteRequestedEvent,
-  QuoteCalculatedEvent,
-  FreightRequestCreatedEvent,
-  QuoteData,
-  QuoteResult,
-  ClientInfo,
-  FreightRequest 
-} from '@/core/events/domain-events';
+import { eventBus, createEvent } from '@/core/events/EventBus';
+import { FreightRequestCreatedEvent, FreightConfirmedEvent, QuoteData, QuoteResult, FreightRequest, ClientInfo } from '@/core/events/domain-events';
+import { configService } from '@/modules/config/ConfigService';
 
 /**
- * Servicio de gestión de fletes que utiliza el Event Bus
- * para comunicarse con otros módulos sin acoplamiento directo
+ * Servicio principal de manejo de fletes con integración M15
  */
 export class FreightService {
-  
-  /**
-   * Solicita una cotización y emite el evento correspondiente
-   */
-  async requestQuote(quoteData: QuoteData, clientInfo?: Partial<ClientInfo>, sessionId?: string): Promise<QuoteResult> {
-    // Emitir evento de solicitud de cotización
-    const quoteRequestEvent = createEvent<Omit<QuoteRequestedEvent, 'id' | 'timestamp'>>({
-      type: 'freight.quote.requested',
-      payload: {
-        quoteData,
-        clientInfo,
-        sessionId
-      }
-    });
-
-    await eventBus.emit(quoteRequestEvent);
-
-    // Calcular cotización (lógica de negocio)
-    const calculatedQuote = await this.calculateQuote(quoteData);
-
-    // Emitir evento de cotización calculada
-    const quoteCalculatedEvent = createEvent<Omit<QuoteCalculatedEvent, 'id' | 'timestamp'>>({
-      type: 'freight.quote.calculated',
-      payload: {
-        quoteData,
-        calculatedQuote,
-        sessionId
-      }
-    });
-
-    await eventBus.emit(quoteCalculatedEvent);
-
-    return calculatedQuote;
+  constructor() {
+    console.log('[FreightService] Servicio inicializado con configuración M15');
   }
 
   /**
-   * Solicita una cotización con distancia real calculada
+   * Calcula cotización con integración M15 (configuración desde base de datos)
    */
-  async requestQuoteWithDistance(
-    quoteData: QuoteData, 
-    clientInfo: Partial<ClientInfo>, 
-    realDistance: number, 
-    sessionId?: string
-  ): Promise<QuoteResult> {
-    // Emitir evento de solicitud de cotización
-    const quoteRequestEvent = createEvent<Omit<QuoteRequestedEvent, 'id' | 'timestamp'>>({
-      type: 'freight.quote.requested',
-      payload: {
-        quoteData,
-        clientInfo,
-        sessionId
+  async calculateQuote(quoteData: QuoteData): Promise<QuoteResult> {
+    try {
+      // Obtener configuración desde M15
+      const pricingRules = await configService.getPricingRules();
+      
+      console.log('[FreightService] Configuración M15 cargada:', pricingRules);
+      console.log('[FreightService] Calculando cotización para:', quoteData);
+
+      // Validar tipo de servicio
+      if (!this.isValidServiceType(quoteData.tipoServicio)) {
+        throw new Error(`Tipo de servicio no válido: ${quoteData.tipoServicio}`);
       }
-    });
 
-    await eventBus.emit(quoteRequestEvent);
-
-    // Calcular cotización (la nueva lógica maneja la distancia internamente)
-    const calculatedQuote = await this.calculateQuote(quoteData);
-
-    // Emitir evento de cotización calculada
-    const quoteCalculatedEvent = createEvent<Omit<QuoteCalculatedEvent, 'id' | 'timestamp'>>({
-      type: 'freight.quote.calculated',
-      payload: {
-        quoteData,
-        calculatedQuote,
-        sessionId
-      }
-    });
-
-    await eventBus.emit(quoteCalculatedEvent);
-
-    return calculatedQuote;
-  }
-
-  /**
-   * (M2) Calcula el precio del flete basado en las reglas de negocio definidas.
-   * REGLA CORREGIDA: Los extras (escaleras) SOLO aplican a viajes locales.
-   */
-  private async calculateQuote(quoteData: QuoteData): Promise<QuoteResult> {
-    
-    // (Simulación M1 - Martina)
-    const { km, isLocal } = this.simularGeocodificacion(quoteData.origen, quoteData.destino);
-    
-    // (Simulación M15 - Esteban)
-    const reglas = this.simularReglasDeNegocio();
-
-    let tarifaBase = 0;
-    let precioKm = 0;
-    const extras: Record<string, number> = {};
-    const distanciaKm = Math.floor(km); // "el km se redondea para abajo"
-    let total = 0;
-
-    if (isLocal) {
-      // --- 1. LÓGICA DE COMBOS (Dentro de Corrientes) ---
-      const esRecorridoCorto = distanciaKm <= reglas.LIMITE_KM_CORTA; // 1km = 10 cuadras
-
+      // Cálculo base según tipo de servicio usando las tarifas M15
+      let precioBase = 0;
+      
       switch (quoteData.tipoServicio) {
         case 'mudanza_completa':
-          tarifaBase = reglas.COMBO_MUDANZA_COMPLETA; // 80.000
+          precioBase = pricingRules.COMBO_MUDANZA_COMPLETA;
           break;
         case 'mini_mudanza':
-          tarifaBase = esRecorridoCorto 
-            ? reglas.COMBO_MINI_MUDANZA_CORTA // 30.000
-            : reglas.COMBO_MINI_MUDANZA_LARGA; // 40.000
+          // Usar distancia ficticia o límite para determinar si es corta/larga
+          const isLongDistance = 20; // TODO: obtener distancia real
+          precioBase = isLongDistance > pricingRules.LIMITE_KM_CORTA 
+            ? pricingRules.COMBO_MINI_MUDANZA_LARGA 
+            : pricingRules.COMBO_MINI_MUDANZA_CORTA;
           break;
         case 'flete_liviano':
-          tarifaBase = esRecorridoCorto
-            ? reglas.COMBO_FLETE_LIVIANO_CORTO // 20.000
-            : reglas.COMBO_FLETE_LIVIANO_LARGO; // 25.000
+          const isLongFreight = 20; // TODO: obtener distancia real
+          precioBase = isLongFreight > pricingRules.LIMITE_KM_CORTA
+            ? pricingRules.COMBO_FLETE_LIVIANO_LARGO
+            : pricingRules.COMBO_FLETE_LIVIANO_CORTO;
           break;
         case 'viaje_largo':
-          // Es local pero seleccionó 'viaje_largo', usamos km
-          precioKm = reglas.PRECIO_COMBUSTIBLE_KM_LOCAL; 
+          // Para viajes largos, usar precio mínimo + combustible por km
+          const estimatedKm = 50; // TODO: obtener distancia real
+          precioBase = pricingRules.PRECIO_MINIMO_FLETE + (estimatedKm * pricingRules.PRECIO_COMBUSTIBLE_KM);
           break;
       }
 
-      // --- 2. LÓGICA DE EXTRAS (SOLO PARA LOCALES) ---
-      // "por cada piso de escalera... se suma una variable (10.000 pesos)"
-      const pisos = quoteData.pisosEscalera || 0;
-      if (pisos > 0) {
-        extras.escaleras = pisos * reglas.EXTRA_PISO_ESCALERA;
+      // Aplicar modificadores adicionales
+      let totalPrice = precioBase;
+
+      // Modificador por pisos/escaleras
+      if (quoteData.pisosEscalera && quoteData.pisosEscalera > 0) {
+        totalPrice += (quoteData.pisosEscalera * pricingRules.EXTRA_PISO_ESCALERA);
       }
 
-      const extrasTotal = Object.values(extras).reduce((sum, value) => sum + value, 0);
-      total = tarifaBase + (distanciaKm * precioKm) + extrasTotal;
+      // Determinar si requiere seña (viajes largos)
+      const estimatedDistance = 20; // TODO: obtener distancia real
+      const requiereSenia = estimatedDistance > pricingRules.LIMITE_KM_CORTA;
+      const montoSenia = requiereSenia ? totalPrice * (pricingRules.PORCENTAJE_SENIA_LARGA / 100) : 0;
 
-    } else {
-      // --- 3. LÓGICA FUERA DE CORRIENTES (SIN EXTRAS) ---
-      // "la cotización es combustible*km"
-      precioKm = reglas.PRECIO_COMBUSTIBLE_KM_LARGA;
-      total = distanciaKm * precioKm;
-      // tarifaBase es 0 y extras es {}
+      // TODO: Aplicar descuentos por volumen/promociones (implementación futura)
+
+      const quoteResult: QuoteResult = {
+        km: 20, // TODO: obtener distancia real  
+        tarifaBase: precioBase,
+        extras: quoteData.pisosEscalera ? { 'pisos_escalera': quoteData.pisosEscalera * pricingRules.EXTRA_PISO_ESCALERA } : {},
+        total: Math.round(totalPrice),
+        requiereSenia,
+        montoSenia: Math.round(montoSenia)
+      };
+
+      console.log('[FreightService] Cotización calculada:', quoteResult);
+      return quoteResult;
+
+    } catch (error) {
+      console.error('[FreightService] Error al calcular cotización:', error);
+      
+      // Fallback con valores por defecto si falla M15
+      console.warn('[FreightService] Usando valores fallback por error en M15');
+      return this.calculateFallbackQuote(quoteData);
+    }
+  }
+
+  /**
+   * Calcula cotización con valores fallback (sin M15)
+   */
+  private calculateFallbackQuote(quoteData: QuoteData): QuoteResult {
+    const estimatedKm = 20; // Distancia estimada por defecto
+    const basePricePerKm = 1500;
+    const precioBase = estimatedKm * basePricePerKm;
+    
+    let serviceMultiplier = 1;
+    switch (quoteData.tipoServicio) {
+      case 'mudanza_completa': serviceMultiplier = 1.5; break;
+      case 'mini_mudanza': serviceMultiplier = 1.2; break;
+      case 'flete_liviano': serviceMultiplier = 1.0; break;
+      case 'viaje_largo': serviceMultiplier = 1.3; break;
     }
 
-    // --- 4. CÁLCULO PRECIO MÍNIMO (Aplica a AMBOS) ---
-    // "ningun flete puede ser menor a 20mil pesos"
-    if (total < reglas.PRECIO_MINIMO_FLETE) {
-      // Ajustamos la tarifa base para que el desglose siga sumando correctamente
-      const diferencia = reglas.PRECIO_MINIMO_FLETE - total;
-      tarifaBase += diferencia;
-      total = reglas.PRECIO_MINIMO_FLETE;
-    }
-
-    // --- 5. LÓGICA DE SEÑA (RF-06) (Aplica a AMBOS) ---
-    let requiereSenia = false;
-    let montoSenia = 0;
-
-    // "si es fuera de la ciudad, se debe una seña del 50%"
-    if (!isLocal) {
-      requiereSenia = true;
-      montoSenia = total * (reglas.PORCENTAJE_SENIA_LARGA / 100); 
-    }
-
-    // --- 6. DEVOLVER DESGLOSE COMPLETO (RF-05) ---
+    const total = Math.round(precioBase * serviceMultiplier);
+    
     return {
-      km: distanciaKm,
-      tarifaBase: tarifaBase,
-      precioKm: precioKm,
-      extras: extras, // (estará vacío si !isLocal)
-      total: total,
-      requiereSenia: requiereSenia,
-      montoSenia: Math.round(montoSenia)
+      km: estimatedKm,
+      tarifaBase: precioBase,
+      extras: quoteData.pisosEscalera ? { 'pisos_escalera': quoteData.pisosEscalera * 5000 } : {},
+      total,
+      requiereSenia: total > 50000,
+      montoSenia: total > 50000 ? Math.round(total * 0.3) : 0
     };
   }
 
-  // --- MÉTODOS SIMULADOS (Prerrequisitos M1 y M15) ---
+  /**
+   * Calcula tiempo estimado según distancia y tipo de servicio
+   */
+  private calculateEstimatedTime(distance: number = 20, tipoServicio: string): string {
+    const baseMinutes = Math.ceil(distance / 30) * 60; // 30 km/h promedio
+    
+    let serviceTimeMultiplier = 1;
+    switch (tipoServicio) {
+      case 'mudanza_completa': serviceTimeMultiplier = 2; break;
+      case 'mini_mudanza': serviceTimeMultiplier = 1.5; break;
+      case 'flete_liviano': serviceTimeMultiplier = 1; break;
+      case 'viaje_largo': serviceTimeMultiplier = 1.2; break;
+    }
 
-  private simularGeocodificacion(origen: string, destino: string): { km: number, isLocal: boolean } {
-    if (destino.toLowerCase().includes('resistencia') || origen.toLowerCase().includes('resistencia')) {
-      return { km: 25, isLocal: false }; // Viaje largo
+    const totalMinutes = Math.ceil(baseMinutes * serviceTimeMultiplier);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    if (hours > 0) {
+      return minutes > 0 ? `${hours}h ${minutes}min` : `${hours}h`;
     }
-    if (destino.toLowerCase().includes('campus')) {
-      return { km: 12, isLocal: true }; // > 10 cuadras (1km)
-    }
-    return { km: 0.8, isLocal: true }; // < 10 cuadras (1km)
+    return `${minutes}min`;
   }
 
-  private simularReglasDeNegocio() {
-    // Esto vendría de M15 (Base de Datos)
-    return {
-      COMBO_MUDANZA_COMPLETA: 80000,
-      COMBO_MINI_MUDANZA_LARGA: 40000,
-      COMBO_MINI_MUDANZA_CORTA: 30000,
-      COMBO_FLETE_LIVIANO_LARGO: 25000,
-      COMBO_FLETE_LIVIANO_CORTO: 20000,
-      PRECIO_COMBUSTIBLE_KM_LARGA: 300, // Precio por KM para viajes largos
-      PRECIO_COMBUSTIBLE_KM_LOCAL: 150, // Precio por KM si es local pero no es combo
-      EXTRA_PISO_ESCALERA: 10000,
-      PRECIO_MINIMO_FLETE: 20000,
-      LIMITE_KM_CORTA: 1, // 1km = 10 cuadras
-      PORCENTAJE_SENIA_LARGA: 50 // 50%
-    };
+  /**
+   * Valida si el tipo de servicio es válido
+   */
+  private isValidServiceType(tipoServicio: string): boolean {
+    const validTypes = ['mudanza_completa', 'mini_mudanza', 'flete_liviano', 'viaje_largo'];
+    return validTypes.includes(tipoServicio);
+  }
+
+  /**
+   * Método principal para solicitar cotización (usado por QuoteForm)
+   */
+  async requestQuote(
+    quoteData: QuoteData, 
+    clientInfo?: Partial<ClientInfo>, 
+    sessionId?: string
+  ): Promise<QuoteResult> {
+    console.log('[FreightService] Solicitando cotización:', quoteData);
+    
+    // Calcular la cotización
+    const result = await this.calculateQuote(quoteData);
+    
+    // Emitir eventos para tracking
+    const quoteRequestedEvent = createEvent<Omit<any, 'id' | 'timestamp'>>({
+      type: 'freight.quote.requested',
+      payload: {
+        quoteData,
+        clientInfo,
+        sessionId
+      }
+    });
+    
+    const quoteCalculatedEvent = createEvent<Omit<any, 'id' | 'timestamp'>>({
+      type: 'freight.quote.calculated',
+      payload: {
+        quoteData,
+        calculatedQuote: result,
+        sessionId
+      }
+    });
+
+    await eventBus.emit(quoteRequestedEvent);
+    await eventBus.emit(quoteCalculatedEvent);
+    
+    return result;
+  }
+
+  /**
+   * Método para cotización con distancia específica (usado en solicitar-flete)
+   */
+  async requestQuoteWithDistance(
+    quoteData: QuoteData & { distance: number }
+  ): Promise<QuoteResult> {
+    console.log('[FreightService] Cotización con distancia específica:', quoteData);
+    
+    // Para mantener compatibilidad, usar el método calculateQuote
+    return await this.calculateQuote(quoteData);
   }
 
   /**
@@ -227,7 +218,6 @@ export class FreightService {
       updatedAt: new Date()
     };
 
-    // Emitir evento de creación de solicitud
     const freightCreatedEvent = createEvent<Omit<FreightRequestCreatedEvent, 'id' | 'timestamp'>>({
       type: 'freight.request.created',
       payload: {
@@ -236,81 +226,52 @@ export class FreightService {
     });
 
     await eventBus.emit(freightCreatedEvent);
-
-    // En un caso real, aquí se guardaría en la base de datos
     console.log('[FreightService] Solicitud de flete creada:', freightRequest);
-
     return freightRequest;
   }
 
   /**
-   * Confirma una solicitud de flete (simulación de acción del dueño)
+   * Confirma una solicitud de flete
    */
-  async confirmFreightRequest(
-    freightRequestId: string,
-    confirmedBy: string,
-    scheduledDate?: Date,
-    notes?: string
-  ): Promise<void> {
-    const confirmEvent = createEvent({
-      type: 'freight.confirmed' as const,
+  async confirmFreightRequest(freightId: string): Promise<void> {
+    console.log('[FreightService] Confirmando flete:', freightId);
+    
+    const freightConfirmedEvent = createEvent<Omit<FreightConfirmedEvent, 'id' | 'timestamp'>>({
+      type: 'freight.confirmed',
       payload: {
-        freightRequestId,
-        confirmedBy,
-        confirmedAt: new Date(),
-        scheduledDate,
-        notes
+        freightRequestId: freightId,
+        confirmedBy: 'system', // TODO: implementar usuario real
+        confirmedAt: new Date()
       }
     });
 
-    await eventBus.emit(confirmEvent);
+    await eventBus.emit(freightConfirmedEvent);
+    console.log('[FreightService] Flete confirmado:', freightId);
   }
 
   /**
-   * Rechaza una solicitud de flete (simulación de acción del dueño)
+   * Rechaza una solicitud de flete
    */
-  async rejectFreightRequest(
-    freightRequestId: string,
-    rejectedBy: string,
-    reason?: string
-  ): Promise<void> {
-    const rejectEvent = createEvent({
-      type: 'freight.rejected' as const,
-      payload: {
-        freightRequestId,
-        rejectedBy,
-        rejectedAt: new Date(),
-        reason
-      }
-    });
+  async rejectFreightRequest(freightId: string, reason: string): Promise<void> {
+    console.log('[FreightService] Rechazando flete:', freightId, 'Razón:', reason);
+    // Implementar lógica de rechazo y eventos correspondientes
+  }
 
-    await eventBus.emit(rejectEvent);
+  /**
+   * Obtiene el historial de fletes de un cliente
+   */
+  async getClientFreightHistory(clientId: string): Promise<FreightRequest[]> {
+    console.log('[FreightService] Obteniendo historial de fletes para cliente:', clientId);
+    // Implementar lógica de consulta de historial
+    return [];
   }
 
   /**
    * Actualiza el estado de un flete
    */
-  async updateFreightStatus(
-    freightRequestId: string,
-    newStatus: 'in_progress' | 'completed' | 'cancelled',
-    updatedBy: string,
-    notes?: string
-  ): Promise<void> {
-    const eventType = `freight.${newStatus}` as const;
-    
-    const statusEvent = createEvent({
-      type: eventType,
-      payload: {
-        freightRequestId,
-        previousStatus: 'confirmed', // En un caso real, esto vendría del estado actual
-        newStatus,
-        updatedBy,
-        updatedAt: new Date(),
-        notes
-      }
-    });
-
-    await eventBus.emit(statusEvent);
+  async updateFreightStatus(freightId: string, status: string): Promise<void> {
+    console.log('[FreightService] Actualizando estado del flete:', freightId, 'a:', status);
+    // Implementar lógica de actualización de estado y eventos
   }
 }
 

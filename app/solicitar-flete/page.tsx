@@ -134,12 +134,10 @@ export default function SolicitarFletePage() {
       });
 
       // Calcular cotización con la distancia ya calculada
-      const calculated = await freightService.requestQuoteWithDistance(
-        requestData, 
-        clientData, 
-        routeData.distance, // Usar distancia ya calculada
-        `formal_quote_${Date.now()}`
-      ) as ExtraQuoteResult;
+      const calculated = await freightService.requestQuoteWithDistance({
+        ...requestData,
+        distance: routeData.distance
+      }) as ExtraQuoteResult;
       
       setQuote(calculated);
       setStep(3);
