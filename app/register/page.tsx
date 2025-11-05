@@ -216,7 +216,8 @@ export default function RegisterPage() {
                         </div>
                         <Button 
                           type="submit" 
-                          className="w-full bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-md"
+                          variant="hero"
+                          className="w-full"
                           disabled={isLoading}
                         >
                           <UserPlus className="mr-2 h-5 w-5" />

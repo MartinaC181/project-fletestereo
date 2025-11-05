@@ -176,7 +176,8 @@ export default function LoginPage() {
                         <div className="space-y-3">
                           <Button 
                             type="submit" 
-                            className="w-full bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-md"
+                            variant="hero"
+                            className="w-full"
                             disabled={isLoading}
                           >
                             <LogIn className="mr-2 h-5 w-5" />
@@ -214,7 +215,7 @@ export default function LoginPage() {
                           <p className="text-sm text-muted-foreground mb-4">¿Necesitas ayuda?</p>
                           <div className="flex justify-center space-x-4">
                             <Link href="/contacto">
-                              <Button className="border border-gray-300 hover:bg-gray-50 px-4 py-2 rounded-md">Contactar Soporte</Button>
+                              <Button variant="outline">Contactar Soporte</Button>
                             </Link>
                           </div>
                         </div>
