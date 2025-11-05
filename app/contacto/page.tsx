@@ -53,7 +53,7 @@ export default function ContactoPage() {
                       <CardHeader className="pb-4">
                         <div className="bg-accent-yellow/20 p-4 rounded-full w-fit mx-auto mb-4">{method.icon}</div>
                         <CardTitle className="text-xl text-primary">{method.title}</CardTitle>
-                        <CardDescription className="text-lg font-semibold text-accent-yellow dark:text-black">{method.content}</CardDescription>
+                        <CardDescription className="text-lg font-semibold text-accent-yellow dark:text-accent-yellow">{method.content}</CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div>
@@ -86,7 +86,7 @@ export default function ContactoPage() {
                             <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" placeholder="tu@email.com" /></div>
                             <div className="space-y-2"><Label htmlFor="phone">Teléfono</Label><Input id="phone" name="phone" placeholder="+54 11 1234-5678" /></div>
                           </div>
-                          <div className="space-y-2"><Label htmlFor="service">Tipo de Servicio</Label><select name="service" className="w-full px-3 py-2 border border-input rounded-md text-sm"><option value="">Seleccioná un servicio</option><option value="Mudanza Completa ($80.000)">Mudanza Completa ($80.000)</option><option value="Mini Mudanza Mayor a 10 cuadras ($40.000)">Mini Mudanza Mayor a 10 cuadras ($40.000)</option><option value="Mini Mudanza Menor a 10 cuadras ($30.000)">Mini Mudanza Menor a 10 cuadras ($30.000)</option><option value="Flete Liviano Recorrido Largo ($25.000)">Flete Liviano Recorrido Largo ($25.000)</option><option value="Flete Liviano Recorrido Corto ($20.000)">Flete Liviano Recorrido Corto ($20.000)</option><option value="Otro">Otro</option></select></div>
+                          <div className="space-y-2"><Label htmlFor="service">Tipo de Servicio</Label><select name="service" className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"><option value="">Seleccioná un servicio</option><option value="Mudanza Completa ($80.000)">Mudanza Completa ($80.000)</option><option value="Mini Mudanza Mayor a 10 cuadras ($40.000)">Mini Mudanza Mayor a 10 cuadras ($40.000)</option><option value="Mini Mudanza Menor a 10 cuadras ($30.000)">Mini Mudanza Menor a 10 cuadras ($30.000)</option><option value="Flete Liviano Recorrido Largo ($25.000)">Flete Liviano Recorrido Largo ($25.000)</option><option value="Flete Liviano Recorrido Corto ($20.000)">Flete Liviano Recorrido Corto ($20.000)</option><option value="Otro">Otro</option></select></div>
                           <div className="space-y-2"><Label htmlFor="message">Mensaje</Label><Textarea id="message" name="message" placeholder="Contanos los detalles de tu proyecto..." rows={5} /></div>
                           <Button type="submit" variant="hero" size="lg" className="w-full"><Send className="mr-2 h-5 w-5" />Enviar Consulta</Button>
                         </form>

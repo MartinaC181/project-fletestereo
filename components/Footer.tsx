@@ -41,7 +41,6 @@ const Footer = () => {
             <h3 className="font-semibold mb-4 dark:text-black">Empresa</h3>
             <ul className="space-y-2 text-sm text-primary-foreground/80 dark:text-black/80">
               <li><Link href="/nosotros" className="hover:text-accent-yellow dark:hover:text-black transition-colors">Acerca de Nosotros</Link></li>
-              <li><Link href="/zonas" className="hover:text-accent-yellow dark:hover:text-black transition-colors">Zonas de Cobertura</Link></li>
               <li><Link href="/tarifas" className="hover:text-accent-yellow dark:hover:text-black transition-colors">Tarifas</Link></li>
               <li><Link href="/politicas" className="hover:text-accent-yellow dark:hover:text-black transition-colors">Políticas</Link></li>
             </ul>
