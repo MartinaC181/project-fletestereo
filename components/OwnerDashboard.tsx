@@ -129,17 +129,17 @@ export const OwnerDashboard: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header del Dashboard */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-card shadow-sm border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Dashboard Administrativo</h1>
-              <p className="text-gray-600">Panel de control - FleteEstereo (Solo Administradores)</p>
+              <h1 className="text-2xl font-bold text-primary">Dashboard Administrativo</h1>
+              <p className="text-muted-foreground">Panel de control - FleteEstereo (Solo Administradores)</p>
               {user && (
-                <p className="text-sm text-gray-500">
-                  Bienvenido, {user.email} - <span className="font-semibold text-blue-600">Admin</span>
+                <p className="text-sm text-muted-foreground">
+                  Bienvenido, {user.email} - <span className="font-semibold text-accent-yellow">Admin</span>
                 </p>
               )}
             </div>
@@ -171,13 +171,13 @@ export const OwnerDashboard: React.FC = () => {
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <Clock className="h-6 w-6 text-blue-600" />
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <Clock className="h-6 w-6 text-primary" />
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-muted-foreground">Solicitudes Pendientes</p>
-                      <p className="text-2xl font-bold">{pendingRequests.length}</p>
-                      <p className="text-xs text-blue-600">
+                      <p className="text-2xl font-bold text-foreground">{pendingRequests.length}</p>
+                      <p className="text-xs text-accent-yellow">
                         ${pendingRequests.reduce((sum, req) => sum + req.calculatedQuote.total, 0).toLocaleString()}
                       </p>
                     </div>
@@ -188,13 +188,13 @@ export const OwnerDashboard: React.FC = () => {
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <CheckCircle className="h-6 w-6 text-green-600" />
+                    <div className="p-2 bg-green-500/10 rounded-lg">
+                      <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-muted-foreground">Pagos Recientes</p>
-                      <p className="text-2xl font-bold">{recentPayments.length}</p>
-                      <p className="text-xs text-green-600">
+                      <p className="text-2xl font-bold text-foreground">{recentPayments.length}</p>
+                      <p className="text-xs text-green-600 dark:text-green-400">
                         ${recentPayments.reduce((sum, payment) => sum + payment.payload.amount, 0).toLocaleString()}
                       </p>
                     </div>
@@ -205,15 +205,15 @@ export const OwnerDashboard: React.FC = () => {
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <Users className="h-6 w-6 text-purple-600" />
+                    <div className="p-2 bg-accent-orange/10 rounded-lg">
+                      <Users className="h-6 w-6 text-accent-orange" />
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-muted-foreground">Clientes Activos</p>
-                      <p className="text-2xl font-bold">
+                      <p className="text-2xl font-bold text-foreground">
                         {new Set(pendingRequests.map(req => req.client.id)).size}
                       </p>
-                      <p className="text-xs text-purple-600">Únicos hoy</p>
+                      <p className="text-xs text-accent-orange">Únicos hoy</p>
                     </div>
                   </div>
                 </CardContent>
@@ -222,16 +222,16 @@ export const OwnerDashboard: React.FC = () => {
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center">
-                    <div className="p-2 bg-orange-100 rounded-lg">
-                      <TrendingUp className="h-6 w-6 text-orange-600" />
+                    <div className="p-2 bg-accent-yellow/10 rounded-lg">
+                      <TrendingUp className="h-6 w-6 text-accent-yellow" />
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-muted-foreground">Ingresos Potenciales</p>
-                      <p className="text-2xl font-bold">
+                      <p className="text-2xl font-bold text-foreground">
                         ${(pendingRequests.reduce((sum, req) => sum + req.calculatedQuote.total, 0) + 
                            recentPayments.reduce((sum, payment) => sum + payment.payload.amount, 0)).toLocaleString()}
                       </p>
-                      <p className="text-xs text-orange-600">Total del día</p>
+                      <p className="text-xs text-accent-yellow">Total del día</p>
                     </div>
                   </div>
                 </CardContent>
@@ -311,48 +311,48 @@ export const OwnerDashboard: React.FC = () => {
                 ) : (
                   <div className="space-y-4">
                     {pendingRequests.map((request) => (
-                      <div key={request.id} className="border rounded-lg p-4 space-y-3">
+                      <div key={request.id} className="border border-border rounded-lg p-4 space-y-3 bg-card">
                         <div className="flex justify-between items-start">
                           <div>
-                            <h3 className="font-semibold">
+                            <h3 className="font-semibold text-foreground">
                               {request.client.nombre} {request.client.apellido}
                             </h3>
                             <p className="text-sm text-muted-foreground">
                               {request.client.telefono} • {request.client.email}
                             </p>
                           </div>
-                          <Badge>
+                          <Badge className="bg-accent-yellow text-black">
                             ${request.calculatedQuote.total.toLocaleString()}
                           </Badge>
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="grid grid-cols-2 gap-4 text-sm text-foreground">
                           <div>
-                            <span className="font-medium">Origen:</span> {request.quote.origen}
+                            <span className="font-medium text-primary">Origen:</span> {request.quote.origen}
                           </div>
                           <div>
-                            <span className="font-medium">Destino:</span> {request.quote.destino}
+                            <span className="font-medium text-primary">Destino:</span> {request.quote.destino}
                           </div>
                           <div>
-                            <span className="font-medium">Fecha:</span> {
+                            <span className="font-medium text-primary">Fecha:</span> {
                               new Date(request.quote.fecha).toLocaleDateString('es-AR')
                             }
                           </div>
                           <div>
-                            <span className="font-medium">Franja:</span> {request.quote.franja}
+                            <span className="font-medium text-primary">Franja:</span> {request.quote.franja}
                           </div>
                           <div>
-                            <span className="font-medium">Tipo:</span> {request.quote.tipoServicio.replace('_', ' ')}
+                            <span className="font-medium text-primary">Tipo:</span> {request.quote.tipoServicio.replace('_', ' ')}
                           </div>
                           <div>
-                            <span className="font-medium">Distancia:</span> {request.calculatedQuote.km} km
+                            <span className="font-medium text-primary">Distancia:</span> {request.calculatedQuote.km} km
                           </div>
                         </div>
 
                         {/* Detalles de Cotización (Estructura Simplificada) */}
-                        <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-                          <h4 className="font-semibold text-sm text-gray-700">Detalles de Cotización</h4>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+                          <h4 className="font-semibold text-sm text-primary">Detalles de Cotización</h4>
+                          <div className="grid grid-cols-2 gap-2 text-xs text-foreground">
                             <div className="flex justify-between">
                               <span>Tarifa base:</span>
                               <span>${request.calculatedQuote.tarifaBase?.toLocaleString()}</span>
@@ -363,12 +363,12 @@ export const OwnerDashboard: React.FC = () => {
                                 <span>${(value as number).toLocaleString()}</span>
                               </div>
                             ))}
-                            <div className="flex justify-between font-semibold border-t pt-1 col-span-2">
+                            <div className="flex justify-between font-semibold border-t border-border pt-1 col-span-2">
                               <span>Total:</span>
-                              <span className="text-green-600">${request.calculatedQuote.total.toLocaleString()}</span>
+                              <span className="text-green-600 dark:text-green-400">${request.calculatedQuote.total.toLocaleString()}</span>
                             </div>
                             {request.calculatedQuote.requiereSenia && (
-                              <div className="flex justify-between text-orange-600 col-span-2">
+                              <div className="flex justify-between text-accent-orange col-span-2">
                                 <span>Seña requerida:</span>
                                 <span>${request.calculatedQuote.montoSenia?.toLocaleString()}</span>
                               </div>
@@ -377,8 +377,8 @@ export const OwnerDashboard: React.FC = () => {
                         </div>
 
                         {request.quote.notas && (
-                          <div className="text-sm">
-                            <span className="font-medium">Notas:</span> {request.quote.notas}
+                          <div className="text-sm text-foreground">
+                            <span className="font-medium text-primary">Notas:</span> {request.quote.notas}
                           </div>
                         )}
 
@@ -386,7 +386,7 @@ export const OwnerDashboard: React.FC = () => {
                           <Button 
                             onClick={() => handleConfirmRequest(request.id)}
                             disabled={processingRequest === request.id}
-                            className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                            className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white flex items-center gap-2"
                           >
                             <CheckCircle className="h-4 w-4" />
                             {processingRequest === request.id ? 'Confirmando...' : 'Confirmar'}
@@ -394,7 +394,7 @@ export const OwnerDashboard: React.FC = () => {
                           <Button 
                             onClick={() => handleRejectRequest(request.id)}
                             disabled={processingRequest === request.id}
-                            className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+                            className="bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white flex items-center gap-2"
                           >
                             <X className="h-4 w-4" />
                             {processingRequest === request.id ? 'Rechazando...' : 'Rechazar'}
@@ -422,12 +422,12 @@ export const OwnerDashboard: React.FC = () => {
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <CheckCircle className="h-6 w-6 text-green-600" />
+                    <div className="p-2 bg-green-500/10 rounded-lg">
+                      <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-muted-foreground">Pagos Completados</p>
-                      <p className="text-2xl font-bold">
+                      <p className="text-2xl font-bold text-foreground">
                         {recentPayments.filter(p => p.payload.status === 'completed').length}
                       </p>
                     </div>
@@ -438,12 +438,12 @@ export const OwnerDashboard: React.FC = () => {
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <TrendingUp className="h-6 w-6 text-blue-600" />
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <TrendingUp className="h-6 w-6 text-primary" />
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-muted-foreground">Ingresos del Día</p>
-                      <p className="text-2xl font-bold">
+                      <p className="text-2xl font-bold text-foreground">
                         ${recentPayments.reduce((sum, payment) => sum + payment.payload.amount, 0).toLocaleString()}
                       </p>
                     </div>
@@ -454,12 +454,12 @@ export const OwnerDashboard: React.FC = () => {
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <Clock className="h-6 w-6 text-purple-600" />
+                    <div className="p-2 bg-accent-orange/10 rounded-lg">
+                      <Clock className="h-6 w-6 text-accent-orange" />
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-muted-foreground">Promedio por Pago</p>
-                      <p className="text-2xl font-bold">
+                      <p className="text-2xl font-bold text-foreground">
                         ${recentPayments.length > 0 ? 
                           Math.round(recentPayments.reduce((sum, payment) => sum + payment.payload.amount, 0) / recentPayments.length).toLocaleString() 
                           : '0'}
@@ -490,14 +490,14 @@ export const OwnerDashboard: React.FC = () => {
                 ) : (
                   <div className="space-y-4">
                     {recentPayments.map((payment) => (
-                      <div key={payment.id} className="border rounded-lg p-4">
+                      <div key={payment.id} className="border border-border rounded-lg p-4 bg-card">
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-3">
-                            <div className="p-2 bg-green-100 rounded-lg">
-                              <CheckCircle className="h-5 w-5 text-green-600" />
+                            <div className="p-2 bg-green-500/10 rounded-lg">
+                              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                             </div>
                             <div>
-                              <p className="font-semibold">${payment.payload.amount.toLocaleString()}</p>
+                              <p className="font-semibold text-foreground">${payment.payload.amount.toLocaleString()}</p>
                               <p className="text-sm text-muted-foreground">
                                 {payment.payload.paymentMethod} • ID: {payment.payload.paymentId}
                               </p>
@@ -506,7 +506,7 @@ export const OwnerDashboard: React.FC = () => {
                               </p>
                             </div>
                           </div>
-                          <Badge className={payment.payload.status === 'completed' ? 'bg-green-500' : 'bg-yellow-500'}>
+                          <Badge className={payment.payload.status === 'completed' ? 'bg-green-600 dark:bg-green-600 text-white' : 'bg-yellow-500 dark:bg-yellow-500 text-black'}>
                             {payment.payload.status === 'completed' ? 'Completado' : payment.payload.status}
                           </Badge>
                         </div>
