@@ -61,7 +61,7 @@ export default function TarifasPage() {
                       <CardContent className="space-y-6">
                         <div><h4 className="font-medium text-primary mb-3">Incluye:</h4><ul className="space-y-2">{service.features.map((f,fi)=>(<li key={fi} className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" /><span className="text-muted-foreground">{f}</span></li>))}</ul></div>
                         <div><h4 className="font-medium text-primary mb-3">Tarifas por zona:</h4><div className="space-y-2">{service.zones.map((z,zi)=>(<div key={zi} className="flex justify-between items-center text-sm"><span className="text-muted-foreground">{z.name}</span><div className="text-right"><span className="font-medium text-primary">${z.price.toLocaleString()}</span><span className="text-xs text-muted-foreground block">{z.time}</span></div></div>))}</div></div>
-                        <Link href="/solicitar-flete" className="block"><Button variant={service.popular ? 'default':'outline'} className="w-full">Solicitar Servicio</Button></Link>
+                        <Link href="/solicitar-flete" className="block"><Button variant="hero" className="w-full">Solicitar Servicio</Button></Link>
                       </CardContent>
                     </Card>
                   ))}
