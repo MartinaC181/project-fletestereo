@@ -77,7 +77,7 @@ const Footer = () => {
 
         <div className="border-t border-white/20 dark:border-black/20 mt-8 pt-8 text-center">
           <p className="text-sm text-primary-foreground/60 dark:text-black/60">
-            © 2024 Fletestereo. Todos los derechos reservados.
+            © 2025 Fletestereo. Todos los derechos reservados.
           </p>
         </div>
       </div>
