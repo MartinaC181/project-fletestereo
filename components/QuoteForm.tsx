@@ -12,7 +12,6 @@ import { geolocationService } from "@/lib/services/geolocation.service";
 import GooglePlacesInput from "@/components/GooglePlacesInput";
 import type { QuoteData, QuoteResult, ServiceType } from "@/core/events/domain-events";
 import { MapView } from "@/components/MapView";
-import type { QuoteData, QuoteResult } from "@/core/events/domain-events";
 import type { Coordinates } from "@/lib/services/geolocation.service";
 
 const QuoteForm = () => {
@@ -36,14 +35,11 @@ const QuoteForm = () => {
     distance: number;
   } | null>(null);
 
-  const handleInputChange = (field: keyof QuoteData, value: string) => {
+  const handleInputChange = useCallback((field: keyof QuoteData, value: string) => {
     setFormData(prev => ({ 
       ...prev, 
       [field]: field === 'pisosEscalera' ? parseInt(value) || 0 : value 
     }));
-  };
-  const handleInputChange = useCallback((field: keyof QuoteData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
     
     // Si cambió origen o destino, limpiar ruta anterior
     if (field === 'origen' || field === 'destino') {
@@ -145,8 +141,6 @@ const QuoteForm = () => {
   const handleDestinoChange = useCallback((value: string) => handleInputChange("destino", value), [handleInputChange]);
   const handleFechaChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("fecha", e.target.value), [handleInputChange]);
   const handleFranjaChange = useCallback((value: string) => handleInputChange("franja", value), [handleInputChange]);
-  const handleCargaTipoChange = useCallback((value: string) => handleInputChange("cargaTipo", value), [handleInputChange]);
-  const handleCargaVolumenChange = useCallback((value: string) => handleInputChange("cargaVolumen", value), [handleInputChange]);
   const handleNotasChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange("notas", e.target.value), [handleInputChange]);
 
   const calculateQuote = async () => {
@@ -266,8 +260,6 @@ const QuoteForm = () => {
                 <div>
                   <Label htmlFor="tipoServicio">Tipo de Servicio *</Label>
                   <Select value={formData.tipoServicio} onValueChange={(value) => handleInputChange("tipoServicio", value as ServiceType)}>
-                  <Label htmlFor="cargaTipo">Tipo de Carga *</Label>
-                  <Select value={formData.cargaTipo} onValueChange={handleCargaTipoChange}>
                     <SelectTrigger>
                       <SelectValue placeholder="Tipo de servicio" />
                     </SelectTrigger>
@@ -288,17 +280,6 @@ const QuoteForm = () => {
                     value={formData.pisosEscalera}
                     onChange={(e) => handleInputChange("pisosEscalera", e.target.value)}
                   />
-                  <Label htmlFor="cargaVolumen">Volumen</Label>
-                  <Select value={formData.cargaVolumen} onValueChange={handleCargaVolumenChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Tamaño de carga" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pequeño">Pequeño</SelectItem>
-                      <SelectItem value="mediano">Mediano</SelectItem>
-                      <SelectItem value="grande">Grande</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
 
@@ -316,7 +297,6 @@ const QuoteForm = () => {
                 onClick={calculateQuote} 
                 disabled={loading || !routeData}
                 className="w-full bg-black text-white hover:bg-gray-800"
-                variant="cta"
                 size="lg"
               >
                 <Calculator className="mr-2 h-5 w-5" />
@@ -456,7 +436,7 @@ const QuoteForm = () => {
                     </div>
                   )}
 
-                  <Button variant="hero" size="lg" className="w-full">
+                  <Button size="lg" className="w-full bg-accent-yellow text-black hover:bg-accent-yellow/90">
                     Confirmar Solicitud
                   </Button>
                 </div>

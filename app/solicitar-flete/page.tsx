@@ -43,14 +43,9 @@ export default function SolicitarFletePage() {
   } | null>(null);
 
   const handleClientDataChange = (field: keyof ClientInfo, value: string) => setClientData(p => ({ ...p, [field]: value }));
-  const handleRequestDataChange = (field: keyof QuoteData, value: string) => setRequestData(p => ({ ...p, [field]: field === 'pisosEscalera' ? parseInt(value) || 0 : value }));
-
-  const calculateQuote = async () => {
-    setCalculatingQuote(true);
-    try {
   
   const handleRequestDataChange = (field: keyof QuoteData, value: string) => {
-    setRequestData(p => ({ ...p, [field]: value }));
+    setRequestData(p => ({ ...p, [field]: field === 'pisosEscalera' ? parseInt(value) || 0 : value }));
     
     // Si cambió origen o destino, limpiar ruta anterior
     if (field === 'origen' || field === 'destino') {
@@ -82,7 +77,12 @@ export default function SolicitarFletePage() {
       ]);
 
       if (!originResult || !destinationResult) {
-        return; // No mostrar error, solo no mostrar mapa
+        toast({
+          title: "Error de ubicación",
+          description: "No pudimos encontrar las direcciones. Verifica que estén correctamente escritas.",
+          variant: "destructive"
+        });
+        return;
       }
 
       // Calcular la ruta
@@ -98,10 +98,19 @@ export default function SolicitarFletePage() {
           polyline: routeInfo.polyline,
           distance: routeInfo.distance
         });
+
+        toast({
+          title: "¡Ruta calculada!",
+          description: `Distancia: ${routeInfo.distance.toFixed(1)} km. Ahora puedes calcular la cotización.`
+        });
       }
     } catch (error) {
       console.error('Error calculating route preview:', error);
-      // No mostrar error al usuario, solo no mostrar el mapa
+      toast({
+        title: "Error",
+        description: "No pudimos calcular la ruta. Intenta nuevamente.",
+        variant: "destructive"
+      });
     } finally {
       setCalculatingRoute(false);
     }
@@ -172,6 +181,7 @@ export default function SolicitarFletePage() {
       calculateQuote();
     }
   };
+
   return (
     <AnimatePresence mode="wait" initial={false}>
       <PageTransition>
@@ -285,7 +295,7 @@ export default function SolicitarFletePage() {
                           )}
                         </div>
                         
-                        {calculatingRoute ? (
+                        {calculatingRoute && !routeData ? (
                           <div className="h-64 bg-muted rounded-lg flex items-center justify-center">
                             <div className="text-center">
                               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
@@ -293,7 +303,15 @@ export default function SolicitarFletePage() {
                             </div>
                           </div>
                         ) : routeData ? (
-                          <div>
+                          <div className="relative">
+                            {calculatingRoute && (
+                              <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 rounded-lg flex items-center justify-center">
+                                <div className="text-center">
+                                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                                  <p className="text-sm text-muted-foreground">Recalculando ruta...</p>
+                                </div>
+                              </div>
+                            )}
                             <MapView
                               center={{
                                 lat: (routeData.originCoords.lat + routeData.destinationCoords.lat) / 2,
@@ -359,43 +377,6 @@ export default function SolicitarFletePage() {
                   </CardContent>
                 </Card>
               )}
-              {step === 3 && quote && (
-                <Card className="shadow-lg">
-                  <CardHeader><CardTitle className="flex items-center gap-2"><Calculator className="h-5 w-5 text-accent-yellow" />Confirmación de Solicitud</CardTitle></CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="bg-muted/50 p-6 rounded-lg">
-                      <h4 className="font-semibold mb-4">Tu Cotización</h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between"><span>Tarifa base:</span><span>${quote.tarifaBase.toLocaleString()}</span></div>
-                        <div className="flex justify-between"><span>Distancia ({quote.km} km):</span><span>${(quote.km * (quote as any).precioKm).toLocaleString()}</span></div>
-                        {Object.entries(quote.extras).map(([key, value]) => (
-                          value > 0 && (
-                            <div key={key} className="flex justify-between">
-                              <span className="capitalize">{key === 'escaleras' ? 'Escaleras' : key}:</span>
-                              <span>${value.toLocaleString()}</span>
-                            </div>
-                          )
-                        ))}
-                        <hr />
-                        <div className="flex justify-between font-bold text-lg"><span>Total estimado:</span><span className="text-accent-yellow">${quote.total.toLocaleString()}</span></div>
-                      </div>
-                      {quote.requiereSenia && (
-                        <div className="mt-4 bg-destructive/10 p-4 rounded-lg border border-destructive/20">
-                          <h5 className="font-semibold text-destructive mb-2">Seña Requerida</h5>
-                          <p className="text-sm">
-                            Este viaje requiere una seña de 
-                            (${quote.montoSenia.toLocaleString()})
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Checkbox id="terms" checked={acceptTerms} onCheckedChange={c=>setAcceptTerms(c as boolean)} />
-                      <div className="grid gap-1.5 leading-none"><label htmlFor="terms" className="text-sm font-medium">Acepto los términos y condiciones</label><p className="text-xs text-muted-foreground">Al enviar esta solicitud acepto las políticas de servicio y privacidad.</p></div>
-                    </div>
-                    <div className="flex gap-4"><Button onClick={()=>setStep(2)} className="flex-1 border border-gray-300">Modificar</Button><Button onClick={submitRequest} disabled={loading || !acceptTerms} className="flex-1">{loading? 'Enviando...':'Confirmar Solicitud'}</Button></div>
-                  </CardContent>
-                </Card>
               {step === 3 && quote && routeData && (
                 <div className="space-y-6">
                   {/* Mapa con la ruta calculada */}
