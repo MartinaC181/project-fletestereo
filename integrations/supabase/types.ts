@@ -521,6 +521,39 @@ export type Database = {
         }
         Relationships: []
       }
+      services: {
+        Row: {
+          id: string
+          nombre: string
+          descripcion: string
+          caracteristicas: string[]
+          precio: string
+          activo: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          nombre: string
+          descripcion: string
+          caracteristicas: string[]
+          precio: string
+          activo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          nombre?: string
+          descripcion?: string
+          caracteristicas?: string[]
+          precio?: string
+          activo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -539,6 +572,12 @@ export type Database = {
           user_phone?: string
         }
         Returns: boolean
+      }
+      delete_service: {
+        Args: {
+          service_id: string
+        }
+        Returns: void
       }
     }
     Enums: {
