@@ -15,6 +15,7 @@ export interface RouteInfo {
   distance: number; // en kilómetros
   duration: number; // en minutos
   polyline?: string;
+  travelMode?: 'DRIVING' | 'WALKING' | 'BICYCLING' | 'TRANSIT';
 }
 
 export interface GeolocationResult {
@@ -68,12 +69,16 @@ class GeolocationService {
   }
 
   // Calcular ruta entre dos puntos
-  async calculateRoute(origin: Coordinates, destination: Coordinates): Promise<RouteInfo | null> {
+  async calculateRoute(
+    origin: Coordinates, 
+    destination: Coordinates, 
+    travelMode: 'DRIVING' | 'WALKING' | 'BICYCLING' | 'TRANSIT' = 'DRIVING'
+  ): Promise<RouteInfo | null> {
     try {
-      console.log('🛣️ Calculando ruta entre coordenadas:', origin, '→', destination);
+      console.log('🛣️ Calculando ruta entre coordenadas:', origin, '→', destination, `(modo: ${travelMode})`);
       
       const response = await fetch(
-        `/api/directions?origin=${origin.lat},${origin.lng}&destination=${destination.lat},${destination.lng}`
+        `/api/directions?origin=${origin.lat},${origin.lng}&destination=${destination.lat},${destination.lng}&mode=${travelMode.toLowerCase()}`
       );
       
       const data = await response.json();
@@ -87,10 +92,20 @@ class GeolocationService {
         const route = data.routes[0];
         const leg = route.legs[0];
         
+        console.log('✅ Ruta calculada exitosamente');
+        console.log('📊 Distancia:', leg.distance.value / 1000, 'km');
+        console.log('⏰ Duración:', leg.duration.value / 60, 'min');
+        console.log('🛣️ Polyline:', route.overview_polyline?.points ? 'PRESENTE' : 'AUSENTE');
+        
+        if (route.overview_polyline?.points) {
+          console.log('📏 Longitud del polyline:', route.overview_polyline.points.length, 'caracteres');
+        }
+        
         return {
           distance: leg.distance.value / 1000, // convertir a km
           duration: leg.duration.value / 60, // convertir a minutos
-          polyline: route.overview_polyline?.points
+          polyline: route.overview_polyline?.points,
+          travelMode
         };
       }
       

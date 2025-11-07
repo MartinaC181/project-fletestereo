@@ -38,8 +38,9 @@ export const GooglePlacesInput: React.FC<GooglePlacesInputProps> = ({
         }
 
         // Verificar si Google Maps ya está cargado
-        if ((window as any).google && (window as any).google.maps && (window as any).google.maps.places) {
-          console.log('[GooglePlaces] Google Maps ya estaba cargado');
+        if ((window as any).google && (window as any).google.maps && 
+            (window as any).google.maps.places && (window as any).google.maps.geometry) {
+          console.log('[GooglePlaces] Google Maps ya estaba cargado con todas las bibliotecas');
           initAutocomplete();
           return;
         }
@@ -47,7 +48,7 @@ export const GooglePlacesInput: React.FC<GooglePlacesInputProps> = ({
         // Cargar el script de Google Maps
         console.log('[GooglePlaces] Cargando script de Google Maps...');
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=es&region=AR`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry&language=es&region=AR`;
         script.async = true;
         script.defer = true;
 

@@ -98,24 +98,37 @@ export const RouteCalculator = ({ onRouteCalculated }: RouteCalculatorProps) => 
             </div>
             
             {showMap && origin && destination && (
-              <div className="border rounded-lg overflow-hidden">
-                <MapView
-                  center={origin.coordinates}
-                  markers={[
-                    {
-                      position: origin.coordinates,
-                      title: 'Origen',
-                      color: 'green'
-                    },
-                    {
-                      position: destination.coordinates,
-                      title: 'Destino',
-                      color: 'red'
-                    }
-                  ]}
-                  polyline={routeInfo.polyline}
-                  height="300px"
-                />
+              <div className="space-y-3">
+                <div className="border rounded-lg overflow-hidden">
+                  <MapView
+                    center={origin.coordinates}
+                    markers={[
+                      {
+                        position: origin.coordinates,
+                        title: 'Origen',
+                        color: 'green'
+                      },
+                      {
+                        position: destination.coordinates,
+                        title: 'Destino',
+                        color: 'red'
+                      }
+                    ]}
+                    polyline={routeInfo.polyline}
+                    height="300px"
+                  />
+                </div>
+                
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <div className="flex-shrink-0 w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center mt-0.5">
+                      <span className="text-amber-600 text-xs font-bold">!</span>
+                    </div>
+                    <p className="text-sm text-amber-800 leading-relaxed">
+                      <strong>Importante:</strong> El recorrido podría variar por causa de fuerza mayor, tránsito colapsado u otra. De todas formas el precio no se modificará.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </div>

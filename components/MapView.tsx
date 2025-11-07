@@ -26,7 +26,14 @@ export const MapView = ({
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
 
   useEffect(() => {
-    if (!mapRef.current || !window.google) return;
+    if (!mapRef.current || !window.google || !window.google.maps) {
+      console.log('⏳ Esperando a que Google Maps esté disponible...');
+      return;
+    }
+
+    console.log('🗺️ Inicializando mapa con polyline:', polyline ? 'SÍ' : 'NO');
+    console.log('🗺️ Marcadores:', markers.length);
+    console.log('🗺️ Geometry library disponible:', !!window.google.maps.geometry);
 
     // Inicializar el mapa
     mapInstanceRef.current = new google.maps.Map(mapRef.current, {
@@ -41,6 +48,10 @@ export const MapView = ({
       ]
     });
 
+    // Crear bounds para ajustar la vista
+    const bounds = new google.maps.LatLngBounds();
+    let shouldFitBounds = false;
+
     // Agregar marcadores
     markers.forEach((marker, index) => {
       new google.maps.Marker({
@@ -51,56 +62,73 @@ export const MapView = ({
           url: `https://maps.google.com/mapfiles/ms/icons/${marker.color || 'red'}-dot.png`
         }
       });
+      
+      // Extender bounds con cada marcador
+      bounds.extend(marker.position);
+      shouldFitBounds = true;
     });
 
     // Agregar polyline si existe
-    if (polyline && window.google.maps.geometry) {
-      const decodedPath = google.maps.geometry.encoding.decodePath(polyline);
+    if (polyline) {
+      console.log('🛣️ Procesando polyline...');
       
-      new google.maps.Polyline({
-        path: decodedPath,
-        geodesic: true,
-        strokeColor: '#2563eb',
-        strokeOpacity: 0.8,
-        strokeWeight: 4,
-        map: mapInstanceRef.current
-      });
+      // Verificar si geometry está disponible
+      if (!window.google.maps.geometry) {
+        console.error('❌ Google Maps Geometry library no está cargada');
+        return;
+      }
 
-      // Ajustar la vista para mostrar toda la ruta
-      const bounds = new google.maps.LatLngBounds();
-      decodedPath.forEach(point => bounds.extend(point));
+      try {
+        const decodedPath = google.maps.geometry.encoding.decodePath(polyline);
+        console.log('✅ Polyline decodificada, puntos:', decodedPath.length);
+        
+        const polylineObject = new google.maps.Polyline({
+          path: decodedPath,
+          geodesic: true,
+          strokeColor: '#2563eb',
+          strokeOpacity: 1.0,
+          strokeWeight: 5,
+          map: mapInstanceRef.current
+        });
+
+        console.log('✅ Polyline agregada al mapa');
+
+        // Limpiar bounds anteriores y usar los del polyline
+        const polylineBounds = new google.maps.LatLngBounds();
+        decodedPath.forEach(point => polylineBounds.extend(point));
+        mapInstanceRef.current.fitBounds(polylineBounds);
+        
+        console.log('✅ Vista ajustada a la ruta');
+      } catch (error) {
+        console.error('❌ Error al procesar polyline:', error);
+      }
+    } else if (shouldFitBounds && markers.length > 1) {
+      // Si hay múltiples marcadores pero no polyline, ajustar vista para mostrar todos
       mapInstanceRef.current.fitBounds(bounds);
+      
+      // Añadir un poco de padding para que los marcadores no queden en el borde
+      google.maps.event.addListenerOnce(mapInstanceRef.current, 'bounds_changed', () => {
+        const zoom = mapInstanceRef.current?.getZoom();
+        if (zoom && zoom > 15) {
+          mapInstanceRef.current?.setZoom(15); // Limitar zoom máximo para evitar que quede demasiado cerca
+        }
+      });
     }
   }, [center, markers, polyline, zoom]);
 
-  // Cargar la API de Google Maps si no está disponible
+  // Asegurar que Google Maps esté cargado antes de usar el mapa
   useEffect(() => {
-    if (window.google) return;
-
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=geometry`;
-    script.async = true;
-    script.defer = true;
+    if (!window.google || !window.google.maps) {
+      console.log('⏳ Esperando a que Google Maps se cargue...');
+      return;
+    }
     
-    script.onload = () => {
-      // El mapa se inicializará cuando el script se cargue
-      if (mapRef.current) {
-        mapInstanceRef.current = new google.maps.Map(mapRef.current, {
-          center,
-          zoom
-        });
-      }
-    };
+    if (!window.google.maps.geometry) {
+      console.error('❌ Google Maps Geometry library no está disponible');
+      return;
+    }
 
-    document.head.appendChild(script);
-
-    return () => {
-      // Limpiar el script si el componente se desmonta
-      const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`);
-      if (existingScript) {
-        existingScript.remove();
-      }
-    };
+    console.log('✅ Google Maps API disponible con geometry library');
   }, []);
 
   return (
