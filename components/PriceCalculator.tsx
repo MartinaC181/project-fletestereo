@@ -1,170 +1,159 @@
-'use client';
+"use client";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
+// (M6) Importamos los tipos y el servicio correctos
+import { freightService } from "@/modules/freight/FreightService";
+import type { QuoteData, ServiceType } from "@/core/events/domain-events";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { RouteInfo } from '@/lib/services/geolocation.service';
-import { pricingService, PriceCalculation } from '@/lib/services/pricing.service';
-import { Calculator, Package, Clock, DollarSign } from 'lucide-react';
+export function PriceCalculator() {
+  const [formData, setFormData] = useState({
+    origen: "Corrientes, Argentina",
+    destino: "",
+    tipoServicio: "" as ServiceType,
+    pisosEscalera: 0,
+  });
 
-interface PriceCalculatorProps {
-  routeInfo: RouteInfo | null;
-  onPriceCalculated?: (calculation: PriceCalculation) => void;
-}
+  const [quoteResult, setQuoteResult] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-export const PriceCalculator = ({ routeInfo, onPriceCalculated }: PriceCalculatorProps) => {
-  const [weight, setWeight] = useState<number>(5);
-  const [urgency, setUrgency] = useState<'standard' | 'express' | 'urgent'>('standard');
-  const [priceCalculation, setPriceCalculation] = useState<PriceCalculation | null>(null);
-
-  const urgencyLevels = pricingService.getUrgencyLevels();
-
-  useEffect(() => {
-    if (routeInfo && weight > 0) {
-      const calculation = pricingService.calculatePrice(routeInfo, weight, urgency);
-      setPriceCalculation(calculation);
-      onPriceCalculated?.(calculation);
-    }
-  }, [routeInfo, weight, urgency, onPriceCalculated]);
-
-  const handleWeightChange = (value: string) => {
-    const numValue = parseFloat(value);
-    if (!isNaN(numValue) && numValue >= 0) {
-      setWeight(numValue);
-    }
+  const handleInputChange = (
+    name: keyof typeof formData,
+    value: string | number | ServiceType
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    setQuoteResult(null); // Resetea el resultado si cambian los datos
+    setError(null);
   };
 
-  if (!routeInfo) {
-    return (
-      <Card className="opacity-50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calculator className="h-5 w-5" />
-            Calculadora de Precios
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-500 text-center py-8">
-            Primero calcula la ruta para obtener una cotización
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  /**
+   * (M2) Llama al 'freightService' unificado
+   */
+  const handleCalculate = async () => {
+    if (!formData.origen || !formData.destino || !formData.tipoServicio) {
+      setError("Por favor, completa todos los campos obligatorios.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      // 1. Creamos el objeto QuoteData (M6)
+      const quoteData: QuoteData = {
+        origen: formData.origen,
+        destino: formData.destino,
+        tipoServicio: formData.tipoServicio,
+        pisosEscalera: Number(formData.pisosEscalera) || 0,
+        // Rellenamos datos dummy para los campos no usados aquí
+        fecha: new Date().toISOString().split("T")[0], 
+        franja: "dia", 
+      };
+      // 2. Llamamos al servicio principal (M2)
+      // Este servicio ya incluye la lógica de M1 (Geo) y M15 (Config)
+      const result = await freightService.requestQuote(quoteData);
+      setQuoteResult(result.total);
+    } catch (err: any) {
+      console.error("[PriceCalculator] Error:", err);
+      setError(err.message || "No se pudo calcular la cotización.");
+      setQuoteResult(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calculator className="h-5 w-5" />
-          Calculadora de Precios
-        </CardTitle>
+        <CardTitle>Calculadora Rápida de Precios</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Configuración del envío */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="weight" className="flex items-center gap-2">
-              <Package className="h-4 w-4" />
-              Peso (kg)
-            </Label>
-            <Input
-              id="weight"
-              type="number"
-              value={weight}
-              onChange={(e) => handleWeightChange(e.target.value)}
-              min="0"
-              step="0.1"
-              placeholder="Peso en kilogramos"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="urgency" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Tipo de envío
-            </Label>
-            <Select value={urgency} onValueChange={(value: any) => setUrgency(value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {urgencyLevels.map((level) => (
-                  <SelectItem key={level.level} value={level.level}>
-                    <div className="flex flex-col">
-                      <span className="capitalize">{level.level}</span>
-                      <span className="text-xs text-gray-500">{level.description}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="origen">Origen</Label>
+          <Input
+            id="origen"
+            value={formData.origen}
+            onChange={(e) => handleInputChange("origen", e.target.value)}
+            placeholder="Ciudad de origen"
+          />
         </div>
 
-        {/* Desglose de precios */}
-        {priceCalculation && (
-          <div className="space-y-4">
-            <Separator />
-            
-            <div className="space-y-3">
-              <h4 className="font-medium flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                Desglose de Precios
-              </h4>
-              
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>Precio base:</span>
-                  <span>{pricingService.formatPrice(priceCalculation.breakdown.base)}</span>
-                </div>
-                
-                <div className="flex justify-between">
-                  <span>Distancia ({routeInfo.distance.toFixed(1)} km):</span>
-                  <span>{pricingService.formatPrice(priceCalculation.breakdown.distance)}</span>
-                </div>
-                
-                {priceCalculation.breakdown.weight > 0 && (
-                  <div className="flex justify-between">
-                    <span>Recargo por peso ({weight} kg):</span>
-                    <span>+{pricingService.formatPrice(priceCalculation.breakdown.weight)}</span>
-                  </div>
-                )}
-                
-                {priceCalculation.breakdown.urgency > 0 && (
-                  <div className="flex justify-between">
-                    <span>Recargo por urgencia:</span>
-                    <span>+{pricingService.formatPrice(priceCalculation.breakdown.urgency)}</span>
-                  </div>
-                )}
-              </div>
-              
-              <Separator />
-              
-              <div className="flex justify-between items-center text-lg font-bold">
-                <span>Total:</span>
-                <span className="text-green-600">
-                  {pricingService.formatPrice(priceCalculation.totalPrice)}
-                </span>
-              </div>
-            </div>
+        <div className="space-y-2">
+          <Label htmlFor="destino">Destino</Label>
+          <Input
+            id="destino"
+            value={formData.destino}
+            onChange={(e) => handleInputChange("destino", e.target.value)}
+            placeholder="Ciudad de destino"
+          />
+        </div>
 
-            {/* Información adicional */}
-            <div className="bg-blue-50 p-3 rounded-lg text-sm">
-              <p className="text-blue-800">
-                <strong>Tiempo estimado:</strong> {Math.round(routeInfo.duration)} minutos
-              </p>
-              <p className="text-blue-700 mt-1">
-                Este precio es una estimación. El costo final puede variar según condiciones específicas del envío.
-              </p>
-            </div>
+        <div className="space-y-2">
+          <Label htmlFor="tipoServicio">Tipo de Servicio</Label>
+          <Select
+            value={formData.tipoServicio}
+            onValueChange={(value: ServiceType) => handleInputChange("tipoServicio", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona un servicio" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="mudanza_completa">Mudanza Completa</SelectItem>
+              <SelectItem value="mini_mudanza">Mini Mudanza</SelectItem>
+              <SelectItem value="flete_liviano">Flete Liviano</SelectItem>
+              <SelectItem value="viaje_largo">Viaje Largo</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="pisosEscalera">Pisos/Escaleras</Label>
+          <Input
+            id="pisosEscalera"
+            type="number"
+            min="0"
+            value={formData.pisosEscalera}
+            onChange={(e) => handleInputChange("pisosEscalera", parseInt(e.target.value) || 0)}
+            placeholder="Número de pisos con escaleras"
+          />
+        </div>
+
+        <Button onClick={handleCalculate} disabled={isLoading} className="w-full">
+          {isLoading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            "Calcular Precio"
+          )}
+        </Button>
+
+        {error && (
+          <p className="text-sm text-center font-medium text-destructive">
+            {error}
+          </p>
+        )}
+
+        {quoteResult !== null && !isLoading && !error && (
+          <div className="text-center">
+            <p className="text-lg">Precio Estimado:</p>
+            <p className="text-4xl font-bold text-primary">
+              ${quoteResult.toLocaleString()}
+            </p>
           </div>
         )}
       </CardContent>
     </Card>
   );
-};
+}
