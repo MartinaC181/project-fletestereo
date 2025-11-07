@@ -15,7 +15,7 @@ const ServicesSection = () => {
       icon: <Truck className="h-8 w-8 text-accent-yellow" />,
       title: "Mini Mudanza",
       description: "Mudanza de elementos esenciales: heladera, lavarropa, cocina, comedor y cama",
-      features: ["Mayor a 10 cuadras: $40.000", "Menor a 10 cuadras: $30.000", "Precio varía por escaleras"]
+      features: ["Mayor a 1 km: $40.000", "Menor a 1 km: $30.000", "Precio varía por escaleras"]
     },
     {
       icon: <Package className="h-8 w-8 text-accent-yellow" />,

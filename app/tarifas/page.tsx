@@ -8,21 +8,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { Calculator, Truck, Home, Package, MapPin, Clock, CheckCircle, Phone, Shield } from 'lucide-react';
+import { Calculator, Truck, Home, Package, MapPin, Clock, CheckCircle, Phone, Building, Route, Weight } from 'lucide-react';
 
 export default function TarifasPage() {
   const serviceTypes = [
-    { icon: <Home className="h-8 w-8 text-accent-orange" />, title: 'Mudanza Completa', subtitle: 'Hasta llenar la camioneta - Corrientes Capital', basePrice: 80000, priceUnit: 'precio fijo', zones: [ { name: 'Corrientes Capital', price: 80000, time: 'Día completo' }, { name: 'Con escaleras', price: 80000, time: 'Precio puede variar' } ], features: ['Incluye todo hasta llenar camioneta','Espejos y pantallas aparte','Precio puede aumentar por escaleras','Servicio completo'], popular: true },
-    { icon: <Truck className="h-8 w-8 text-accent-orange" />, title: 'Mini Mudanza (Mayor a 10 cuadras)', subtitle: 'Elementos esenciales - Corrientes', basePrice: 40000, priceUnit: 'precio fijo', zones: [ { name: 'Mayor a 10 cuadras', price: 40000, time: 'Medio día' }, { name: 'Con escaleras', price: 40000, time: 'Precio varía' } ], features: ['Heladera, lavarropa, cocina','Juego de comedor y 1 cama','Precio varía por escaleras','Recorrido mayor a 10 cuadras'], popular: false },
-    { icon: <Package className="h-8 w-8 text-accent-orange" />, title: 'Mini Mudanza (Menor a 10 cuadras)', subtitle: 'Elementos esenciales - Distancia corta', basePrice: 30000, priceUnit: 'precio fijo', zones: [ { name: 'Menor a 10 cuadras', price: 30000, time: 'Pocas horas' } ], features: ['Heladera, lavarropa, cocina','Juego de comedor y 1 cama','No incluye bolsas ni cajas','Distancia hasta 10 cuadras'], popular: false },
-    { icon: <MapPin className="h-8 w-8 text-accent-orange" />, title: 'Flete Liviano Recorrido Largo', subtitle: '1 a 4 objetos - Mayor a 10 cuadras', basePrice: 25000, priceUnit: 'precio fijo', zones: [ { name: 'Mayor a 10 cuadras', price: 25000, time: '2-4 horas' } ], features: ['De 1 a 4 objetos','Mayor a 10 cuadras en Corrientes','Puede incluir ayudante','Ideal para pocos objetos'], popular: false },
-    { icon: <Truck className="h-8 w-8 text-accent-orange" />, title: 'Flete Liviano Recorrido Corto', subtitle: '1 a 4 objetos livianos - Hasta 10 cuadras', basePrice: 20000, priceUnit: 'precio fijo', zones: [ { name: 'Hasta 10 cuadras', price: 20000, time: '1-2 horas' } ], features: ['De 1 a 4 objetos livianos','Objetos que levanta 1 persona','Distancia hasta 10 cuadras','Servicio económico'], popular: false }
+    { icon: <Home className="h-8 w-8 text-accent-orange" />, title: 'Mudanza Completa', subtitle: 'Hasta llenar la camioneta - Corrientes Capital', basePrice: 80000, features: ['Incluye todo hasta llenar camioneta','Espejos y pantallas aparte','Servicio completo'], popular: true, hasStairsVariation: true },
+    { icon: <Truck className="h-8 w-8 text-accent-orange" />, title: 'Mini Mudanza (Mayor a 1 km)', subtitle: 'Elementos esenciales - Corrientes', basePrice: 40000, features: ['Heladera, lavarropa, cocina','Juego de comedor y 1 cama','Recorrido mayor a 1 km'], popular: false, hasStairsVariation: true },
+    { icon: <Package className="h-8 w-8 text-accent-orange" />, title: 'Mini Mudanza (Menor a 1 km)', subtitle: 'Elementos esenciales - Distancia corta', basePrice: 30000, features: ['Heladera, lavarropa, cocina','Juego de comedor y 1 cama','No incluye bolsas ni cajas','Distancia hasta 1 km'], popular: false, hasStairsVariation: true },
+    { icon: <MapPin className="h-8 w-8 text-accent-orange" />, title: 'Flete Liviano Recorrido Largo', subtitle: '1 a 4 objetos - Mayor a 1 km', basePrice: 25000, features: ['De 1 a 4 objetos','Mayor a 1 km en Corrientes','Puede incluir ayudante','Ideal para pocos objetos'], popular: false, hasStairsVariation: true },
+    { icon: <Truck className="h-8 w-8 text-accent-orange" />, title: 'Flete Liviano Recorrido Corto', subtitle: '1 a 4 objetos livianos - Hasta 1 km', basePrice: 20000, features: ['De 1 a 4 objetos livianos','Objetos que levanta 1 persona','Distancia hasta 1 km','Servicio económico'], popular: false, hasStairsVariation: true },
+    { icon: <Route className="h-8 w-8 text-accent-orange" />, title: 'Fuera de Capital', subtitle: 'Servicios interurbanos', basePrice: null, features: ['Desde y hacia Corrientes','Tarifa según distancia','Consultar disponibilidad','Presupuesto personalizado','Requiere seña'], popular: false, hasStairsVariation: false }
   ];
   const factors = [
-    { icon: <MapPin className="h-6 w-6 text-primary" />, title: 'Distancia', description: 'Calculamos la ruta más eficiente para optimizar costos' },
-    { icon: <Clock className="h-6 w-6 text-primary" />, title: 'Horario', description: 'Los precios pueden variar según el horario elegido' },
-    { icon: <Truck className="h-6 w-6 text-primary" />, title: 'Tipo de Vehículo', description: 'Seleccionamos el vehículo ideal según tu carga' },
-    { icon: <Shield className="h-6 w-6 text-primary" />, title: 'Valor Asegurado', description: 'El seguro se calcula según el valor declarado' }
+    { icon: <Route className="h-6 w-6 text-primary" />, title: 'Distancia', description: 'Calculamos la ruta más eficiente para optimizar costos' },
+    { icon: <Building className="h-6 w-6 text-primary" />, title: 'Escaleras', description: 'El precio puede variar según cantidad de pisos y dificultad' },
+    { icon: <MapPin className="h-6 w-6 text-primary" />, title: 'Flete Interurbano', description: 'Servicios hacia otras ciudades con tarifas especiales' },
+    { icon: <Weight className="h-6 w-6 text-primary" />, title: 'Volumen de Carga', description: 'Evaluamos la cantidad y tipo de objetos a transportar' }
   ];
   return (
     <AnimatePresence mode="wait" initial={false}>
@@ -48,20 +49,28 @@ export default function TarifasPage() {
                   <h2 className="text-3xl lg:text-4xl font-bold text-primary mb-4">Nuestras Tarifas</h2>
                   <p className="text-lg text-muted-foreground">Precios competitivos para todos los tipos de servicio</p>
                 </div>
-                <div className="grid lg:grid-cols-3 gap-8">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {serviceTypes.map((service,i)=>(
-                    <Card key={i} className={`relative hover:shadow-xl transition-all duration-300 ${service.popular? 'border-accent-orange shadow-lg scale-105':'border-border'}`}>
+                    <Card key={i} className={`relative hover:shadow-xl transition-all duration-300 flex flex-col ${service.popular? 'border-accent-orange shadow-lg scale-105':'border-border'}`}>
                       {service.popular && <div className="absolute -top-3 left-1/2 transform -translate-x-1/2"><Badge className="bg-accent-orange text-white px-4 py-1">Más Popular</Badge></div>}
                       <CardHeader className="text-center pb-4">
                         <div className="bg-accent-orange/10 p-4 rounded-full w-fit mx-auto mb-4">{service.icon}</div>
                         <CardTitle className="text-xl text-primary">{service.title}</CardTitle>
                         <CardDescription>{service.subtitle}</CardDescription>
-                        <div className="mt-4"><span className="text-3xl font-bold text-primary">${service.basePrice.toLocaleString()}</span><span className="text-muted-foreground ml-2">{service.priceUnit}</span></div>
+                        <div className="mt-4">
+                          {service.basePrice ? (
+                            <span className="text-3xl font-bold text-primary">${service.basePrice.toLocaleString()}</span>
+                          ) : (
+                            <span className="text-2xl font-bold text-primary">Presupuesto<br/>Personalizado</span>
+                          )}
+                        </div>
+                        {service.hasStairsVariation && (
+                          <p className="text-xs text-amber-600 mt-2">* El precio puede variar por escaleras</p>
+                        )}
                       </CardHeader>
-                      <CardContent className="space-y-6">
-                        <div><h4 className="font-medium text-primary mb-3">Incluye:</h4><ul className="space-y-2">{service.features.map((f,fi)=>(<li key={fi} className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" /><span className="text-muted-foreground">{f}</span></li>))}</ul></div>
-                        <div><h4 className="font-medium text-primary mb-3">Tarifas por zona:</h4><div className="space-y-2">{service.zones.map((z,zi)=>(<div key={zi} className="flex justify-between items-center text-sm"><span className="text-muted-foreground">{z.name}</span><div className="text-right"><span className="font-medium text-primary">${z.price.toLocaleString()}</span><span className="text-xs text-muted-foreground block">{z.time}</span></div></div>))}</div></div>
-                        <Link href="/solicitar-flete" className="block"><Button variant="hero" className="w-full">Solicitar Servicio</Button></Link>
+                      <CardContent className="flex flex-col flex-grow space-y-6">
+                        <div className="flex-grow"><h4 className="font-medium text-primary mb-3">Incluye:</h4><ul className="space-y-2">{service.features.map((f,fi)=>(<li key={fi} className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" /><span className="text-muted-foreground">{f}</span></li>))}</ul></div>
+                        <div className="mt-auto"><Link href="/solicitar-flete" className="block"><Button variant="hero" className="w-full">Solicitar Servicio</Button></Link></div>
                       </CardContent>
                     </Card>
                   ))}
