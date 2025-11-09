@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, X } from 'lucide-react';
@@ -13,16 +12,19 @@ import ServicesSection from '@/components/ServicesSection';
 import QuoteForm from '@/components/QuoteForm';
 import Footer from '@/components/Footer';
 
-function HomePageContent() {
-  const searchParams = useSearchParams();
+export default function HomePage() {
   const [showAccessAlert, setShowAccessAlert] = useState(false);
 
   useEffect(() => {
-    const error = searchParams.get('error');
-    if (error === 'access_denied') {
-      setShowAccessAlert(true);
+    // Verificar parámetros de URL después del renderizado
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const error = urlParams.get('error');
+      if (error === 'access_denied') {
+        setShowAccessAlert(true);
+      }
     }
-  }, [searchParams]);
+  }, []);
 
   return (
     <AnimatePresence mode="wait" initial={false}>
@@ -63,20 +65,5 @@ function HomePageContent() {
         </div>
       </PageTransition>
     </AnimatePresence>
-  );
-}
-
-export default function HomePage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Cargando Fletestereo...</p>
-        </div>
-      </div>
-    }>
-      <HomePageContent />
-    </Suspense>
   );
 }
