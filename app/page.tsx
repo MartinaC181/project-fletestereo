@@ -12,9 +12,8 @@ import Hero from '@/components/Hero';
 import ServicesSection from '@/components/ServicesSection';
 import QuoteForm from '@/components/QuoteForm';
 import Footer from '@/components/Footer';
-import { Suspense } from 'react';
 
-function HomePageContent() {
+export default function HomePage() {
   const searchParams = useSearchParams();
   const [showAccessAlert, setShowAccessAlert] = useState(false);
 
@@ -64,13 +63,5 @@ function HomePageContent() {
         </div>
       </PageTransition>
     </AnimatePresence>
-  );
-}
-
-export default function HomePage() {
-  return (
-    <Suspense fallback={<div>Cargando...</div>}>
-      <HomePageContent />
-    </Suspense>
   );
 }
