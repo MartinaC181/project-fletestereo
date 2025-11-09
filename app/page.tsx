@@ -13,7 +13,7 @@ import ServicesSection from '@/components/ServicesSection';
 import QuoteForm from '@/components/QuoteForm';
 import Footer from '@/components/Footer';
 
-function HomePageContent() {
+export default function HomePageContent() {
   const searchParams = useSearchParams();
   const [showAccessAlert, setShowAccessAlert] = useState(false);
 
@@ -63,20 +63,5 @@ function HomePageContent() {
         </div>
       </PageTransition>
     </AnimatePresence>
-  );
-}
-
-export default function HomePage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Cargando Fletestereo...</p>
-        </div>
-      </div>
-    }>
-      <HomePageContent />
-    </Suspense>
   );
 }
