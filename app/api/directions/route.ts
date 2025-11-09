@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const runtime = 'nodejs';
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const origin = searchParams.get('origin');
