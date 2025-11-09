@@ -32,7 +32,7 @@ export default function ContactoPage() {
             <section className="relative bg-gradient-to-br from-primary/5 via-background to-accent-orange-light/10 overflow-hidden">
               <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
                 <div className="text-center max-w-4xl mx-auto">
-                  <h1 className="text-4xl lg:text-6xl font-bold text-primary mb-6">Hablemos de tu <span className="block text-accent-orange">Proyecto</span></h1>
+                  <h1 className="text-4xl lg:text-6xl font-bold text-primary mb-6">Contactanos <span className="block text-accent-orange">Ahora</span></h1>
                   <p className="text-lg lg:text-xl text-muted-foreground mb-8">Estamos aquí para ayudarte. Obtené respuestas inmediatas a tus consultas y cotizaciones personalizadas sin compromiso.</p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Button variant="hero" size="lg" className="w-full sm:w-auto" onClick={contactMethods[1].handler}><MessageSquare className="mr-2 h-5 w-5" />WhatsApp Directo</Button>
