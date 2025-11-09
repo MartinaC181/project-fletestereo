@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Alert, AlertDescription } from '@/src/components/ui/alert';
+import { Alert, AlertDescription } from '../components/ui/alert';
 import { AlertCircle, X } from 'lucide-react';
-import { Button } from '@/src/components/ui/button';
-import PageTransition from '@/src/components/PageTransition';
-import Header from '@/src/components/Header';
-import Hero from '@/src/components/Hero';
-import ServicesSection from '@/src/components/ServicesSection';
-import QuoteForm from '@/src/components/QuoteForm';
-import Footer from '@/src/components/Footer';
+import { Button } from '../components/ui/button';
+import PageTransition from '../components/PageTransition';
+import Header from '../components/Header';
+import Hero from '../components/Hero';
+import ServicesSection from '../components/ServicesSection';
+import QuoteForm from '../components/QuoteForm';
+import Footer from '../components/Footer';
 
 export default function HomePage() {
   const [showAccessAlert, setShowAccessAlert] = useState(false);
