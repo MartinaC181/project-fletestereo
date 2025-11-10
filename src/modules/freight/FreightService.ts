@@ -63,8 +63,9 @@ export class FreightService {
         totalPrice += (quoteData.pisosEscalera * pricingRules.EXTRA_PISO_ESCALERA);
       }
 
-      // Determinar si requiere seña (viajes largos)
-      const requiereSenia = distanciaReal > pricingRules.LIMITE_KM_CORTA;
+      // Determinar si requiere seña (viajes interurbanos - fuera de Corrientes)
+      const esViajeInterurbano = this.isInterurbanTrip(quoteData.origen, quoteData.destino);
+      const requiereSenia = esViajeInterurbano;
       const montoSenia = requiereSenia ? totalPrice * (pricingRules.PORCENTAJE_SENIA_LARGA / 100) : 0;
 
       // TODO: Aplicar descuentos por volumen/promociones (implementación futura)
@@ -106,15 +107,24 @@ export class FreightService {
       case 'viaje_largo': serviceMultiplier = 1.3; break;
     }
 
-    const total = Math.round(precioBase * serviceMultiplier);
+    let total = Math.round(precioBase * serviceMultiplier);
+    
+    // Agregar costo por escaleras
+    const extrasEscaleras = quoteData.pisosEscalera ? quoteData.pisosEscalera * 5000 : 0;
+    total += extrasEscaleras;
+    
+    // Determinar si requiere seña basado en ubicación (no en monto)
+    const esViajeInterurbano = this.isInterurbanTrip(quoteData.origen, quoteData.destino);
+    const requiereSenia = esViajeInterurbano;
+    const montoSenia = requiereSenia ? Math.round(total * 0.3) : 0;
     
     return {
       km: estimatedKm,
       tarifaBase: precioBase,
-      extras: quoteData.pisosEscalera ? { 'pisos_escalera': quoteData.pisosEscalera * 5000 } : {},
+      extras: quoteData.pisosEscalera ? { 'pisos_escalera': extrasEscaleras } : {},
       total,
-      requiereSenia: total > 50000,
-      montoSenia: total > 50000 ? Math.round(total * 0.3) : 0
+      requiereSenia,
+      montoSenia
     };
   }
 
@@ -148,6 +158,47 @@ export class FreightService {
   private isValidServiceType(tipoServicio: string): boolean {
     const validTypes = ['mudanza_completa', 'mini_mudanza', 'flete_liviano', 'viaje_largo'];
     return validTypes.includes(tipoServicio);
+  }
+
+  /**
+   * Determina si el viaje es interurbano (fuera de la ciudad de Corrientes)
+   * La seña solo se requiere cuando origen o destino están fuera de Corrientes
+   */
+  private isInterurbanTrip(origen: string, destino: string): boolean {
+    // Normalizamos las direcciones a lowercase para comparación
+    const origenNorm = origen.toLowerCase();
+    const destinoNorm = destino.toLowerCase();
+    
+    // Lista de términos que indican que es dentro de Corrientes Capital
+    const corrientesTerms = [
+      'corrientes',
+      'corrientes capital',
+      'ciudad de corrientes',
+      'ctes',
+      'w3w',  // Barrios de Corrientes
+      'w3e',
+      'w3c',
+      'w3a'
+    ];
+    
+    // Verificar si el origen está en Corrientes
+    const origenEnCorrientes = corrientesTerms.some(term => origenNorm.includes(term));
+    
+    // Verificar si el destino está en Corrientes  
+    const destinoEnCorrientes = corrientesTerms.some(term => destinoNorm.includes(term));
+    
+    // Es viaje interurbano si alguno de los dos NO está en Corrientes
+    const esInterurbano = !origenEnCorrientes || !destinoEnCorrientes;
+    
+    console.log('[FreightService] Análisis viaje interurbano:', {
+      origen,
+      destino,
+      origenEnCorrientes,
+      destinoEnCorrientes,
+      esInterurbano
+    });
+    
+    return esInterurbano;
   }
 
   /**

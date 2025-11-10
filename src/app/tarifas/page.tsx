@@ -12,12 +12,12 @@ import { Calculator, Truck, Home, Package, MapPin, Clock, CheckCircle, Phone, Bu
 
 export default function TarifasPage() {
   const serviceTypes = [
-    { icon: <Home className="h-8 w-8 text-accent-orange" />, title: 'Mudanza Completa', subtitle: 'Hasta llenar la camioneta - Corrientes Capital', basePrice: 80000, features: ['Incluye todo hasta llenar camioneta','Espejos y pantallas aparte','Servicio completo'], popular: true, hasStairsVariation: true },
-    { icon: <Truck className="h-8 w-8 text-accent-orange" />, title: 'Mini Mudanza (Mayor a 1 km)', subtitle: 'Elementos esenciales - Corrientes', basePrice: 40000, features: ['Heladera, lavarropa, cocina','Juego de comedor y 1 cama','Recorrido mayor a 1 km'], popular: false, hasStairsVariation: true },
-    { icon: <Package className="h-8 w-8 text-accent-orange" />, title: 'Mini Mudanza (Menor a 1 km)', subtitle: 'Elementos esenciales - Distancia corta', basePrice: 30000, features: ['Heladera, lavarropa, cocina','Juego de comedor y 1 cama','No incluye bolsas ni cajas','Distancia hasta 1 km'], popular: false, hasStairsVariation: true },
-    { icon: <MapPin className="h-8 w-8 text-accent-orange" />, title: 'Flete Liviano Recorrido Largo', subtitle: '1 a 4 objetos - Mayor a 1 km', basePrice: 25000, features: ['De 1 a 4 objetos','Mayor a 1 km en Corrientes','Puede incluir ayudante','Ideal para pocos objetos'], popular: false, hasStairsVariation: true },
-    { icon: <Truck className="h-8 w-8 text-accent-orange" />, title: 'Flete Liviano Recorrido Corto', subtitle: '1 a 4 objetos livianos - Hasta 1 km', basePrice: 20000, features: ['De 1 a 4 objetos livianos','Objetos que levanta 1 persona','Distancia hasta 1 km','Servicio económico'], popular: false, hasStairsVariation: true },
-    { icon: <Route className="h-8 w-8 text-accent-orange" />, title: 'Fuera de Capital', subtitle: 'Servicios interurbanos', basePrice: null, features: ['Desde y hacia Corrientes','Tarifa según distancia','Consultar disponibilidad','Presupuesto personalizado','Requiere seña'], popular: false, hasStairsVariation: false }
+    { icon: <Home className="h-8 w-8 text-accent-orange" />, title: 'Mudanza Completa', subtitle: 'Hasta llenar la camioneta - Corrientes Capital', basePrice: 80000, features: ['Incluye todo hasta llenar camioneta','Espejos y pantallas aparte','Servicio completo'], popular: true, hasStairsVariation: true, serviceKey: 'mudanza_completa' },
+    { icon: <Truck className="h-8 w-8 text-accent-orange" />, title: 'Mini Mudanza (Mayor a 1 km)', subtitle: 'Elementos esenciales - Corrientes', basePrice: 40000, features: ['Heladera, lavarropa, cocina','Juego de comedor y 1 cama','Recorrido mayor a 1 km'], popular: false, hasStairsVariation: true, serviceKey: 'mini_mudanza' },
+    { icon: <Package className="h-8 w-8 text-accent-orange" />, title: 'Mini Mudanza (Menor a 1 km)', subtitle: 'Elementos esenciales - Distancia corta', basePrice: 30000, features: ['Heladera, lavarropa, cocina','Juego de comedor y 1 cama','No incluye bolsas ni cajas','Distancia hasta 1 km'], popular: false, hasStairsVariation: true, serviceKey: 'mini_mudanza' },
+    { icon: <MapPin className="h-8 w-8 text-accent-orange" />, title: 'Flete Liviano Recorrido Largo', subtitle: '1 a 4 objetos - Mayor a 1 km', basePrice: 25000, features: ['De 1 a 4 objetos','Mayor a 1 km en Corrientes','Puede incluir ayudante','Ideal para pocos objetos'], popular: false, hasStairsVariation: true, serviceKey: 'flete_liviano' },
+    { icon: <Truck className="h-8 w-8 text-accent-orange" />, title: 'Flete Liviano Recorrido Corto', subtitle: '1 a 4 objetos livianos - Hasta 1 km', basePrice: 20000, features: ['De 1 a 4 objetos livianos','Objetos que levanta 1 persona','Distancia hasta 1 km','Servicio económico'], popular: false, hasStairsVariation: true, serviceKey: 'flete_liviano' },
+    { icon: <Route className="h-8 w-8 text-accent-orange" />, title: 'Fuera de Capital', subtitle: 'Servicios interurbanos', basePrice: null, features: ['Desde y hacia Corrientes','Tarifa según distancia','Consultar disponibilidad','Presupuesto personalizado','Requiere seña'], popular: false, hasStairsVariation: false, serviceKey: 'viaje_largo' }
   ];
   const factors = [
     { icon: <Route className="h-6 w-6 text-primary" />, title: 'Distancia', description: 'Calculamos la ruta más eficiente para optimizar costos' },
@@ -70,7 +70,7 @@ export default function TarifasPage() {
                       </CardHeader>
                       <CardContent className="flex flex-col flex-grow space-y-6">
                         <div className="flex-grow"><h4 className="font-medium text-primary mb-3">Incluye:</h4><ul className="space-y-2">{service.features.map((f,fi)=>(<li key={fi} className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" /><span className="text-muted-foreground">{f}</span></li>))}</ul></div>
-                        <div className="mt-auto"><Link href="/solicitar-flete" className="block"><Button variant="hero" className="w-full">Solicitar Servicio</Button></Link></div>
+                        <div className="mt-auto"><Link href={`/solicitar-flete?servicio=${service.serviceKey}`} className="block"><Button variant="hero" className="w-full">Solicitar Servicio</Button></Link></div>
                       </CardContent>
                     </Card>
                   ))}
