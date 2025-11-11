@@ -1,66 +1,69 @@
 // src/modules/config/ConfigService.ts
-import { supabase } from "@/src/integrations/supabase/client";
-import type { PricingRules, ConfigRow } from "./config.types";
+import type { PricingRules } from "./config.types";
 
 class ConfigService {
+  private readonly STORAGE_KEY = 'fletestereo_config';
 
-  // Mapea los nombres de tu BD a los nombres de la lógica de M15
-  private mapRowToRules(dbConfig: ConfigRow): PricingRules {
-    return {
-      // Asumimos que los combos están en 'extras_json'
-      COMBO_MUDANZA_COMPLETA: dbConfig.extras_json?.COMBO_MUDANZA_COMPLETA || 80000,
-      COMBO_MINI_MUDANZA_LARGA: dbConfig.extras_json?.COMBO_MINI_MUDANZA_LARGA || 40000,
-      COMBO_MINI_MUDANZA_CORTA: dbConfig.extras_json?.COMBO_MINI_MUDANZA_CORTA || 30000,
-      COMBO_FLETE_LIVIANO_LARGO: dbConfig.extras_json?.COMBO_FLETE_LIVIANO_LARGO || 25000,
-      COMBO_FLETE_LIVIANO_CORTO: dbConfig.extras_json?.COMBO_FLETE_LIVIANO_CORTO || 20000,
+  // Configuración por defecto
+  private defaultRules: PricingRules = {
+    // Combos locales
+    COMBO_MUDANZA_COMPLETA: 80000,
+    COMBO_MINI_MUDANZA_LARGA: 40000,
+    COMBO_MINI_MUDANZA_CORTA: 30000,
+    COMBO_FLETE_LIVIANO_LARGO: 25000,
+    COMBO_FLETE_LIVIANO_CORTO: 20000,
 
-      // Mapeo de columnas directas
-      PRECIO_MINIMO_FLETE: dbConfig.tarifa_base || 20000, // Reutilizamos tarifa_base como precio mínimo
-      EXTRA_PISO_ESCALERA: dbConfig.extras_json?.EXTRA_PISO_ESCALERA || 10000,
-      PRECIO_COMBUSTIBLE_KM: dbConfig.precio_km || 300, // Reutilizamos precio_km
-      PORCENTAJE_SENIA_LARGA: dbConfig.porcentaje_senia || 50, // Reutilizamos porcentaje_senia
-      LIMITE_KM_CORTA: dbConfig.umbral_km || 1, // Reutilizamos umbral_km
-    };
+    // Variables dinámicas
+    PRECIO_MINIMO_FLETE: 20000,
+    EXTRA_PISO_ESCALERA: 10000,
+    PRECIO_COMBUSTIBLE_KM: 300,
+    PORCENTAJE_SENIA_LARGA: 50,
+    LIMITE_KM_CORTA: 1,
+  };
+
+  /**
+   * (M15) Obtiene las reglas de precios.
+   * Primero intenta cargar desde localStorage, si no existe usa los valores por defecto.
+   */
+  async getPricingRules(): Promise<PricingRules> {
+    console.log("[ConfigService] Obteniendo reglas de precios desde localStorage");
+    
+    try {
+      if (typeof window !== 'undefined') {
+        const storedConfig = localStorage.getItem(this.STORAGE_KEY);
+        if (storedConfig) {
+          const parsedConfig = JSON.parse(storedConfig);
+          console.log("[ConfigService] Configuración cargada desde localStorage");
+          return { ...this.defaultRules, ...parsedConfig };
+        }
+      }
+      
+      console.log("[ConfigService] Usando configuración por defecto");
+      return this.defaultRules;
+    } catch (error) {
+      console.error("[ConfigService] Error al cargar configuración:", error);
+      return this.defaultRules;
+    }
   }
 
   /**
-   * (M15) Obtiene las reglas de precios desde la fila ÚNICA
-   * de la tabla 'config' de Supabase.
+   * (M15) Guarda las reglas de precios en localStorage.
    */
-  async getPricingRules(): Promise<PricingRules> {
-    console.log("[ConfigService] Obteniendo reglas de precios (Optimizado)");
+  async savePricingRules(rules: PricingRules): Promise<void> {
+    console.log("[ConfigService] Guardando reglas de precios en localStorage...");
 
-    const { data, error } = await supabase
-      .from("config")
-      .select("*")
-      .limit(1) // Tomamos la primera (y única) fila
-      .single();
-    
-    if (error || !data) {
-      console.error("[ConfigService] Error al obtener reglas. Usando valores por defecto.", error?.message);
-      // Creamos un objeto 'ConfigRow' por defecto para el mapeador
-      const defaultDbConfig: ConfigRow = {
-        id: 'default',
-        umbral_km: 1,
-        porcentaje_senia: 50,
-        tarifa_base: 20000,
-        precio_km: 300,
-        extras_json: {
-          COMBO_MUDANZA_COMPLETA: 80000,
-          COMBO_MINI_MUDANZA_LARGA: 40000,
-          COMBO_MINI_MUDANZA_CORTA: 30000,
-          COMBO_FLETE_LIVIANO_LARGO: 25000,
-          COMBO_FLETE_LIVIANO_CORTO: 20000,
-          EXTRA_PISO_ESCALERA: 10000
-        }
-      };
-      return this.mapRowToRules(defaultDbConfig);
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(rules));
+        console.log("[ConfigService] Reglas guardadas exitosamente en localStorage");
+      } else {
+        throw new Error("localStorage no disponible en el servidor");
+      }
+    } catch (error) {
+      console.error("[ConfigService] Error al guardar reglas:", error);
+      throw new Error("No se pudieron guardar las reglas de configuración");
     }
-    
-    return this.mapRowToRules(data as ConfigRow);
   }
-
-  // (La función savePricingRules necesitará una lógica inversa de mapeo)
 }
 
 export const configService = new ConfigService();

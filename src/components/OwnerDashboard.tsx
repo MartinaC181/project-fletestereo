@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Badge } from '@/src/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/tabs';
@@ -7,6 +7,7 @@ import { useAuth } from '@/src/hooks/useAuth';
 import { LogOut, TrendingUp, Users, CheckCircle, Clock, X, Phone, Mail } from 'lucide-react';
 import { FreightHistory } from '@/src/components/FreightHistory';
 import { FreightHistoryStats } from '@/src/components/FreightHistoryStats';
+import { ConfigForm } from './ConfigForm';
 import { freightService } from '@/src/modules/freight';
 import { useToast } from '@/src/hooks/use-toast';
 import type { 
@@ -158,11 +159,12 @@ export const OwnerDashboard: React.FC = () => {
       {/* Contenido del Dashboard */}
       <main className="container mx-auto px-4 py-6">
         <Tabs defaultValue="solicitudes" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
             <TabsTrigger value="solicitudes">Solicitudes</TabsTrigger>
             <TabsTrigger value="pagos">Pagos</TabsTrigger>
             <TabsTrigger value="historial">Historial</TabsTrigger>
             <TabsTrigger value="estadisticas">Estadísticas</TabsTrigger>
+            <TabsTrigger value="config">Tarifas y Reglas</TabsTrigger>
           </TabsList>
           
           <TabsContent value="solicitudes" className="space-y-6">
@@ -524,6 +526,21 @@ export const OwnerDashboard: React.FC = () => {
 
           <TabsContent value="estadisticas" className="space-y-6">
             <FreightHistoryStats />
+          </TabsContent>
+
+          <TabsContent value="config">
+            <Card>
+              <CardHeader>
+                <CardTitle>Configuración de Reglas de Negocio (M15)</CardTitle>
+                <CardDescription>
+                  Ajusta las tarifas, combos y reglas que usa el sistema para
+                  calcular las cotizaciones.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ConfigForm />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>
