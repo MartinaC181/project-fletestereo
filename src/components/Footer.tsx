@@ -29,9 +29,9 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4 dark:text-black">Servicios</h3>
             <ul className="space-y-2 text-sm text-primary-foreground/80 dark:text-black/80">
-              <li><Link href="/servicios" className="hover:text-accent-yellow dark:hover:text-black transition-colors">Mudanza Completa</Link></li>
-              <li><Link href="/servicios" className="hover:text-accent-yellow dark:hover:text-black transition-colors">Mini Mudanza</Link></li>
-              <li><Link href="/servicios" className="hover:text-accent-yellow dark:hover:text-black transition-colors">Flete Liviano</Link></li>
+              <li><Link href="/tarifas" className="hover:text-accent-yellow dark:hover:text-black transition-colors">Mudanza Completa</Link></li>
+              <li><Link href="/tarifas" className="hover:text-accent-yellow dark:hover:text-black transition-colors">Mini Mudanza</Link></li>
+              <li><Link href="/tarifas" className="hover:text-accent-yellow dark:hover:text-black transition-colors">Flete Liviano</Link></li>
               <li><Link href="/tarifas" className="hover:text-accent-yellow dark:hover:text-black transition-colors">Ver Tarifas</Link></li>
             </ul>
           </div>
