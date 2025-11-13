@@ -75,10 +75,21 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-white/20 dark:border-black/20 mt-8 pt-8 text-center">
-          <p className="text-sm text-primary-foreground/60 dark:text-black/60">
-            © 2025 Fletestereo. Todos los derechos reservados.
-          </p>
+        <div className="border-t border-white/20 dark:border-black/20 mt-8 pt-8">
+          <div className="text-center space-y-2">
+            <p className="text-sm text-primary-foreground/60 dark:text-black/60">
+              © 2025 Fletestereo. Todos los derechos reservados.
+            </p>
+            <p className="text-xs text-primary-foreground/50 dark:text-black/50 flex items-center justify-center gap-1">
+              Desarrollado con ❤️ por{" "}
+              <Link 
+                href="/creditos" 
+                className="font-semibold text-accent-yellow hover:text-accent-yellow/80 dark:text-black dark:hover:text-black/80 transition-colors underline decoration-dotted underline-offset-2"
+              >
+                Coderrientes
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </footer>
