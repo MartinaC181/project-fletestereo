@@ -26,54 +26,82 @@ export class FreightService {
       const distanciaReal = quoteData.distance || 20;
       console.log('[FreightService] 📏 Distancia utilizada:', distanciaReal, 'km');
 
-      // Validar tipo de servicio
-      if (!this.isValidServiceType(quoteData.tipoServicio)) {
-        throw new Error(`Tipo de servicio no válido: ${quoteData.tipoServicio}`);
-      }
-
-      // Cálculo base según tipo de servicio usando las tarifas M15
-      let precioBase = 0;
-      
-      switch (quoteData.tipoServicio) {
-        case 'mudanza_completa':
-          precioBase = pricingRules.COMBO_MUDANZA_COMPLETA;
-          break;
-        case 'mini_mudanza':
-          // Usar distancia real para determinar si es corta/larga
-          precioBase = distanciaReal > pricingRules.LIMITE_KM_CORTA 
-            ? pricingRules.COMBO_MINI_MUDANZA_LARGA 
-            : pricingRules.COMBO_MINI_MUDANZA_CORTA;
-          break;
-        case 'flete_liviano':
-          precioBase = distanciaReal > pricingRules.LIMITE_KM_CORTA
-            ? pricingRules.COMBO_FLETE_LIVIANO_LARGO
-            : pricingRules.COMBO_FLETE_LIVIANO_CORTO;
-          break;
-        case 'viaje_largo':
-          // Para viajes largos, usar precio mínimo + combustible por km
-          precioBase = pricingRules.PRECIO_MINIMO_FLETE + (distanciaReal * pricingRules.PRECIO_COMBUSTIBLE_KM);
-          break;
-      }
-
-      // Aplicar modificadores adicionales
-      let totalPrice = precioBase;
-
-      // Modificador por pisos/escaleras
-      if (quoteData.pisosEscalera && quoteData.pisosEscalera > 0) {
-        totalPrice += (quoteData.pisosEscalera * pricingRules.EXTRA_PISO_ESCALERA);
-      }
-
-      // Determinar si requiere seña (viajes interurbanos - fuera de Corrientes)
+      // Determinar si es viaje interurbano (fuera de Corrientes)
       const esViajeInterurbano = this.isInterurbanTrip(quoteData.origen, quoteData.destino);
+      console.log('[FreightService] 🗺️ Tipo de viaje:', esViajeInterurbano ? 'INTERURBANO' : 'URBANO');
+
+      let precioBase = 0;
+      let totalPrice = 0;
+      const extras: Record<string, number> = {};
+
+      if (esViajeInterurbano) {
+        // ===== LÓGICA INTERURBANA =====
+        // Para viajes fuera de Corrientes: solo combustible por KM
+        // NO importa el tipo de servicio ni las escaleras
+        precioBase = pricingRules.PRECIO_MINIMO_FLETE + (distanciaReal * pricingRules.PRECIO_COMBUSTIBLE_KM);
+        totalPrice = precioBase;
+        
+        console.log('[FreightService] 🚛 Cálculo interurbano:');
+        console.log(`  - Precio mínimo: $${pricingRules.PRECIO_MINIMO_FLETE}`);
+        console.log(`  - Combustible: ${distanciaReal}km × $${pricingRules.PRECIO_COMBUSTIBLE_KM} = $${distanciaReal * pricingRules.PRECIO_COMBUSTIBLE_KM}`);
+        
+      } else {
+        // ===== LÓGICA URBANA =====
+        // Para viajes dentro de Corrientes: usar tipo de servicio + escaleras
+        
+        // Validar tipo de servicio para urbanos
+        if (!this.isValidServiceType(quoteData.tipoServicio)) {
+          throw new Error(`Tipo de servicio no válido: ${quoteData.tipoServicio}`);
+        }
+
+        // Calcular precio base según tipo de servicio
+        switch (quoteData.tipoServicio) {
+          case 'mudanza_completa':
+            precioBase = pricingRules.COMBO_MUDANZA_COMPLETA;
+            break;
+          case 'mini_mudanza':
+            precioBase = distanciaReal > pricingRules.LIMITE_KM_CORTA 
+              ? pricingRules.COMBO_MINI_MUDANZA_LARGA 
+              : pricingRules.COMBO_MINI_MUDANZA_CORTA;
+            break;
+          case 'flete_liviano':
+            precioBase = distanciaReal > pricingRules.LIMITE_KM_CORTA
+              ? pricingRules.COMBO_FLETE_LIVIANO_LARGO
+              : pricingRules.COMBO_FLETE_LIVIANO_CORTO;
+            break;
+          case 'viaje_largo':
+            // Viaje largo dentro de la ciudad (caso especial)
+            precioBase = pricingRules.PRECIO_MINIMO_FLETE + (distanciaReal * pricingRules.PRECIO_COMBUSTIBLE_KM);
+            break;
+        }
+
+        totalPrice = precioBase;
+
+        // Aplicar modificador por escaleras (solo en urbanos)
+        if (quoteData.pisosEscalera && quoteData.pisosEscalera > 0) {
+          const extraEscaleras = quoteData.pisosEscalera * pricingRules.EXTRA_PISO_ESCALERA;
+          totalPrice += extraEscaleras;
+          extras['pisos_escalera'] = extraEscaleras;
+        }
+
+        console.log('[FreightService] 🏙️ Cálculo urbano:');
+        console.log(`  - Tipo servicio: ${quoteData.tipoServicio}`);
+        console.log(`  - Precio base: $${precioBase}`);
+        if (extras.pisos_escalera) {
+          console.log(`  - Escaleras: ${quoteData.pisosEscalera} × $${pricingRules.EXTRA_PISO_ESCALERA} = $${extras.pisos_escalera}`);
+        }
+      }
+
+      // Seña: solo para viajes interurbanos (50%)
       const requiereSenia = esViajeInterurbano;
       const montoSenia = requiereSenia ? totalPrice * (pricingRules.PORCENTAJE_SENIA_LARGA / 100) : 0;
 
       // TODO: Aplicar descuentos por volumen/promociones (implementación futura)
 
       const quoteResult: QuoteResult = {
-        km: distanciaReal,  // Usar distancia real
+        km: distanciaReal,
         tarifaBase: precioBase,
-        extras: quoteData.pisosEscalera ? { 'pisos_escalera': quoteData.pisosEscalera * pricingRules.EXTRA_PISO_ESCALERA } : {},
+        extras: extras, // Usar los extras calculados según el tipo de viaje
         total: Math.round(totalPrice),
         requiereSenia,
         montoSenia: Math.round(montoSenia)
@@ -92,36 +120,53 @@ export class FreightService {
   }
 
   /**
-   * Calcula cotización con valores fallback (sin M15)
+   * Calcula cotización con valores fallback (sin M15) - Aplica misma lógica de negocio
    */
   private calculateFallbackQuote(quoteData: QuoteData): QuoteResult {
-    const estimatedKm = 20; // Distancia estimada por defecto
-    const basePricePerKm = 1500;
-    const precioBase = estimatedKm * basePricePerKm;
-    
-    let serviceMultiplier = 1;
-    switch (quoteData.tipoServicio) {
-      case 'mudanza_completa': serviceMultiplier = 1.5; break;
-      case 'mini_mudanza': serviceMultiplier = 1.2; break;
-      case 'flete_liviano': serviceMultiplier = 1.0; break;
-      case 'viaje_largo': serviceMultiplier = 1.3; break;
-    }
-
-    let total = Math.round(precioBase * serviceMultiplier);
-    
-    // Agregar costo por escaleras
-    const extrasEscaleras = quoteData.pisosEscalera ? quoteData.pisosEscalera * 5000 : 0;
-    total += extrasEscaleras;
-    
-    // Determinar si requiere seña basado en ubicación (no en monto)
+    const estimatedKm = 20;
     const esViajeInterurbano = this.isInterurbanTrip(quoteData.origen, quoteData.destino);
+    
+    let precioBase = 0;
+    let total = 0;
+    const extras: Record<string, number> = {};
+    
+    if (esViajeInterurbano) {
+      // INTERURBANO: solo combustible por KM (valores fallback)
+      const precioMinimo = 15000;
+      const combustibleKm = 800;
+      precioBase = precioMinimo + (estimatedKm * combustibleKm);
+      total = precioBase;
+    } else {
+      // URBANO: usar tipo de servicio + escaleras (valores fallback)
+      const basePricePerKm = 1500;
+      precioBase = estimatedKm * basePricePerKm;
+      
+      let serviceMultiplier = 1;
+      switch (quoteData.tipoServicio) {
+        case 'mudanza_completa': serviceMultiplier = 1.5; break;
+        case 'mini_mudanza': serviceMultiplier = 1.2; break;
+        case 'flete_liviano': serviceMultiplier = 1.0; break;
+        case 'viaje_largo': serviceMultiplier = 1.3; break;
+      }
+
+      total = Math.round(precioBase * serviceMultiplier);
+      
+      // Agregar costo por escaleras solo en urbanos
+      if (quoteData.pisosEscalera && quoteData.pisosEscalera > 0) {
+        const extrasEscaleras = quoteData.pisosEscalera * 5000;
+        total += extrasEscaleras;
+        extras['pisos_escalera'] = extrasEscaleras;
+      }
+    }
+    
+    // Seña: solo para viajes interurbanos
     const requiereSenia = esViajeInterurbano;
-    const montoSenia = requiereSenia ? Math.round(total * 0.3) : 0;
+    const montoSenia = requiereSenia ? Math.round(total * 0.5) : 0; // 50% para interurbanos
     
     return {
       km: estimatedKm,
       tarifaBase: precioBase,
-      extras: quoteData.pisosEscalera ? { 'pisos_escalera': extrasEscaleras } : {},
+      extras: extras,
       total,
       requiereSenia,
       montoSenia
@@ -318,31 +363,24 @@ export class FreightService {
         }
       }
 
-      // 2. Crear solicitud CON cotización integrada (ESTRUCTURA SIMPLIFICADA)
-      console.log('[FreightService] 📝 Creando solicitud completa...');
-      const insertData = {
+      // 2. Crear solicitud en tabla requests (TEMPORAL - sin cotización integrada)
+      console.log('[FreightService] 📝 Creando solicitud...');
+      const requestData = {
         client_id: clientId,
         origen: quoteData.origen,
         destino: quoteData.destino,
         fecha: quoteData.fecha,
         franja: quoteData.franja,
         carga_tipo: quoteData.tipoServicio,
-        notas: quoteData.notas || null,
-        estado: 'Solicitada' as const,
-        
-        // Campos de cotización integrados directamente
-        km: calculatedQuote.km,
-        tarifa_base: calculatedQuote.tarifaBase,
-        precio_km: Math.round((calculatedQuote.total - calculatedQuote.tarifaBase) / calculatedQuote.km) || 150,
-        extras_json: calculatedQuote.extras || {},
-        total: calculatedQuote.total
+        notas: `${quoteData.notas || ''}\n\n--- COTIZACIÓN ---\nKM: ${calculatedQuote.km}\nTarifa Base: $${calculatedQuote.tarifaBase}\nExtras: ${JSON.stringify(calculatedQuote.extras)}\nTOTAL: $${calculatedQuote.total}\nRequiere Seña: ${calculatedQuote.requiereSenia}\nMonto Seña: $${calculatedQuote.montoSenia}`,
+        estado: 'Solicitada' as const
       };
       
-      console.log('[FreightService] 📋 Datos completos a insertar:', insertData);
+      console.log('[FreightService] 📋 Datos completos a insertar:', requestData);
       
       const { data: request, error: requestError } = await supabase
         .from('requests')
-        .insert(insertData)
+        .insert(requestData)
         .select(`
           *,
           client:clients(
@@ -363,23 +401,25 @@ export class FreightService {
       console.log('[FreightService] ✅ Solicitud completa creada exitosamente:', request.id);
 
       // 3. Crear objeto FreightRequest adaptado para compatibilidad con la interfaz existente
-      const requestData = request as any; // Cast para acceder a los nuevos campos
       const freightRequest: FreightRequest = {
-        id: requestData.id,
-        clientId: requestData.client_id,
-        client: requestData.client,
+        id: request.id,
+        clientId: request.client_id,
+        client: {
+          ...request.client,
+          dni: '' // El DNI no es obligatorio en la tabla clients
+        },
         quote: quoteData,
         calculatedQuote: {
-          km: requestData.km || calculatedQuote.km,
-          tarifaBase: requestData.tarifa_base || calculatedQuote.tarifaBase,
-          extras: requestData.extras_json || calculatedQuote.extras || {},
-          total: requestData.total || calculatedQuote.total,
-          requiereSenia: (requestData.total || calculatedQuote.total) > 50000,
-          montoSenia: (requestData.total || calculatedQuote.total) > 50000 ? Math.round((requestData.total || calculatedQuote.total) * 0.3) : 0
+          km: calculatedQuote.km,
+          tarifaBase: calculatedQuote.tarifaBase,
+          extras: calculatedQuote.extras || {},
+          total: calculatedQuote.total,
+          requiereSenia: calculatedQuote.requiereSenia,
+          montoSenia: calculatedQuote.montoSenia
         },
         status: 'pending',
-        createdAt: new Date(requestData.created_at),
-        updatedAt: new Date(requestData.updated_at)
+        createdAt: new Date(request.created_at),
+        updatedAt: new Date(request.updated_at)
       };
 
       // 4. Emitir eventos
@@ -468,35 +508,66 @@ export class FreightService {
         throw new Error('Error al obtener solicitudes: ' + error.message);
       }
 
-      // Transformar datos simplificados al formato FreightRequest
+      // Transformar datos (TEMPORAL - extraer cotización de notas)
       const freightRequests: FreightRequest[] = requests?.map((request: any) => {
-        // Cast para acceder a los nuevos campos de cotización
-        const req = request as any;
+        // Extraer datos de cotización del campo notas (solución temporal)
+        const extractQuoteFromNotes = (notas: string) => {
+          const defaultQuote = { km: 0, tarifaBase: 0, extras: {}, total: 0, requiereSenia: false, montoSenia: 0 };
+          if (!notas) return defaultQuote;
+          
+          try {
+            const kmMatch = notas.match(/KM: (\d+(?:\.\d+)?)/);
+            const tarifaMatch = notas.match(/Tarifa Base: \$(\d+(?:,\d{3})*(?:\.\d{2})?)/);
+            const totalMatch = notas.match(/TOTAL: \$(\d+(?:,\d{3})*(?:\.\d{2})?)/);
+            const extrasMatch = notas.match(/Extras: (\{.*?\})/);
+            const seniaRequiereMatch = notas.match(/Requiere Seña: (true|false)/);
+            const seniaMontoMatch = notas.match(/Monto Seña: \$(\d+(?:,\d{3})*(?:\.\d{2})?)/);
+            
+            return {
+              km: kmMatch ? parseFloat(kmMatch[1]) : 0,
+              tarifaBase: tarifaMatch ? parseFloat(tarifaMatch[1].replace(/,/g, '')) : 0,
+              extras: extrasMatch ? JSON.parse(extrasMatch[1]) : {},
+              total: totalMatch ? parseFloat(totalMatch[1].replace(/,/g, '')) : 0,
+              requiereSenia: seniaRequiereMatch ? seniaRequiereMatch[1] === 'true' : false,
+              montoSenia: seniaMontoMatch ? parseFloat(seniaMontoMatch[1].replace(/,/g, '')) : 0
+            };
+          } catch (error) {
+            console.warn('Error extrayendo cotización de notas:', error);
+            return defaultQuote;
+          }
+        };
+
+        const extractedQuote = extractQuoteFromNotes(request.notas);
+        const cleanNotes = request.notas ? request.notas.split('\n\n--- COTIZACIÓN ---')[0] : '';
+
         return {
-          id: req.id,
-          clientId: req.client_id,
-          client: req.clients, // Accediendo a la tabla clients
-          quote: {
-            origen: req.origen,
-            destino: req.destino,
-            fecha: req.fecha,
-            franja: req.franja,
-            tipoServicio: req.carga_tipo,
-            pisosEscalera: req.pisosEscalera || 0,
-            notas: req.notas || ''
+          id: request.id,
+          clientId: request.client_id,
+          client: {
+            ...request.clients,
+            dni: '' // El DNI no es obligatorio en la tabla clients
           },
-          // Usar datos directamente de la tabla requests (estructura simplificada)
+          quote: {
+            origen: request.origen,
+            destino: request.destino,
+            fecha: request.fecha,
+            franja: request.franja,
+            tipoServicio: request.carga_tipo,
+            pisosEscalera: 0, // Este campo no está en la tabla
+            notas: cleanNotes
+          },
+          // Usar datos extraídos temporalmente de notas
           calculatedQuote: {
-            km: req.km || 0,
-            tarifaBase: req.tarifa_base || 0,
-            extras: req.extras_json || {},
-            total: req.total || 0,
-            requiereSenia: (req.total || 0) > 50000,
-            montoSenia: (req.total || 0) > 50000 ? Math.round((req.total || 0) * 0.3) : 0
+            km: extractedQuote.km,
+            tarifaBase: extractedQuote.tarifaBase,
+            extras: extractedQuote.extras,
+            total: extractedQuote.total,
+            requiereSenia: extractedQuote.requiereSenia,
+            montoSenia: extractedQuote.montoSenia
           },
           status: 'pending',
-          createdAt: new Date(req.created_at),
-          updatedAt: new Date(req.updated_at)
+          createdAt: new Date(request.created_at),
+          updatedAt: new Date(request.updated_at)
         };
       }) || [];
 

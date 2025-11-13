@@ -185,18 +185,27 @@ function SolicitarFleteContent() {
     setLoading(true);
     try {
       console.log('🚀 Iniciando envío de solicitud...');
-      console.log('👤 Datos del cliente:', clientData);
+      console.log('�️ Tipo de viaje:', quote.requiereSenia ? 'INTERURBANO (con seña)' : 'URBANO (sin seña)');
+      console.log('�👤 Datos del cliente:', clientData);
       console.log('📦 Datos de la solicitud:', requestData);
       console.log('💰 Cotización:', quote);
       
       const freightRequest = await freightService.createFreightRequest(clientData, requestData, quote);
       
       console.log('✅ Solicitud creada exitosamente:', freightRequest);
+      
+      // Mensaje específico según tipo de viaje
+      const tipoViaje = quote.requiereSenia ? 'interurbano' : 'urbano';
+      const mensajeExtra = quote.requiereSenia 
+        ? `Seña requerida: $${quote.montoSenia.toLocaleString()} (50% del total).`
+        : 'No requiere seña por ser un viaje urbano.';
+      
       toast({ 
         title: "¡Solicitud enviada exitosamente!", 
-        description: `Tu solicitud #${freightRequest.id.slice(0,8)} ha sido registrada y aparecerá en el dashboard administrativo.` 
+        description: `Tu solicitud #${freightRequest.id.slice(0,8)} para viaje ${tipoViaje} ha sido registrada. ${mensajeExtra}`,
+        duration: 5000
       });
-      setTimeout(()=> router.push('/'), 3000);
+      setTimeout(()=> router.push('/'), 4000);
     } catch (e) {
       console.error('❌ Error completo:', e);
       toast({ 
