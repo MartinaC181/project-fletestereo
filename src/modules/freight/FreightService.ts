@@ -437,6 +437,15 @@ export class FreightService {
         clientId: freightRequest.clientId,
         total: freightRequest.calculatedQuote.total
       });
+
+      // 5. Notificar al admin por email
+      try {
+        await this.notifyAdminNewFreight(freightRequest.id);
+        console.log('[FreightService] 📧 Notificación enviada al admin');
+      } catch (emailError) {
+        console.error('[FreightService] ⚠️ Error enviando email al admin (no bloquea el flujo):', emailError);
+      }
+
       return freightRequest;
 
     } catch (error) {
@@ -611,6 +620,15 @@ export class FreightService {
           }
         });
         await eventBus.emit(freightConfirmedEvent);
+
+        // Notificar al cliente por email
+        try {
+          await this.notifyClientFreightConfirmed(freightId);
+          console.log('[FreightService] 📧 Email de confirmación enviado al cliente');
+        } catch (emailError) {
+          console.error('[FreightService] ⚠️ Error enviando email de confirmación (no bloquea el flujo):', emailError);
+        }
+
       } else if (newStatus === 'Rechazada') {
         const freightRejectedEvent = createEvent<any>({
           type: 'freight.rejected',
@@ -622,12 +640,102 @@ export class FreightService {
           }
         });
         await eventBus.emit(freightRejectedEvent);
+
+        // Notificar al cliente por email
+        try {
+          await this.notifyClientFreightRejected(freightId, reason || 'Sin especificar');
+          console.log('[FreightService] 📧 Email de rechazo enviado al cliente');
+        } catch (emailError) {
+          console.error('[FreightService] ⚠️ Error enviando email de rechazo (no bloquea el flujo):', emailError);
+        }
       }
 
       console.log('[FreightService] Estado actualizado exitosamente');
 
     } catch (error) {
       console.error('[FreightService] Error en updateFreightStatus:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Notifica al admin sobre un nuevo flete
+   */
+  private async notifyAdminNewFreight(freightId: string): Promise<void> {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          freightId,
+          type: 'admin_new_freight'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      console.log('[FreightService] ✅ Notificación al admin enviada exitosamente');
+    } catch (error) {
+      console.error('[FreightService] ❌ Error notificando al admin:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Notifica al cliente sobre confirmación de flete
+   */
+  private async notifyClientFreightConfirmed(freightId: string): Promise<void> {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          freightId,
+          type: 'client_confirmed'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      console.log('[FreightService] ✅ Notificación de confirmación al cliente enviada');
+    } catch (error) {
+      console.error('[FreightService] ❌ Error notificando al cliente:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Notifica al cliente sobre rechazo de flete
+   */
+  private async notifyClientFreightRejected(freightId: string, reason: string): Promise<void> {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          freightId,
+          type: 'client_rejected',
+          reason
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      console.log('[FreightService] ✅ Notificación de rechazo al cliente enviada');
+    } catch (error) {
+      console.error('[FreightService] ❌ Error notificando al cliente:', error);
       throw error;
     }
   }
