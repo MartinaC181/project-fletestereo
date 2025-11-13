@@ -123,6 +123,7 @@ export class ServicesService {
 
   /**
    * Eliminar un servicio (soft delete) - Solo Admin
+   * Llama a la función RPC 'delete_service' que pone 'activo' en false
    */
   async deleteService(id: string): Promise<void> {
     try {
@@ -141,7 +142,7 @@ export class ServicesService {
   }
 
   /**
-   * Restaurar un servicio eliminado - Solo Admin
+   * Restaurar un servicio eliminado (soft delete) - Solo Admin
    */
   async restoreService(id: string): Promise<void> {
     try {
