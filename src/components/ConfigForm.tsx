@@ -121,43 +121,6 @@ export function ConfigForm() {
         </div>
       </div>
 
-      {/* --- SECCIÓN COMBOS --- */}
-      <div className="space-y-4 rounded-lg border p-4">
-        <h3 className="text-lg font-medium">Combos Locales (ARS)</h3>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <InputGroup
-            label="Mudanza Completa"
-            name="COMBO_MUDANZA_COMPLETA"
-            value={formData.COMBO_MUDANZA_COMPLETA}
-            onChange={handleChange}
-          />
-          <InputGroup
-            label="Mini Mudanza Larga (>10 cuadras)"
-            name="COMBO_MINI_MUDANZA_LARGA"
-            value={formData.COMBO_MINI_MUDANZA_LARGA}
-            onChange={handleChange}
-          />
-          <InputGroup
-            label="Mini Mudanza Corta (<10 cuadras)"
-            name="COMBO_MINI_MUDANZA_CORTA"
-            value={formData.COMBO_MINI_MUDANZA_CORTA}
-            onChange={handleChange}
-          />
-          <InputGroup
-            label="Flete Liviano Largo (>10 cuadras)"
-            name="COMBO_FLETE_LIVIANO_LARGO"
-            value={formData.COMBO_FLETE_LIVIANO_LARGO}
-            onChange={handleChange}
-          />
-          <InputGroup
-            label="Flete Liviano Corto (<10 cuadras)"
-            name="COMBO_FLETE_LIVIANO_CORTO"
-            value={formData.COMBO_FLETE_LIVIANO_CORTO}
-            onChange={handleChange}
-          />
-        </div>
-      </div>
-
       <Button type="submit" disabled={isSaving} className="w-full md:w-auto">
         {isSaving ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
