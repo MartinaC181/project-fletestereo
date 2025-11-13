@@ -104,6 +104,84 @@ class NotificationService {
   }
 
   /**
+   * Notifica al cliente que debe pagar la seña
+   */
+  async notifyClientSeniaRequired(freightRequest: FreightRequest, linkPago: string): Promise<void> {
+    try {
+      const clientEmail = freightRequest.client?.email;
+      if (!clientEmail) {
+        console.warn('[NotificationService] ⚠️ Cliente no tiene email, saltando notificación');
+        return;
+      }
+
+      const emailHtml = this.generateClientSeniaRequestEmail(freightRequest, linkPago);
+      
+      const mailOptions = {
+        from: process.env.EMAIL_USER || 'masdeu398@gmail.com',
+        to: clientEmail,
+        subject: `💰 Seña requerida para tu flete #${freightRequest.id.slice(0, 8)} - Fletestereo`,
+        html: emailHtml
+      };
+
+      await this.transporter.sendMail(mailOptions);
+      console.log('[NotificationService] ✅ Email de seña enviado al cliente:', clientEmail);
+    } catch (error) {
+      console.error('[NotificationService] ❌ Error enviando email de seña al cliente:', error);
+      // No lanzar error para no bloquear el flujo principal
+    }
+  }
+
+  /**
+   * Notifica al admin que la seña fue pagada
+   */
+  async notifyAdminSeniaPaid(freightRequest: FreightRequest, referenciaPago: string): Promise<void> {
+    try {
+      const emailHtml = this.generateAdminSeniaPaidEmail(freightRequest, referenciaPago);
+      
+      const mailOptions = {
+        from: process.env.EMAIL_USER || 'masdeu398@gmail.com',
+        to: 'masdeu398@gmail.com', // Email del admin
+        subject: `💰 Seña pagada - Flete #${freightRequest.id.slice(0, 8)}`,
+        html: emailHtml
+      };
+
+      await this.transporter.sendMail(mailOptions);
+      console.log('[NotificationService] ✅ Email de seña pagada enviado al admin');
+    } catch (error) {
+      console.error('[NotificationService] ❌ Error enviando email de seña pagada al admin:', error);
+      // No lanzar error para no bloquear el flujo principal
+    }
+  }
+
+  /**
+   * Notifica al cliente que el servicio está confirmado tras pago de seña
+   */
+  async notifyClientServiceConfirmedAfterSenia(freightRequest: FreightRequest): Promise<void> {
+    try {
+      const clientEmail = freightRequest.client?.email;
+      if (!clientEmail) {
+        console.warn('[NotificationService] ⚠️ Cliente no tiene email, saltando notificación');
+        return;
+      }
+
+      const emailHtml = this.generateClientServiceConfirmedEmail(freightRequest);
+      
+      const mailOptions = {
+        from: process.env.EMAIL_USER || 'masdeu398@gmail.com',
+        to: clientEmail,
+        subject: `🎉 ¡Servicio confirmado! Seña recibida - Flete #${freightRequest.id.slice(0, 8)}`,
+        html: emailHtml
+      };
+
+      await this.transporter.sendMail(mailOptions);
+      console.log('[NotificationService] ✅ Email de servicio confirmado enviado al cliente:', clientEmail);
+    } catch (error) {
+      console.error('[NotificationService] ❌ Error enviando email de servicio confirmado:', error);
+      // No lanzar error para no bloquear el flujo principal
+    }
+  }
+
+  /**
    * Genera el HTML del email para el admin
    */
   private generateAdminNotificationEmail(freightRequest: FreightRequest): string {
@@ -139,13 +217,13 @@ class NotificationService {
 
             <h2>Detalles del Flete:</h2>
             <div class="detail">
-              <strong>Origen:</strong> ${freightRequest.origen}<br>
-              <strong>Destino:</strong> ${freightRequest.destino}<br>
-              <strong>Fecha:</strong> ${freightRequest.fecha}<br>
-              <strong>Franja horaria:</strong> ${freightRequest.franja}<br>
-              <strong>Tipo de servicio:</strong> ${freightRequest.tipoServicio}<br>
-              ${freightRequest.pisosEscalera > 0 ? `<strong>Pisos con escalera:</strong> ${freightRequest.pisosEscalera}<br>` : ''}
-              ${freightRequest.notas ? `<strong>Notas:</strong> ${freightRequest.notas}<br>` : ''}
+              <strong>Origen:</strong> ${freightRequest.quote?.origen || 'N/A'}<br>
+              <strong>Destino:</strong> ${freightRequest.quote?.destino || 'N/A'}<br>
+              <strong>Fecha:</strong> ${freightRequest.quote?.fecha || 'N/A'}<br>
+              <strong>Franja horaria:</strong> ${freightRequest.quote?.franja || 'N/A'}<br>
+              <strong>Tipo de servicio:</strong> ${freightRequest.quote?.tipoServicio || 'N/A'}<br>
+              ${(freightRequest.quote?.pisosEscalera || 0) > 0 ? `<strong>Pisos con escalera:</strong> ${freightRequest.quote?.pisosEscalera}<br>` : ''}
+              ${freightRequest.quote?.notas ? `<strong>Notas:</strong> ${freightRequest.quote?.notas}<br>` : ''}
             </div>
 
             <h2>Cotización:</h2>
@@ -197,11 +275,11 @@ class NotificationService {
 
             <h2>Detalles del servicio:</h2>
             <div class="detail">
-              <strong>Origen:</strong> ${freightRequest.origen}<br>
-              <strong>Destino:</strong> ${freightRequest.destino}<br>
-              <strong>Fecha:</strong> ${freightRequest.fecha}<br>
-              <strong>Franja horaria:</strong> ${freightRequest.franja}<br>
-              <strong>Tipo de servicio:</strong> ${freightRequest.tipoServicio}
+              <strong>Origen:</strong> ${freightRequest.quote?.origen || 'N/A'}<br>
+              <strong>Destino:</strong> ${freightRequest.quote?.destino || 'N/A'}<br>
+              <strong>Fecha:</strong> ${freightRequest.quote?.fecha || 'N/A'}<br>
+              <strong>Franja horaria:</strong> ${freightRequest.quote?.franja || 'N/A'}<br>
+              <strong>Tipo de servicio:</strong> ${freightRequest.quote?.tipoServicio || 'N/A'}
             </div>
 
             <h2>Próximos pasos:</h2>
@@ -222,6 +300,202 @@ class NotificationService {
             </ul>
 
             <p><em>¡Gracias por confiar en Fletestereo!</em></p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * Genera el HTML del email solicitando seña al cliente
+   */
+  private generateClientSeniaRequestEmail(freightRequest: FreightRequest, linkPago: string): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Seña requerida</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: #f59e0b; color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+          .content { background-color: #fffbeb; padding: 20px; border-radius: 0 0 8px 8px; }
+          .detail { margin: 10px 0; padding: 10px; background-color: white; border-radius: 4px; }
+          .amount { font-size: 20px; font-weight: bold; color: #f59e0b; text-align: center; }
+          .button { display: inline-block; padding: 15px 30px; background-color: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>💰 Seña Requerida</h1>
+            <p>Solicitud #${freightRequest.id.slice(0, 8)}</p>
+          </div>
+          <div class="content">
+            <p>¡Excelente! Tu solicitud de flete ha sido <strong>aceptada</strong>.</p>
+            
+            <p>Para confirmar el servicio, necesitamos que realices el pago de la seña:</p>
+
+            <div class="detail">
+              <div class="amount">Seña: $${freightRequest.montoSenia?.toLocaleString() || 'N/A'}</div>
+            </div>
+
+            <h2>Detalles del servicio:</h2>
+            <div class="detail">
+              <strong>Origen:</strong> ${freightRequest.quote?.origen || 'N/A'}<br>
+              <strong>Destino:</strong> ${freightRequest.quote?.destino || 'N/A'}<br>
+              <strong>Fecha:</strong> ${freightRequest.quote?.fecha || 'N/A'}<br>
+              <strong>Total del servicio:</strong> $${freightRequest.calculatedQuote?.total?.toLocaleString() || 'N/A'}
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${linkPago}" class="button">
+                💳 Pagar Seña Ahora
+              </a>
+            </div>
+
+            <p><strong>Importante:</strong></p>
+            <ul>
+              <li>Una vez pagada la seña, el servicio quedará 100% confirmado</li>
+              <li>El saldo restante se paga al finalizar el servicio</li>
+              <li>Si tienes alguna consulta, contáctanos por WhatsApp</li>
+            </ul>
+
+            <p>📱 WhatsApp: +54 9 3795170535</p>
+            <p><em>¡Gracias por elegir Fletestereo!</em></p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * Genera el HTML del email notificando al admin que se pagó la seña
+   */
+  private generateAdminSeniaPaidEmail(freightRequest: FreightRequest, referenciaPago: string): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Seña Pagada</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: #10b981; color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+          .content { background-color: #f0fdf4; padding: 20px; border-radius: 0 0 8px 8px; }
+          .detail { margin: 10px 0; padding: 10px; background-color: white; border-radius: 4px; }
+          .success { color: #10b981; font-weight: bold; font-size: 18px; }
+          .button { display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>💰 Seña Pagada - Confirmación Pendiente</h1>
+            <p>Flete #${freightRequest.id.slice(0, 8)}</p>
+          </div>
+          <div class="content">
+            <div class="success">
+              ¡El cliente ha pagado la seña! Necesita tu confirmación.
+            </div>
+
+            <h2>Información del pago:</h2>
+            <div class="detail">
+              <strong>Monto de seña:</strong> $${freightRequest.montoSenia?.toLocaleString() || 'N/A'}<br>
+              <strong>Referencia:</strong> ${referenciaPago}<br>
+              <strong>Fecha:</strong> ${new Date().toLocaleDateString()}
+            </div>
+
+            <h2>Datos del cliente:</h2>
+            <div class="detail">
+              <strong>Nombre:</strong> ${freightRequest.client?.nombre} ${freightRequest.client?.apellido}<br>
+              <strong>Teléfono:</strong> ${freightRequest.client?.telefono}<br>
+              <strong>Email:</strong> ${freightRequest.client?.email}
+            </div>
+
+            <p><strong>Próximos pasos:</strong></p>
+            <ol>
+              <li>Verificar el pago en tu aplicación de billetera virtual</li>
+              <li>Confirmar el servicio en el dashboard</li>
+              <li>Se enviará automáticamente la confirmación final al cliente</li>
+            </ol>
+
+            <p style="margin-top: 30px;">
+              <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/dashboard" class="button">
+                Ver en Dashboard
+              </a>
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * Genera el HTML del email de confirmación final del servicio
+   */
+  private generateClientServiceConfirmedEmail(freightRequest: FreightRequest): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Servicio Confirmado</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: #10b981; color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+          .content { background-color: #f0fdf4; padding: 20px; border-radius: 0 0 8px 8px; }
+          .detail { margin: 10px 0; padding: 10px; background-color: white; border-radius: 4px; }
+          .success { color: #10b981; font-weight: bold; font-size: 20px; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🎉 ¡Servicio Confirmado!</h1>
+            <p>Solicitud #${freightRequest.id.slice(0, 8)}</p>
+          </div>
+          <div class="content">
+            <div class="success">
+              ¡Tu seña fue recibida y el servicio está 100% confirmado!
+            </div>
+
+            <h2>Resumen del servicio:</h2>
+            <div class="detail">
+              <strong>Origen:</strong> ${freightRequest.quote?.origen || 'N/A'}<br>
+              <strong>Destino:</strong> ${freightRequest.quote?.destino || 'N/A'}<br>
+              <strong>Fecha:</strong> ${freightRequest.quote?.fecha || 'N/A'}<br>
+              <strong>Franja:</strong> ${freightRequest.quote?.franja || 'N/A'}
+            </div>
+
+            <h2>Información de pago:</h2>
+            <div class="detail">
+              <strong>Seña pagada:</strong> $${freightRequest.montoSenia?.toLocaleString() || 'N/A'}<br>
+              <strong>Total del servicio:</strong> $${freightRequest.calculatedQuote?.total?.toLocaleString() || 'N/A'}<br>
+              <strong>Saldo restante:</strong> $${((freightRequest.calculatedQuote?.total || 0) - (freightRequest.montoSenia || 0)).toLocaleString()}
+            </div>
+
+            <h2>¿Qué sigue ahora?</h2>
+            <div class="detail">
+              <ul>
+                <li><strong>Nos pondremos en contacto</strong> para coordinar horario exacto</li>
+                <li><strong>El día del servicio</strong> pagas el saldo restante</li>
+                <li><strong>Tienes alguna consulta</strong> contáctanos por WhatsApp</li>
+              </ul>
+            </div>
+
+            <p style="text-align: center; margin: 30px 0;">
+              📱 <strong>WhatsApp:</strong> +54 9 3795170535<br>
+              ✉️ <strong>Email:</strong> masdeu398@gmail.com
+            </p>
+
+            <p><em>¡Gracias por confiar en Fletestereo! Estamos listos para tu mudanza.</em></p>
           </div>
         </div>
       </body>

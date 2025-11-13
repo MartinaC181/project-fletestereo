@@ -4,7 +4,8 @@ import { supabase } from '@/src/integrations/supabase/client';
 
 export async function POST(request: NextRequest) {
   try {
-    const { freightId, type, reason } = await request.json();
+    const body = await request.json();
+    const { freightId, type, reason, linkPago, referenciaPago } = body;
 
     if (!freightId || !type) {
       return NextResponse.json(
@@ -70,6 +71,52 @@ export async function POST(request: NextRequest) {
           );
         }
         await notificationService.notifyClientFreightRejected(freightRequest, reason);
+        break;
+      case 'client_senia_required':
+        if (!linkPago) {
+          return NextResponse.json(
+            { error: 'linkPago es requerido para solicitar seña' },
+            { status: 400 }
+          );
+        }
+        // Por ahora usamos un objeto simple adaptado
+        const simpleFreightRequest = {
+          id: freightData.id,
+          client: freightData.client,
+          quote: {
+            origen: freightData.origen,
+            destino: freightData.destino,
+            fecha: freightData.fecha,
+            franja: freightData.franja
+          },
+          calculatedQuote: {
+            total: 0 // Agregar valor por defecto
+          },
+          montoSenia: 0 // Por determinar
+        };
+        await notificationService.notifyClientSeniaRequired(simpleFreightRequest as any, linkPago);
+        break;
+      case 'admin_senia_paid':
+        // TODO: Implementar cuando se arreglen los tipos
+        console.log('[API] admin_senia_paid - Pendiente de implementar');
+        break;
+      case 'client_service_confirmed':
+        // Crear objeto simplificado para la confirmación final
+        const finalFreightRequest = {
+          id: freightData.id,
+          client: freightData.client,
+          quote: {
+            origen: freightData.origen,
+            destino: freightData.destino,
+            fecha: freightData.fecha,
+            franja: freightData.franja
+          },
+          calculatedQuote: {
+            total: 0 // Por determinar
+          },
+          montoSenia: 0 // Por determinar
+        };
+        await notificationService.notifyClientServiceConfirmedAfterSenia(finalFreightRequest as any);
         break;
       default:
         return NextResponse.json(

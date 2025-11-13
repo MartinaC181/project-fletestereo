@@ -20,6 +20,11 @@ export const FreightEventTypes = {
   FREIGHT_REJECTED: 'freight.rejected',
   FREIGHT_RESCHEDULED: 'freight.rescheduled',
   
+  // Eventos del sistema de señas
+  FREIGHT_SENIA_REQUESTED: 'freight.senia.requested',
+  FREIGHT_SENIA_PAID: 'freight.senia.paid',
+  FREIGHT_SENIA_CONFIRMED: 'freight.senia.confirmed',
+  
   // Eventos de estado del flete
   FREIGHT_IN_PROGRESS: 'freight.in_progress',
   FREIGHT_COMPLETED: 'freight.completed',
@@ -101,9 +106,16 @@ export interface FreightRequest {
   client: ClientInfo;
   quote: QuoteData;
   calculatedQuote: QuoteResult;
-  status: 'pending' | 'confirmed' | 'rejected' | 'in_progress' | 'completed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'rejected' | 'in_progress' | 'completed' | 'cancelled' | 'senia_requested' | 'senia_paid' | 'confirmed_final';
   createdAt: Date;
   updatedAt: Date;
+  // Campos adicionales para señas
+  requiereSenia?: boolean;
+  montoSenia?: number;
+  linkPagoSenia?: string;
+  fechaPagoSenia?: Date;
+  metodoPagoSenia?: string;
+  referenciaPago?: string;
 }
 
 // Eventos específicos
@@ -201,6 +213,37 @@ export interface PaymentEvent extends BaseEvent {
   };
 }
 
+// Eventos del sistema de señas
+export interface FreightSeniaRequestedEvent extends BaseEvent {
+  type: typeof FreightEventTypes.FREIGHT_SENIA_REQUESTED;
+  payload: {
+    freightRequestId: string;
+    montoSenia: number;
+    linkPago: string;
+    clientEmail: string;
+  };
+}
+
+export interface FreightSeniaPaidEvent extends BaseEvent {
+  type: typeof FreightEventTypes.FREIGHT_SENIA_PAID;
+  payload: {
+    freightRequestId: string;
+    montoSenia: number;
+    metodoPago: string;
+    referenciaPago: string;
+    fechaPago: Date;
+  };
+}
+
+export interface FreightSeniaConfirmedEvent extends BaseEvent {
+  type: typeof FreightEventTypes.FREIGHT_SENIA_CONFIRMED;
+  payload: {
+    freightRequestId: string;
+    confirmedBy: string;
+    confirmedAt: Date;
+  };
+}
+
 // Union type de todos los eventos del dominio
 export type FreightDomainEvent = 
   | QuoteRequestedEvent
@@ -210,4 +253,7 @@ export type FreightDomainEvent =
   | FreightRejectedEvent
   | FreightStatusChangedEvent
   | NotificationCreatedEvent
-  | PaymentEvent;
+  | PaymentEvent
+  | FreightSeniaRequestedEvent
+  | FreightSeniaPaidEvent
+  | FreightSeniaConfirmedEvent;

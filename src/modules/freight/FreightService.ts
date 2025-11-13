@@ -209,7 +209,7 @@ export class FreightService {
    * Determina si el viaje es interurbano (fuera de la ciudad de Corrientes)
    * La seña solo se requiere cuando origen o destino están fuera de Corrientes
    */
-  private isInterurbanTrip(origen: string, destino: string): boolean {
+  public isInterurbanTrip(origen: string, destino: string): boolean {
     // Normalizamos las direcciones a lowercase para comparación
     const origenNorm = origen.toLowerCase();
     const destinoNorm = destino.toLowerCase();
@@ -509,7 +509,7 @@ export class FreightService {
             email
           )
         `)
-        .eq('estado', 'Solicitada')
+        .in('estado', ['Solicitada', 'Señada'])
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -736,6 +736,242 @@ export class FreightService {
       console.log('[FreightService] ✅ Notificación de rechazo al cliente enviada');
     } catch (error) {
       console.error('[FreightService] ❌ Error notificando al cliente:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Solicita seña al cliente (admin acepta pero requiere seña)
+   */
+  async requestSenia(freightId: string, linkPago: string): Promise<void> {
+    try {
+      console.log('[FreightService] Solicitando seña para flete:', freightId);
+      
+      // Actualizar estado en BD (usamos estado existente + campos adicionales)
+      const { error } = await supabase
+        .from('requests')
+        .update({ 
+          estado: 'Señada', // Estado existente que usaremos para señas
+          notas: `SEÑA SOLICITADA - Link: ${linkPago}`,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', freightId);
+
+      if (error) {
+        console.error('[FreightService] Error actualizando estado para seña:', error);
+        throw new Error('Error al solicitar seña: ' + error.message);
+      }
+
+      // Notificar al cliente
+      try {
+        await this.notifyClientSeniaRequired(freightId, linkPago);
+        console.log('[FreightService] 📧 Email de seña enviado al cliente');
+      } catch (emailError) {
+        console.error('[FreightService] ⚠️ Error enviando email de seña (no bloquea el flujo):', emailError);
+      }
+
+      console.log('[FreightService] Seña solicitada exitosamente');
+    } catch (error) {
+      console.error('[FreightService] Error en requestSenia:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Marca la seña como pagada (cliente reporta el pago)
+   */
+  async markSeniaPaid(freightId: string, referenciaPago: string, metodoPago: string): Promise<void> {
+    try {
+      console.log('[FreightService] Marcando seña como pagada:', freightId);
+      
+      // Actualizar estado en BD (seguimos en Señada pero con info de pago)
+      const { error } = await supabase
+        .from('requests')
+        .update({ 
+          estado: 'Señada',
+          notas: `SEÑA PAGADA - Método: ${metodoPago} - Referencia: ${referenciaPago} - Fecha: ${new Date().toLocaleDateString()}`,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', freightId);
+
+      if (error) {
+        console.error('[FreightService] Error marcando seña como pagada:', error);
+        throw new Error('Error al marcar seña pagada: ' + error.message);
+      }
+
+      // Emitir evento
+      const seniaPaidEvent = createEvent({
+        type: 'freight.senia.paid',
+        payload: {
+          freightRequestId: freightId,
+          referenciaPago: referenciaPago,
+          metodoPago: metodoPago,
+          paidAt: new Date()
+        }
+      });
+      await eventBus.emit(seniaPaidEvent);
+
+      // Notificar al admin
+      try {
+        await this.notifyAdminSeniaPaid(freightId, referenciaPago);
+        console.log('[FreightService] 📧 Email de seña pagada enviado al admin');
+      } catch (emailError) {
+        console.error('[FreightService] ⚠️ Error enviando email de seña pagada (no bloquea el flujo):', emailError);
+      }
+
+      console.log('[FreightService] Seña marcada como pagada exitosamente');
+    } catch (error) {
+      console.error('[FreightService] Error en markSeniaPaid:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Confirma el servicio después del pago de seña (admin confirma)
+   */
+  async confirmServiceAfterSenia(freightId: string): Promise<void> {
+    try {
+      console.log('[FreightService] Confirmando servicio después de seña:', freightId);
+      
+      // Actualizar estado en BD (confirmado después de seña)
+      const { error } = await supabase
+        .from('requests')
+        .update({ 
+          estado: 'Confirmada',
+          notas: `SERVICIO CONFIRMADO - Seña pagada y verificada - ${new Date().toLocaleDateString()}`,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', freightId);
+
+      if (error) {
+        console.error('[FreightService] Error confirmando servicio final:', error);
+        throw new Error('Error al confirmar servicio: ' + error.message);
+      }
+
+      // Notificar al cliente (versión simplificada)
+      try {
+        await this.notifyClientServiceConfirmed(freightId);
+        console.log('[FreightService] 📧 Email de confirmación final enviado al cliente');
+      } catch (emailError) {
+        console.error('[FreightService] ⚠️ Error enviando email de confirmación final (no bloquea el flujo):', emailError);
+      }
+
+      console.log('[FreightService] Servicio confirmado exitosamente después de seña');
+    } catch (error) {
+      console.error('[FreightService] Error en confirmServiceAfterSenia:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Notifica al cliente que debe pagar seña
+   */
+  private async notifyClientSeniaRequired(freightId: string, linkPago: string): Promise<void> {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          freightId,
+          type: 'client_senia_required',
+          linkPago
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      console.log('[FreightService] ✅ Notificación de seña requerida enviada al cliente');
+    } catch (error) {
+      console.error('[FreightService] ❌ Error notificando seña requerida al cliente:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Notifica al admin que se pagó la seña
+   */
+  private async notifyAdminSeniaPaid(freightId: string, referenciaPago: string): Promise<void> {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          freightId,
+          type: 'admin_senia_paid',
+          referenciaPago
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      console.log('[FreightService] ✅ Notificación de seña pagada enviada al admin');
+    } catch (error) {
+      console.error('[FreightService] ❌ Error notificando seña pagada al admin:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Confirma servicio urbano directamente (sin seña)
+   */
+  async confirmUrbanService(freightId: string): Promise<void> {
+    try {
+      console.log('[FreightService] 🏙️ Confirmando servicio urbano:', freightId);
+
+      // Actualizar estado a "Confirmada"
+      const { error: updateError } = await supabase
+        .from('requests')
+        .update({ 
+          estado: 'Confirmada',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', freightId);
+
+      if (updateError) {
+        throw new Error(`Error al actualizar estado: ${updateError.message}`);
+      }
+
+      // Notificar al cliente que el servicio está confirmado
+      await this.notifyClientServiceConfirmed(freightId);
+
+      console.log('[FreightService] ✅ Servicio urbano confirmado exitosamente');
+    } catch (error) {
+      console.error('[FreightService] ❌ Error confirmando servicio urbano:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Notifica al cliente que el servicio está confirmado
+   */
+  private async notifyClientServiceConfirmed(freightId: string): Promise<void> {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          freightId,
+          type: 'client_service_confirmed'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      console.log('[FreightService] ✅ Notificación de servicio confirmado enviada al cliente');
+    } catch (error) {
+      console.error('[FreightService] ❌ Error notificando servicio confirmado al cliente:', error);
       throw error;
     }
   }
