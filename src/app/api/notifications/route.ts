@@ -24,7 +24,8 @@ export async function POST(request: NextRequest) {
           nombre,
           apellido,
           telefono,
-          email
+          email,
+          dni
         )
       `)
       .eq('id', freightId)
@@ -38,21 +39,56 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Mapeo de estados de español a inglés
+    const statusMap: Record<string, string> = {
+      'Solicitada': 'pending',
+      'Señada': 'senia_requested', 
+      'Confirmada': 'confirmed',
+      'Rechazada': 'rejected',
+      'Completada': 'completed',
+      'Cancelada': 'cancelled',
+      'Pendiente_Seña': 'senia_requested',
+      'Seña_Solicitada': 'senia_requested',
+      'Seña_Pagada': 'senia_paid',
+      'Confirmada_Final': 'confirmed_final'
+    };
+
     // Convertir datos de Supabase al formato FreightRequest
     const freightRequest = {
       id: freightData.id,
+      clientId: freightData.client_id || freightData.client?.id,
       origen: freightData.origen,
       destino: freightData.destino,
       fecha: freightData.fecha,
       franja: freightData.franja,
-      tipoServicio: freightData.tipo_servicio,
-      pisosEscalera: freightData.pisos_escalera || 0,
+      tipoServicio: freightData.carga_tipo as any,
+      pisosEscalera: (freightData as any).pisos_escalera || 0,
       notas: freightData.notas,
       estado: freightData.estado,
-      client: freightData.client,
+      status: (statusMap[freightData.estado] || 'pending') as 'pending' | 'confirmed' | 'rejected' | 'in_progress' | 'completed' | 'cancelled' | 'senia_requested' | 'senia_paid' | 'confirmed_final',
+      client: {
+        ...freightData.client,
+        dni: freightData.client?.dni || ''
+      },
+      quote: {
+        origen: freightData.origen,
+        destino: freightData.destino,
+        fecha: freightData.fecha,
+        franja: freightData.franja,
+        tipoServicio: freightData.carga_tipo as any,
+        pisosEscalera: (freightData as any).pisos_escalera || 0,
+        notas: freightData.notas
+      },
       calculatedQuote: {
-        total: freightData.precio_total
-      }
+        total: freightData.total || 0,
+        km: 0,
+        tarifaBase: 0,
+        extras: {},
+        requiereSenia: false,
+        montoSenia: 0
+      },
+      createdAt: new Date(freightData.created_at || new Date().toISOString()),
+      updatedAt: new Date(freightData.updated_at || new Date().toISOString())
     };
 
     // Enviar la notificación correspondiente

@@ -206,8 +206,8 @@ export class FreightService {
   }
 
   /**
-   * Determina si el viaje es interurbano (fuera de la ciudad de Corrientes)
-   * La seña solo se requiere cuando origen o destino están fuera de Corrientes
+   * Determina si el viaje es interurbano (fuera de Corrientes CAPITAL)
+   * La seña se requiere cuando origen o destino están fuera de Corrientes CAPITAL
    */
   public isInterurbanTrip(origen: string, destino: string): boolean {
     // Normalizamos las direcciones a lowercase para comparación
@@ -215,32 +215,82 @@ export class FreightService {
     const destinoNorm = destino.toLowerCase();
     
     // Lista de términos que indican que es dentro de Corrientes Capital
-    const corrientesTerms = [
-      'corrientes',
+    const corrientesCapitalTerms = [
       'corrientes capital',
       'ciudad de corrientes',
-      'ctes',
-      'w3w',  // Barrios de Corrientes
-      'w3e',
-      'w3c',
-      'w3a'
+      'corrientes, corrientes',
+      'corrientes ciudad',
+      'capital corrientes',
+      'casco histórico corrientes',
+      'microcentro corrientes',
+      'centro corrientes'
+    ];
+
+    // Barrios conocidos de Corrientes Capital
+    const barriosCapital = [
+      'centro', 'microcentro', 'casco histórico',
+      'san gerónimo', 'san roque', 'san benito',
+      'w3w', 'w3e', 'w3c', 'w3a', 'w3b',
+      'barrio norte', 'barrio sur', 'barrio este', 'barrio oeste',
+      'santa rita', 'san antonio', 'aldana', 'molina punta',
+      'anahí', 'pirayuí', 'laguna brava', '3 de abril',
+      'berón de astrada', 'dr. montaña', 'quinta ferré'
+    ];
+
+    // Términos que indican que NO es Corrientes Capital
+    const terminosExcluidos = [
+      'goya', 'paso de los libres', 'mercedes', 'curuzú cuatiá',
+      'monte caseros', 'santo tome', 'bella vista', 'esquina',
+      'empedrado', 'saladas', 'mburucuyá', 'ituzaingó',
+      'resistencia', 'posadas', 'formosa', 'buenos aires',
+      'santa fe', 'paraná', 'uruguay', 'brasil'
     ];
     
-    // Verificar si el origen está en Corrientes
-    const origenEnCorrientes = corrientesTerms.some(term => origenNorm.includes(term));
+    // Función auxiliar para verificar si una dirección está en Corrientes Capital
+    const estaEnCorrientesCapital = (direccion: string): boolean => {
+      // Si contiene términos excluidos, definitivamente NO es Capital
+      if (terminosExcluidos.some(term => direccion.includes(term))) {
+        return false;
+      }
+
+      // Si contiene términos específicos de Capital, SÍ es Capital
+      if (corrientesCapitalTerms.some(term => direccion.includes(term))) {
+        return true;
+      }
+
+      // Si contiene barrios específicos de Capital, SÍ es Capital  
+      if (barriosCapital.some(barrio => direccion.includes(barrio))) {
+        return true;
+      }
+
+      // Si solo dice "corrientes" sin especificar, asumimos que es Capital
+      if (direccion.includes('corrientes') && direccion.includes('ctes')) {
+        return true;
+      }
+
+      // Si contiene "corrientes" pero no términos excluidos, probablemente es Capital
+      if (direccion.includes('corrientes')) {
+        return true;
+      }
+
+      // Por defecto, si no podemos determinar, asumimos que NO es Capital (requiere seña)
+      return false;
+    };
     
-    // Verificar si el destino está en Corrientes  
-    const destinoEnCorrientes = corrientesTerms.some(term => destinoNorm.includes(term));
+    // Verificar si origen y destino están en Corrientes Capital
+    const origenEnCapital = estaEnCorrientesCapital(origenNorm);
+    const destinoEnCapital = estaEnCorrientesCapital(destinoNorm);
     
-    // Es viaje interurbano si alguno de los dos NO está en Corrientes
-    const esInterurbano = !origenEnCorrientes || !destinoEnCorrientes;
+    // Es viaje interurbano si alguno de los dos NO está en Corrientes Capital
+    const esInterurbano = !origenEnCapital || !destinoEnCapital;
     
-    console.log('[FreightService] Análisis viaje interurbano:', {
+    console.log('[FreightService] 🗺️ Análisis geográfico para seña:', {
       origen,
       destino,
-      origenEnCorrientes,
-      destinoEnCorrientes,
-      esInterurbano
+      origenEnCapital,
+      destinoEnCapital,
+      esInterurbano,
+      requiereSeña: esInterurbano
     });
     
     return esInterurbano;

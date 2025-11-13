@@ -2,10 +2,10 @@
 -- Fecha: 2025-11-13
 
 -- Agregar nuevos estados para el sistema de señas
-ALTER TYPE estado_request ADD VALUE IF NOT EXISTS 'Pendiente_Seña';
-ALTER TYPE estado_request ADD VALUE IF NOT EXISTS 'Seña_Solicitada'; 
-ALTER TYPE estado_request ADD VALUE IF NOT EXISTS 'Seña_Pagada';
-ALTER TYPE estado_request ADD VALUE IF NOT EXISTS 'Confirmada_Final';
+ALTER TYPE request_status ADD VALUE IF NOT EXISTS 'Pendiente_Seña';
+ALTER TYPE request_status ADD VALUE IF NOT EXISTS 'Seña_Solicitada'; 
+ALTER TYPE request_status ADD VALUE IF NOT EXISTS 'Seña_Pagada';
+ALTER TYPE request_status ADD VALUE IF NOT EXISTS 'Confirmada_Final';
 
 -- Agregar campos para manejar señas
 ALTER TABLE requests ADD COLUMN IF NOT EXISTS requiere_senia BOOLEAN DEFAULT false;
