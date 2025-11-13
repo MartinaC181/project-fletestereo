@@ -1,22 +1,23 @@
 // src/modules/config/config.types.ts
 /**
  * (M15) Define la estructura de las reglas de negocio
- * que el dueño puede configurar.
+ * que el dueño puede configurar desde el dashboard.
+ * Los combos se manejan desde la vista de tarifas, no aquí.
  */
 export interface PricingRules {
-  // --- Tarifas Fijas (Combos Locales) ---
-  COMBO_MUDANZA_COMPLETA: number;
-  COMBO_MINI_MUDANZA_LARGA: number;
-  COMBO_MINI_MUDANZA_CORTA: number;
-  COMBO_FLETE_LIVIANO_LARGO: number;
-  COMBO_FLETE_LIVIANO_CORTO: number;
-
-  // --- Variables Dinámicas (Globales) ---
+  // --- Variables Dinámicas para Cálculo de Precios ---
   PRECIO_MINIMO_FLETE: number;
   EXTRA_PISO_ESCALERA: number;
   PRECIO_COMBUSTIBLE_KM: number;
   PORCENTAJE_SENIA_LARGA: number;
   LIMITE_KM_CORTA: number;
+  
+  // Combos (legacy - mantenidos para compatibilidad pero ya no se usan)
+  COMBO_MUDANZA_COMPLETA?: number;
+  COMBO_MINI_MUDANZA_LARGA?: number;
+  COMBO_MINI_MUDANZA_CORTA?: number;
+  COMBO_FLETE_LIVIANO_LARGO?: number;
+  COMBO_FLETE_LIVIANO_CORTO?: number;
 }
 
 /**

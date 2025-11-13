@@ -431,7 +431,7 @@ function SolicitarFleteContent() {
                     <CardContent>
                       <div className="text-center mb-4">
                         <p className="text-3xl font-bold text-green-700 mb-2">
-                          ${quote.total.toLocaleString()}
+                          ${(quote.total || 0).toLocaleString()}
                         </p>
                         <p className="text-sm text-green-600">
                           Distancia: {routeData?.distance.toFixed(1)} km • {requestData.tipoServicio}
@@ -441,9 +441,9 @@ function SolicitarFleteContent() {
                       <div className="bg-white rounded-lg p-4 space-y-2">
                         <div className="flex justify-between text-sm">
                           <span>Tarifa base:</span>
-                          <span>${quote.tarifaBase.toLocaleString()}</span>
+                          <span>${(quote.tarifaBase || 0).toLocaleString()}</span>
                         </div>
-                        {Object.entries(quote.extras).map(([key, value]) => {
+                        {quote.extras && Object.entries(quote.extras).map(([key, value]) => {
                           // Convertir claves a etiquetas amigables
                           const getExtraLabel = (key: string) => {
                             switch(key) {
@@ -465,7 +465,7 @@ function SolicitarFleteContent() {
                         {quote.requiereSenia && (
                           <div className="flex justify-between text-sm font-medium text-amber-600 pt-2 border-t">
                             <span>Seña requerida:</span>
-                            <span>${quote.montoSenia.toLocaleString()}</span>
+                            <span>${(quote.montoSenia || 0).toLocaleString()}</span>
                           </div>
                         )}
                       </div>

@@ -36,14 +36,16 @@ export class FreightService {
 
       if (esViajeInterurbano) {
         // ===== LÓGICA INTERURBANA =====
-        // Para viajes fuera de Corrientes: solo combustible por KM
+        // Para viajes fuera de Corrientes: combustible por KM con precio mínimo
         // NO importa el tipo de servicio ni las escaleras
-        precioBase = pricingRules.PRECIO_MINIMO_FLETE + (distanciaReal * pricingRules.PRECIO_COMBUSTIBLE_KM);
+        const precioPorKm = distanciaReal * pricingRules.PRECIO_COMBUSTIBLE_KM;
+        precioBase = Math.max(precioPorKm, pricingRules.PRECIO_MINIMO_FLETE);
         totalPrice = precioBase;
         
         console.log('[FreightService] 🚛 Cálculo interurbano:');
-        console.log(`  - Precio mínimo: $${pricingRules.PRECIO_MINIMO_FLETE}`);
-        console.log(`  - Combustible: ${distanciaReal}km × $${pricingRules.PRECIO_COMBUSTIBLE_KM} = $${distanciaReal * pricingRules.PRECIO_COMBUSTIBLE_KM}`);
+        console.log(`  - Combustible: ${distanciaReal}km × $${pricingRules.PRECIO_COMBUSTIBLE_KM} = $${precioPorKm}`);
+        console.log(`  - Precio mínimo garantizado: $${pricingRules.PRECIO_MINIMO_FLETE}`);
+        console.log(`  - Precio base final: $${precioBase}`);
         
       } else {
         // ===== LÓGICA URBANA =====
@@ -70,8 +72,9 @@ export class FreightService {
               : pricingRules.COMBO_FLETE_LIVIANO_CORTO;
             break;
           case 'viaje_largo':
-            // Viaje largo dentro de la ciudad (caso especial)
-            precioBase = pricingRules.PRECIO_MINIMO_FLETE + (distanciaReal * pricingRules.PRECIO_COMBUSTIBLE_KM);
+            // Viaje largo dentro de la ciudad (caso especial): cobrar por km con mínimo garantizado
+            const precioPorKmUrbano = distanciaReal * pricingRules.PRECIO_COMBUSTIBLE_KM;
+            precioBase = Math.max(precioPorKmUrbano, pricingRules.PRECIO_MINIMO_FLETE);
             break;
         }
 
@@ -99,12 +102,12 @@ export class FreightService {
       // TODO: Aplicar descuentos por volumen/promociones (implementación futura)
 
       const quoteResult: QuoteResult = {
-        km: distanciaReal,
-        tarifaBase: precioBase,
-        extras: extras, // Usar los extras calculados según el tipo de viaje
-        total: Math.round(totalPrice),
-        requiereSenia,
-        montoSenia: Math.round(montoSenia)
+        km: distanciaReal || 0,
+        tarifaBase: precioBase || 0,
+        extras: extras || {}, // Usar los extras calculados según el tipo de viaje
+        total: Math.round(totalPrice) || 0,
+        requiereSenia: requiereSenia || false,
+        montoSenia: Math.round(montoSenia) || 0
       };
 
       console.log('[FreightService] Cotización calculada:', quoteResult);
@@ -131,10 +134,11 @@ export class FreightService {
     const extras: Record<string, number> = {};
     
     if (esViajeInterurbano) {
-      // INTERURBANO: solo combustible por KM (valores fallback)
+      // INTERURBANO: combustible por KM con precio mínimo garantizado (valores fallback)
       const precioMinimo = 15000;
       const combustibleKm = 800;
-      precioBase = precioMinimo + (estimatedKm * combustibleKm);
+      const precioPorKm = estimatedKm * combustibleKm;
+      precioBase = Math.max(precioPorKm, precioMinimo);
       total = precioBase;
     } else {
       // URBANO: usar tipo de servicio + escaleras (valores fallback)

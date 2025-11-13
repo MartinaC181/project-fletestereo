@@ -18,7 +18,7 @@ const teamMembers = [
     skills: ["React", "Next.js", "TypeScript", "Node.js"],
     githubUsername: "maximomasdeu",
     github: "https://github.com/maximomasdeu",
-    linkedin: "https://linkedin.com/in/maximomasdeu",
+    linkedin: "https://www.linkedin.com/in/maximo-masdeu-8b4a5b2a4/",
     email: "masdeu398@gmail.com",
     color: "from-blue-500 to-cyan-500"
   },
@@ -29,8 +29,8 @@ const teamMembers = [
     skills: ["Supabase", "PostgreSQL", "API Design", "Cloud"],
     githubUsername: "estebancardoz0",
     github: "https://github.com/estebancardoz0",
-    linkedin: "https://linkedin.com/in/estebancardoz0",
-    email: "dev2@example.com",
+    linkedin: "https://www.linkedin.com/in/esteban-cardozo19/",
+    email: "esteban.cardozo.wec@gmail.com",
     color: "from-purple-500 to-pink-500"
   },
   {
@@ -40,8 +40,8 @@ const teamMembers = [
     skills: ["UI/UX", "Tailwind CSS", "Animations", "Responsive Design"],
     githubUsername: "MartinaC181",
     github: "https://github.com/MartinaC181",
-    linkedin: "https://linkedin.com/in/MartinaC181",
-    email: "dev3@example.com",
+    linkedin: "https://ar.linkedin.com/in/martina-abigail-canteros",
+    email: "martiinacanteros@gmail.com",
     color: "from-amber-500 to-orange-500"
   }
 ];
