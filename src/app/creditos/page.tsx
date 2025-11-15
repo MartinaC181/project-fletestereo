@@ -14,7 +14,7 @@ const teamMembers = [
   {
     name: "Máximo Masdeu",
     role: "Full Stack Developer",
-    description: "Especialista en desarrollo frontend y backend, con pasión por crear experiencias de usuario excepcionales.",
+    description: "Estudiante de Tecnicatura Universitaria en Programación en la UTN Resistencia, Chaco. Enfoque en desarrollo frontend con conocimientos en backend.",
     skills: ["React", "Next.js", "TypeScript", "Node.js"],
     githubUsername: "maximomasdeu",
     github: "https://github.com/maximomasdeu",
@@ -25,7 +25,7 @@ const teamMembers = [
   {
     name: "Esteban Cardozo",
     role: "Backend Developer",
-    description: "Experto en arquitectura de sistemas y bases de datos, construyendo soluciones robustas y escalables.",
+    description: "Estudiante de Tecnicatura Universitaria en Programación en la UTN Resistencia, Chaco. Especializado en desarrollo backend y bases de datos.",
     skills: ["Supabase", "PostgreSQL", "API Design", "Cloud"],
     githubUsername: "estebancardoz0",
     github: "https://github.com/estebancardoz0",
@@ -36,7 +36,7 @@ const teamMembers = [
   {
     name: "Martina Canteros",
     role: "Frontend Developer",
-    description: "Creativo diseñador de interfaces, enfocado en la usabilidad y el diseño visual atractivo.",
+    description: "Estudiante de Tecnicatura Universitaria en Programación en la UTN Resistencia, Chaco. Enfoque en desarrollo backend con conocimientos en frontend.",
     skills: ["UI/UX", "Tailwind CSS", "Animations", "Responsive Design"],
     githubUsername: "MartinaC181",
     github: "https://github.com/MartinaC181",
@@ -107,27 +107,11 @@ export default function CreditosPage() {
                     <CardContent className="pt-16 pb-6 px-6 text-center">
                       {/* Name & Role */}
                       <h3 className="text-2xl font-bold mb-2">{member.name}</h3>
-                      <Badge variant="secondary" className="mb-4">
-                        {member.role}
-                      </Badge>
 
                       {/* Description */}
                       <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
                         {member.description}
                       </p>
-
-                      {/* Skills */}
-                      <div className="flex flex-wrap justify-center gap-2 mb-6">
-                        {member.skills.map((skill) => (
-                          <Badge 
-                            key={skill} 
-                            variant="outline"
-                            className="text-xs"
-                          >
-                            {skill}
-                          </Badge>
-                        ))}
-                      </div>
 
                       {/* Social Links */}
                       <div className="flex justify-center gap-3">

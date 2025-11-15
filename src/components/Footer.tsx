@@ -56,21 +56,12 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4" />
-                <span>masdeu398@gmail.com</span>
+                <span>frenky_dany@hotmail.com</span>
               </div>
               <div className="flex items-center space-x-2">
                 <MapPin className="h-4 w-4" />
                 <span>Corrientes, Argentina</span>
               </div>
-            </div>
-            
-            <div className="mt-6">
-              <h4 className="font-medium mb-2 dark:text-black">Horarios de Atención</h4>
-              <p className="text-xs text-primary-foreground/60 dark:text-black/60">
-                Lunes a Viernes: XX:XX - XX:XX<br />
-                Sábados: XX:XX - XX:XX<br />
-                Domingos: XX:XX - XX:XX
-              </p>
             </div>
           </div>
         </div>

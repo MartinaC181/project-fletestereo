@@ -246,7 +246,7 @@ export default function ServiciosPage() {
                   <p className="text-lg lg:text-xl text-muted-foreground mb-8">Ofrecemos soluciones completas de transporte y logística adaptadas a tus necesidades específicas. Profesionalismo, seguridad y eficiencia en cada servicio.</p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Link href="/solicitar-flete"><Button variant="hero" size="lg" className="w-full sm:w-auto">Solicitar Cotización <ArrowRight className="ml-2 h-5 w-5" /></Button></Link>
-                    <Button variant="outline" size="lg" className="w-full sm:w-auto"><Phone className="mr-2 h-5 w-5" />Llamar Ahora</Button>
+                    <Button variant="outline" size="lg" className="w-full sm:w-auto" onClick={() => window.open('tel:+543795170535', '_self')}><Phone className="mr-2 h-5 w-5" />Llamar Ahora</Button>
                   </div>
                 </div>
               </div>
@@ -373,7 +373,7 @@ export default function ServiciosPage() {
                             </div>
                             {service.activo && (
                               <Link href={`/solicitar-flete?servicio=${service.id}`}>
-                                <Button variant="outline" size="sm">Cotizar</Button>
+                                <Button variant="hero" size="sm">Cotizar</Button>
                               </Link>
                             )}
                           </div>
