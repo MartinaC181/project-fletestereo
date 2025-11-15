@@ -423,12 +423,24 @@ const QuoteForm = () => {
                         <span>Distancia ({quote.km} km):</span>
                         <span>Incluido en tarifa base</span>
                       </div>
-                      {quote.extras.escaleras > 0 && (
-                        <div className="flex justify-between">
-                          <span>Escaleras:</span>
-                          <span>${quote.extras.escaleras.toLocaleString()}</span>
-                        </div>
-                      )}
+                      {Object.entries(quote.extras).map(([key, value]) => {
+                        if (!value || value <= 0) return null;
+                        const getExtraLabel = (key: string) => {
+                          switch(key) {
+                            case 'pisos_escalera': return 'Pisos con escaleras';
+                            case 'escaleras': return 'Escaleras';
+                            case 'volumen_extra': return 'Volumen extra';
+                            case 'distancia_extra': return 'Distancia adicional';
+                            default: return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                          }
+                        };
+                        return (
+                          <div key={key} className="flex justify-between">
+                            <span>{getExtraLabel(key)}:</span>
+                            <span>+${(value as number).toLocaleString()}</span>
+                          </div>
+                        );
+                      })}
                       <hr />
                       <div className="flex justify-between font-bold text-lg">
                         <span>Total:</span>
@@ -438,10 +450,10 @@ const QuoteForm = () => {
                   </div>
 
                   {quote.requiereSenia && (
-                    <div className="bg-destructive/10 p-4 rounded-lg border border-destructive/20">
-                      <h5 className="font-semibold text-destructive mb-2">Seña Requerida</h5>
-                      <p className="text-sm">
-                        Este viaje requiere una seña de 
+                    <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                      <h5 className="font-semibold text-amber-800 mb-2">Seña Requerida</h5>
+                      <p className="text-sm text-amber-700">
+                        Para viajes interurbanos (fuera de Corrientes Capital) se requiere una seña del 30% 
                         (${quote.montoSenia.toLocaleString()})
                       </p>
                     </div>

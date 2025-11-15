@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, memo, useMemo } from 'react';
 import { Coordinates } from '@/src/lib/services/geolocation.service';
 
 interface MapViewProps {
@@ -15,7 +15,7 @@ interface MapViewProps {
   height?: string;
 }
 
-export const MapView = ({
+const MapViewComponent = ({
   center,
   markers = [],
   polyline,
@@ -24,16 +24,29 @@ export const MapView = ({
 }: MapViewProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
+  const markersRef = useRef<google.maps.Marker[]>([]);
+  const polylineRef = useRef<google.maps.Polyline | null>(null);
 
+  // Crear una clave estable basada en el contenido de los marcadores
+  const markersKey = useMemo(() => {
+    return markers.map(m => 
+      `${m.position.lat},${m.position.lng},${m.title},${m.color || 'red'}`
+    ).join('|');
+  }, [markers]);
+
+  // Mantener una referencia al array de marcadores actual
+  const markersDataRef = useRef(markers);
   useEffect(() => {
-    if (!mapRef.current || !window.google || !window.google.maps) {
-      console.log('⏳ Esperando a que Google Maps esté disponible...');
+    markersDataRef.current = markers;
+  }, [markers]);
+
+  // Inicializar el mapa solo una vez
+  useEffect(() => {
+    if (!mapRef.current || !window.google || !window.google.maps || mapInstanceRef.current) {
       return;
     }
 
-    console.log('🗺️ Inicializando mapa con polyline:', polyline ? 'SÍ' : 'NO');
-    console.log('🗺️ Marcadores:', markers.length);
-    console.log('🗺️ Geometry library disponible:', !!window.google.maps.geometry);
+    console.log('🗺️ Inicializando mapa por primera vez');
 
     // Inicializar el mapa
     mapInstanceRef.current = new google.maps.Map(mapRef.current, {
@@ -47,14 +60,28 @@ export const MapView = ({
         }
       ]
     });
+  }, [center.lat, center.lng, zoom]); // Solo reinicializar si el centro o zoom cambian
+
+  // Actualizar marcadores cuando cambien
+  useEffect(() => {
+    if (!mapInstanceRef.current || !window.google?.maps) return;
+
+    console.log('🔄 Actualizando marcadores...');
+
+    // Limpiar marcadores anteriores
+    markersRef.current.forEach(marker => marker.setMap(null));
+    markersRef.current = [];
 
     // Crear bounds para ajustar la vista
     const bounds = new google.maps.LatLngBounds();
     let shouldFitBounds = false;
 
-    // Agregar marcadores
-    markers.forEach((marker, index) => {
-      new google.maps.Marker({
+    // Usar los marcadores de la referencia
+    const currentMarkers = markersDataRef.current;
+
+    // Agregar nuevos marcadores
+    currentMarkers.forEach((marker) => {
+      const newMarker = new google.maps.Marker({
         position: marker.position,
         map: mapInstanceRef.current,
         title: marker.title,
@@ -63,26 +90,45 @@ export const MapView = ({
         }
       });
       
-      // Extender bounds con cada marcador
+      markersRef.current.push(newMarker);
       bounds.extend(marker.position);
       shouldFitBounds = true;
     });
 
-    // Agregar polyline si existe
-    if (polyline) {
-      console.log('🛣️ Procesando polyline...');
+    // Ajustar vista si hay múltiples marcadores y no hay polyline
+    if (shouldFitBounds && currentMarkers.length > 1 && !polyline) {
+      mapInstanceRef.current.fitBounds(bounds);
       
-      // Verificar si geometry está disponible
-      if (!window.google.maps.geometry) {
-        console.error('❌ Google Maps Geometry library no está cargada');
-        return;
-      }
+      google.maps.event.addListenerOnce(mapInstanceRef.current, 'bounds_changed', () => {
+        const currentZoom = mapInstanceRef.current?.getZoom();
+        if (currentZoom && currentZoom > 15) {
+          mapInstanceRef.current?.setZoom(15);
+        }
+      });
+    }
+  }, [markersKey, polyline]); // Usar la clave estable en lugar del array de marcadores
 
+  // Actualizar polyline cuando cambie
+  useEffect(() => {
+    if (!mapInstanceRef.current || !window.google?.maps || !window.google.maps.geometry) {
+      return;
+    }
+
+    // Limpiar polyline anterior
+    if (polylineRef.current) {
+      polylineRef.current.setMap(null);
+      polylineRef.current = null;
+    }
+
+    // Agregar nueva polyline si existe
+    if (polyline) {
+      console.log('🛣️ Actualizando polyline...');
+      
       try {
         const decodedPath = google.maps.geometry.encoding.decodePath(polyline);
         console.log('✅ Polyline decodificada, puntos:', decodedPath.length);
         
-        const polylineObject = new google.maps.Polyline({
+        polylineRef.current = new google.maps.Polyline({
           path: decodedPath,
           geodesic: true,
           strokeColor: '#2563eb',
@@ -93,7 +139,7 @@ export const MapView = ({
 
         console.log('✅ Polyline agregada al mapa');
 
-        // Limpiar bounds anteriores y usar los del polyline
+        // Ajustar vista a la ruta
         const polylineBounds = new google.maps.LatLngBounds();
         decodedPath.forEach(point => polylineBounds.extend(point));
         mapInstanceRef.current.fitBounds(polylineBounds);
@@ -102,19 +148,8 @@ export const MapView = ({
       } catch (error) {
         console.error('❌ Error al procesar polyline:', error);
       }
-    } else if (shouldFitBounds && markers.length > 1) {
-      // Si hay múltiples marcadores pero no polyline, ajustar vista para mostrar todos
-      mapInstanceRef.current.fitBounds(bounds);
-      
-      // Añadir un poco de padding para que los marcadores no queden en el borde
-      google.maps.event.addListenerOnce(mapInstanceRef.current, 'bounds_changed', () => {
-        const zoom = mapInstanceRef.current?.getZoom();
-        if (zoom && zoom > 15) {
-          mapInstanceRef.current?.setZoom(15); // Limitar zoom máximo para evitar que quede demasiado cerca
-        }
-      });
     }
-  }, [center, markers, polyline, zoom]);
+  }, [polyline]); // Solo actualizar polyline cuando cambie
 
   // Asegurar que Google Maps esté cargado antes de usar el mapa
   useEffect(() => {
@@ -139,3 +174,6 @@ export const MapView = ({
     />
   );
 };
+
+// Memoizar el componente para evitar re-renders innecesarios
+export const MapView = memo(MapViewComponent);

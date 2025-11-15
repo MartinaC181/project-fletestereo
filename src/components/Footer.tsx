@@ -29,9 +29,9 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4 dark:text-black">Servicios</h3>
             <ul className="space-y-2 text-sm text-primary-foreground/80 dark:text-black/80">
-              <li><Link href="/servicios" className="hover:text-accent-yellow dark:hover:text-black transition-colors">Mudanza Completa</Link></li>
-              <li><Link href="/servicios" className="hover:text-accent-yellow dark:hover:text-black transition-colors">Mini Mudanza</Link></li>
-              <li><Link href="/servicios" className="hover:text-accent-yellow dark:hover:text-black transition-colors">Flete Liviano</Link></li>
+              <li><Link href="/tarifas" className="hover:text-accent-yellow dark:hover:text-black transition-colors">Mudanza Completa</Link></li>
+              <li><Link href="/tarifas" className="hover:text-accent-yellow dark:hover:text-black transition-colors">Mini Mudanza</Link></li>
+              <li><Link href="/tarifas" className="hover:text-accent-yellow dark:hover:text-black transition-colors">Flete Liviano</Link></li>
               <li><Link href="/tarifas" className="hover:text-accent-yellow dark:hover:text-black transition-colors">Ver Tarifas</Link></li>
             </ul>
           </div>
@@ -56,29 +56,31 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4" />
-                <span>masdeu398@gmail.com</span>
+                <span>frenky_dany@hotmail.com</span>
               </div>
               <div className="flex items-center space-x-2">
                 <MapPin className="h-4 w-4" />
                 <span>Corrientes, Argentina</span>
               </div>
             </div>
-            
-            <div className="mt-6">
-              <h4 className="font-medium mb-2 dark:text-black">Horarios de Atención</h4>
-              <p className="text-xs text-primary-foreground/60 dark:text-black/60">
-                Lunes a Viernes: XX:XX - XX:XX<br />
-                Sábados: XX:XX - XX:XX<br />
-                Domingos: XX:XX - XX:XX
-              </p>
-            </div>
           </div>
         </div>
 
-        <div className="border-t border-white/20 dark:border-black/20 mt-8 pt-8 text-center">
-          <p className="text-sm text-primary-foreground/60 dark:text-black/60">
-            © 2025 Fletestereo. Todos los derechos reservados.
-          </p>
+        <div className="border-t border-white/20 dark:border-black/20 mt-8 pt-8">
+          <div className="text-center space-y-2">
+            <p className="text-sm text-primary-foreground/60 dark:text-black/60">
+              © 2025 Fletestereo. Todos los derechos reservados.
+            </p>
+            <p className="text-xs text-primary-foreground/50 dark:text-black/50 flex items-center justify-center gap-1">
+              Desarrollado con ❤️ por{" "}
+              <Link 
+                href="/creditos" 
+                className="font-semibold text-accent-yellow hover:text-accent-yellow/80 dark:text-black dark:hover:text-black/80 transition-colors underline decoration-dotted underline-offset-2"
+              >
+                Coderrientes
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </footer>

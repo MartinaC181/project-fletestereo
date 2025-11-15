@@ -26,56 +26,88 @@ export class FreightService {
       const distanciaReal = quoteData.distance || 20;
       console.log('[FreightService] 📏 Distancia utilizada:', distanciaReal, 'km');
 
-      // Validar tipo de servicio
-      if (!this.isValidServiceType(quoteData.tipoServicio)) {
-        throw new Error(`Tipo de servicio no válido: ${quoteData.tipoServicio}`);
-      }
+      // Determinar si es viaje interurbano (fuera de Corrientes)
+      const esViajeInterurbano = this.isInterurbanTrip(quoteData.origen, quoteData.destino);
+      console.log('[FreightService] 🗺️ Tipo de viaje:', esViajeInterurbano ? 'INTERURBANO' : 'URBANO');
 
-      // Cálculo base según tipo de servicio usando las tarifas M15
       let precioBase = 0;
-      
-      switch (quoteData.tipoServicio) {
-        case 'mudanza_completa':
-          precioBase = pricingRules.COMBO_MUDANZA_COMPLETA;
-          break;
-        case 'mini_mudanza':
-          // Usar distancia real para determinar si es corta/larga
-          precioBase = distanciaReal > pricingRules.LIMITE_KM_CORTA 
-            ? pricingRules.COMBO_MINI_MUDANZA_LARGA 
-            : pricingRules.COMBO_MINI_MUDANZA_CORTA;
-          break;
-        case 'flete_liviano':
-          precioBase = distanciaReal > pricingRules.LIMITE_KM_CORTA
-            ? pricingRules.COMBO_FLETE_LIVIANO_LARGO
-            : pricingRules.COMBO_FLETE_LIVIANO_CORTO;
-          break;
-        case 'viaje_largo':
-          // Para viajes largos, usar precio mínimo + combustible por km
-          precioBase = pricingRules.PRECIO_MINIMO_FLETE + (distanciaReal * pricingRules.PRECIO_COMBUSTIBLE_KM);
-          break;
+      let totalPrice = 0;
+      const extras: Record<string, number> = {};
+
+      if (esViajeInterurbano) {
+        // ===== LÓGICA INTERURBANA =====
+        // Para viajes fuera de Corrientes: combustible por KM con precio mínimo
+        // NO importa el tipo de servicio ni las escaleras
+        const precioPorKm = distanciaReal * pricingRules.PRECIO_COMBUSTIBLE_KM;
+        precioBase = Math.max(precioPorKm, pricingRules.PRECIO_MINIMO_FLETE);
+        totalPrice = precioBase;
+        
+        console.log('[FreightService] 🚛 Cálculo interurbano:');
+        console.log(`  - Combustible: ${distanciaReal}km × $${pricingRules.PRECIO_COMBUSTIBLE_KM} = $${precioPorKm}`);
+        console.log(`  - Precio mínimo garantizado: $${pricingRules.PRECIO_MINIMO_FLETE}`);
+        console.log(`  - Precio base final: $${precioBase}`);
+        
+      } else {
+        // ===== LÓGICA URBANA =====
+        // Para viajes dentro de Corrientes: usar tipo de servicio + escaleras
+        
+        // Validar tipo de servicio para urbanos
+        if (!this.isValidServiceType(quoteData.tipoServicio)) {
+          throw new Error(`Tipo de servicio no válido: ${quoteData.tipoServicio}`);
+        }
+
+        // Calcular precio base según tipo de servicio
+        switch (quoteData.tipoServicio) {
+          case 'mudanza_completa':
+            precioBase = pricingRules.COMBO_MUDANZA_COMPLETA;
+            break;
+          case 'mini_mudanza':
+            precioBase = distanciaReal > pricingRules.LIMITE_KM_CORTA 
+              ? pricingRules.COMBO_MINI_MUDANZA_LARGA 
+              : pricingRules.COMBO_MINI_MUDANZA_CORTA;
+            break;
+          case 'flete_liviano':
+            precioBase = distanciaReal > pricingRules.LIMITE_KM_CORTA
+              ? pricingRules.COMBO_FLETE_LIVIANO_LARGO
+              : pricingRules.COMBO_FLETE_LIVIANO_CORTO;
+            break;
+          case 'viaje_largo':
+            // Viaje largo dentro de la ciudad (caso especial): cobrar por km con mínimo garantizado
+            const precioPorKmUrbano = distanciaReal * pricingRules.PRECIO_COMBUSTIBLE_KM;
+            precioBase = Math.max(precioPorKmUrbano, pricingRules.PRECIO_MINIMO_FLETE);
+            break;
+        }
+
+        totalPrice = precioBase;
+
+        // Aplicar modificador por escaleras (solo en urbanos)
+        if (quoteData.pisosEscalera && quoteData.pisosEscalera > 0) {
+          const extraEscaleras = quoteData.pisosEscalera * pricingRules.EXTRA_PISO_ESCALERA;
+          totalPrice += extraEscaleras;
+          extras['pisos_escalera'] = extraEscaleras;
+        }
+
+        console.log('[FreightService] 🏙️ Cálculo urbano:');
+        console.log(`  - Tipo servicio: ${quoteData.tipoServicio}`);
+        console.log(`  - Precio base: $${precioBase}`);
+        if (extras.pisos_escalera) {
+          console.log(`  - Escaleras: ${quoteData.pisosEscalera} × $${pricingRules.EXTRA_PISO_ESCALERA} = $${extras.pisos_escalera}`);
+        }
       }
 
-      // Aplicar modificadores adicionales
-      let totalPrice = precioBase;
-
-      // Modificador por pisos/escaleras
-      if (quoteData.pisosEscalera && quoteData.pisosEscalera > 0) {
-        totalPrice += (quoteData.pisosEscalera * pricingRules.EXTRA_PISO_ESCALERA);
-      }
-
-      // Determinar si requiere seña (viajes largos)
-      const requiereSenia = distanciaReal > pricingRules.LIMITE_KM_CORTA;
+      // Seña: solo para viajes interurbanos (50%)
+      const requiereSenia = esViajeInterurbano;
       const montoSenia = requiereSenia ? totalPrice * (pricingRules.PORCENTAJE_SENIA_LARGA / 100) : 0;
 
       // TODO: Aplicar descuentos por volumen/promociones (implementación futura)
 
       const quoteResult: QuoteResult = {
-        km: distanciaReal,  // Usar distancia real
-        tarifaBase: precioBase,
-        extras: quoteData.pisosEscalera ? { 'pisos_escalera': quoteData.pisosEscalera * pricingRules.EXTRA_PISO_ESCALERA } : {},
-        total: Math.round(totalPrice),
-        requiereSenia,
-        montoSenia: Math.round(montoSenia)
+        km: distanciaReal || 0,
+        tarifaBase: precioBase || 0,
+        extras: extras || {}, // Usar los extras calculados según el tipo de viaje
+        total: Math.round(totalPrice) || 0,
+        requiereSenia: requiereSenia || false,
+        montoSenia: Math.round(montoSenia) || 0
       };
 
       console.log('[FreightService] Cotización calculada:', quoteResult);
@@ -91,30 +123,57 @@ export class FreightService {
   }
 
   /**
-   * Calcula cotización con valores fallback (sin M15)
+   * Calcula cotización con valores fallback (sin M15) - Aplica misma lógica de negocio
    */
   private calculateFallbackQuote(quoteData: QuoteData): QuoteResult {
-    const estimatedKm = 20; // Distancia estimada por defecto
-    const basePricePerKm = 1500;
-    const precioBase = estimatedKm * basePricePerKm;
+    const estimatedKm = 20;
+    const esViajeInterurbano = this.isInterurbanTrip(quoteData.origen, quoteData.destino);
     
-    let serviceMultiplier = 1;
-    switch (quoteData.tipoServicio) {
-      case 'mudanza_completa': serviceMultiplier = 1.5; break;
-      case 'mini_mudanza': serviceMultiplier = 1.2; break;
-      case 'flete_liviano': serviceMultiplier = 1.0; break;
-      case 'viaje_largo': serviceMultiplier = 1.3; break;
-    }
+    let precioBase = 0;
+    let total = 0;
+    const extras: Record<string, number> = {};
+    
+    if (esViajeInterurbano) {
+      // INTERURBANO: combustible por KM con precio mínimo garantizado (valores fallback)
+      const precioMinimo = 15000;
+      const combustibleKm = 800;
+      const precioPorKm = estimatedKm * combustibleKm;
+      precioBase = Math.max(precioPorKm, precioMinimo);
+      total = precioBase;
+    } else {
+      // URBANO: usar tipo de servicio + escaleras (valores fallback)
+      const basePricePerKm = 1500;
+      precioBase = estimatedKm * basePricePerKm;
+      
+      let serviceMultiplier = 1;
+      switch (quoteData.tipoServicio) {
+        case 'mudanza_completa': serviceMultiplier = 1.5; break;
+        case 'mini_mudanza': serviceMultiplier = 1.2; break;
+        case 'flete_liviano': serviceMultiplier = 1.0; break;
+        case 'viaje_largo': serviceMultiplier = 1.3; break;
+      }
 
-    const total = Math.round(precioBase * serviceMultiplier);
+      total = Math.round(precioBase * serviceMultiplier);
+      
+      // Agregar costo por escaleras solo en urbanos
+      if (quoteData.pisosEscalera && quoteData.pisosEscalera > 0) {
+        const extrasEscaleras = quoteData.pisosEscalera * 5000;
+        total += extrasEscaleras;
+        extras['pisos_escalera'] = extrasEscaleras;
+      }
+    }
+    
+    // Seña: solo para viajes interurbanos
+    const requiereSenia = esViajeInterurbano;
+    const montoSenia = requiereSenia ? Math.round(total * 0.5) : 0; // 50% para interurbanos
     
     return {
       km: estimatedKm,
       tarifaBase: precioBase,
-      extras: quoteData.pisosEscalera ? { 'pisos_escalera': quoteData.pisosEscalera * 5000 } : {},
+      extras: extras,
       total,
-      requiereSenia: total > 50000,
-      montoSenia: total > 50000 ? Math.round(total * 0.3) : 0
+      requiereSenia,
+      montoSenia
     };
   }
 
@@ -148,6 +207,97 @@ export class FreightService {
   private isValidServiceType(tipoServicio: string): boolean {
     const validTypes = ['mudanza_completa', 'mini_mudanza', 'flete_liviano', 'viaje_largo'];
     return validTypes.includes(tipoServicio);
+  }
+
+  /**
+   * Determina si el viaje es interurbano (fuera de Corrientes CAPITAL)
+   * La seña se requiere cuando origen o destino están fuera de Corrientes CAPITAL
+   */
+  public isInterurbanTrip(origen: string, destino: string): boolean {
+    // Normalizamos las direcciones a lowercase para comparación
+    const origenNorm = origen.toLowerCase();
+    const destinoNorm = destino.toLowerCase();
+    
+    // Lista de términos que indican que es dentro de Corrientes Capital
+    const corrientesCapitalTerms = [
+      'corrientes capital',
+      'ciudad de corrientes',
+      'corrientes, corrientes',
+      'corrientes ciudad',
+      'capital corrientes',
+      'casco histórico corrientes',
+      'microcentro corrientes',
+      'centro corrientes'
+    ];
+
+    // Barrios conocidos de Corrientes Capital
+    const barriosCapital = [
+      'centro', 'microcentro', 'casco histórico',
+      'san gerónimo', 'san roque', 'san benito',
+      'w3w', 'w3e', 'w3c', 'w3a', 'w3b',
+      'barrio norte', 'barrio sur', 'barrio este', 'barrio oeste',
+      'santa rita', 'san antonio', 'aldana', 'molina punta',
+      'anahí', 'pirayuí', 'laguna brava', '3 de abril',
+      'berón de astrada', 'dr. montaña', 'quinta ferré'
+    ];
+
+    // Términos que indican que NO es Corrientes Capital
+    const terminosExcluidos = [
+      'goya', 'paso de los libres', 'mercedes', 'curuzú cuatiá',
+      'monte caseros', 'santo tome', 'bella vista', 'esquina',
+      'empedrado', 'saladas', 'mburucuyá', 'ituzaingó',
+      'resistencia', 'posadas', 'formosa', 'buenos aires',
+      'santa fe', 'paraná', 'uruguay', 'brasil'
+    ];
+    
+    // Función auxiliar para verificar si una dirección está en Corrientes Capital
+    const estaEnCorrientesCapital = (direccion: string): boolean => {
+      // Si contiene términos excluidos, definitivamente NO es Capital
+      if (terminosExcluidos.some(term => direccion.includes(term))) {
+        return false;
+      }
+
+      // Si contiene términos específicos de Capital, SÍ es Capital
+      if (corrientesCapitalTerms.some(term => direccion.includes(term))) {
+        return true;
+      }
+
+      // Si contiene barrios específicos de Capital, SÍ es Capital  
+      if (barriosCapital.some(barrio => direccion.includes(barrio))) {
+        return true;
+      }
+
+      // Si solo dice "corrientes" sin especificar, asumimos que es Capital
+      if (direccion.includes('corrientes') && direccion.includes('ctes')) {
+        return true;
+      }
+
+      // Si contiene "corrientes" pero no términos excluidos, probablemente es Capital
+      if (direccion.includes('corrientes')) {
+        return true;
+      }
+
+      // Por defecto, si no podemos determinar, asumimos que NO es Capital (requiere seña)
+      return false;
+    };
+    
+    // Verificar si origen y destino están en Corrientes Capital
+    const origenEnCapital = estaEnCorrientesCapital(origenNorm);
+    const destinoEnCapital = estaEnCorrientesCapital(destinoNorm);
+    
+    // Es viaje interurbano si alguno de los dos NO está en Corrientes Capital
+    const esInterurbano = !origenEnCapital || !destinoEnCapital;
+    
+    console.log('[FreightService] 🗺️ Análisis geográfico para seña:', {
+      origen,
+      destino,
+      origenEnCapital,
+      destinoEnCapital,
+      esInterurbano,
+      requiereSeña: esInterurbano
+    });
+    
+    return esInterurbano;
   }
 
   /**
@@ -267,31 +417,24 @@ export class FreightService {
         }
       }
 
-      // 2. Crear solicitud CON cotización integrada (ESTRUCTURA SIMPLIFICADA)
-      console.log('[FreightService] 📝 Creando solicitud completa...');
-      const insertData = {
+      // 2. Crear solicitud en tabla requests (TEMPORAL - sin cotización integrada)
+      console.log('[FreightService] 📝 Creando solicitud...');
+      const requestData = {
         client_id: clientId,
         origen: quoteData.origen,
         destino: quoteData.destino,
         fecha: quoteData.fecha,
         franja: quoteData.franja,
         carga_tipo: quoteData.tipoServicio,
-        notas: quoteData.notas || null,
-        estado: 'Solicitada' as const,
-        
-        // Campos de cotización integrados directamente
-        km: calculatedQuote.km,
-        tarifa_base: calculatedQuote.tarifaBase,
-        precio_km: Math.round((calculatedQuote.total - calculatedQuote.tarifaBase) / calculatedQuote.km) || 150,
-        extras_json: calculatedQuote.extras || {},
-        total: calculatedQuote.total
+        notas: `${quoteData.notas || ''}\n\n--- COTIZACIÓN ---\nKM: ${calculatedQuote.km}\nTarifa Base: $${calculatedQuote.tarifaBase}\nExtras: ${JSON.stringify(calculatedQuote.extras)}\nTOTAL: $${calculatedQuote.total}\nRequiere Seña: ${calculatedQuote.requiereSenia}\nMonto Seña: $${calculatedQuote.montoSenia}`,
+        estado: 'Solicitada' as const
       };
       
-      console.log('[FreightService] 📋 Datos completos a insertar:', insertData);
+      console.log('[FreightService] 📋 Datos completos a insertar:', requestData);
       
       const { data: request, error: requestError } = await supabase
         .from('requests')
-        .insert(insertData)
+        .insert(requestData)
         .select(`
           *,
           client:clients(
@@ -312,23 +455,25 @@ export class FreightService {
       console.log('[FreightService] ✅ Solicitud completa creada exitosamente:', request.id);
 
       // 3. Crear objeto FreightRequest adaptado para compatibilidad con la interfaz existente
-      const requestData = request as any; // Cast para acceder a los nuevos campos
       const freightRequest: FreightRequest = {
-        id: requestData.id,
-        clientId: requestData.client_id,
-        client: requestData.client,
+        id: request.id,
+        clientId: request.client_id,
+        client: {
+          ...request.client,
+          dni: '' // El DNI no es obligatorio en la tabla clients
+        },
         quote: quoteData,
         calculatedQuote: {
-          km: requestData.km || calculatedQuote.km,
-          tarifaBase: requestData.tarifa_base || calculatedQuote.tarifaBase,
-          extras: requestData.extras_json || calculatedQuote.extras || {},
-          total: requestData.total || calculatedQuote.total,
-          requiereSenia: (requestData.total || calculatedQuote.total) > 50000,
-          montoSenia: (requestData.total || calculatedQuote.total) > 50000 ? Math.round((requestData.total || calculatedQuote.total) * 0.3) : 0
+          km: calculatedQuote.km,
+          tarifaBase: calculatedQuote.tarifaBase,
+          extras: calculatedQuote.extras || {},
+          total: calculatedQuote.total,
+          requiereSenia: calculatedQuote.requiereSenia,
+          montoSenia: calculatedQuote.montoSenia
         },
         status: 'pending',
-        createdAt: new Date(requestData.created_at),
-        updatedAt: new Date(requestData.updated_at)
+        createdAt: new Date(request.created_at),
+        updatedAt: new Date(request.updated_at)
       };
 
       // 4. Emitir eventos
@@ -346,6 +491,15 @@ export class FreightService {
         clientId: freightRequest.clientId,
         total: freightRequest.calculatedQuote.total
       });
+
+      // 5. Notificar al admin por email
+      try {
+        await this.notifyAdminNewFreight(freightRequest.id);
+        console.log('[FreightService] 📧 Notificación enviada al admin');
+      } catch (emailError) {
+        console.error('[FreightService] ⚠️ Error enviando email al admin (no bloquea el flujo):', emailError);
+      }
+
       return freightRequest;
 
     } catch (error) {
@@ -409,7 +563,7 @@ export class FreightService {
             email
           )
         `)
-        .eq('estado', 'Solicitada')
+        .in('estado', ['Solicitada', 'Señada'])
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -417,35 +571,66 @@ export class FreightService {
         throw new Error('Error al obtener solicitudes: ' + error.message);
       }
 
-      // Transformar datos simplificados al formato FreightRequest
+      // Transformar datos (TEMPORAL - extraer cotización de notas)
       const freightRequests: FreightRequest[] = requests?.map((request: any) => {
-        // Cast para acceder a los nuevos campos de cotización
-        const req = request as any;
+        // Extraer datos de cotización del campo notas (solución temporal)
+        const extractQuoteFromNotes = (notas: string) => {
+          const defaultQuote = { km: 0, tarifaBase: 0, extras: {}, total: 0, requiereSenia: false, montoSenia: 0 };
+          if (!notas) return defaultQuote;
+          
+          try {
+            const kmMatch = notas.match(/KM: (\d+(?:\.\d+)?)/);
+            const tarifaMatch = notas.match(/Tarifa Base: \$(\d+(?:,\d{3})*(?:\.\d{2})?)/);
+            const totalMatch = notas.match(/TOTAL: \$(\d+(?:,\d{3})*(?:\.\d{2})?)/);
+            const extrasMatch = notas.match(/Extras: (\{.*?\})/);
+            const seniaRequiereMatch = notas.match(/Requiere Seña: (true|false)/);
+            const seniaMontoMatch = notas.match(/Monto Seña: \$(\d+(?:,\d{3})*(?:\.\d{2})?)/);
+            
+            return {
+              km: kmMatch ? parseFloat(kmMatch[1]) : 0,
+              tarifaBase: tarifaMatch ? parseFloat(tarifaMatch[1].replace(/,/g, '')) : 0,
+              extras: extrasMatch ? JSON.parse(extrasMatch[1]) : {},
+              total: totalMatch ? parseFloat(totalMatch[1].replace(/,/g, '')) : 0,
+              requiereSenia: seniaRequiereMatch ? seniaRequiereMatch[1] === 'true' : false,
+              montoSenia: seniaMontoMatch ? parseFloat(seniaMontoMatch[1].replace(/,/g, '')) : 0
+            };
+          } catch (error) {
+            console.warn('Error extrayendo cotización de notas:', error);
+            return defaultQuote;
+          }
+        };
+
+        const extractedQuote = extractQuoteFromNotes(request.notas);
+        const cleanNotes = request.notas ? request.notas.split('\n\n--- COTIZACIÓN ---')[0] : '';
+
         return {
-          id: req.id,
-          clientId: req.client_id,
-          client: req.clients, // Accediendo a la tabla clients
-          quote: {
-            origen: req.origen,
-            destino: req.destino,
-            fecha: req.fecha,
-            franja: req.franja,
-            tipoServicio: req.carga_tipo,
-            pisosEscalera: req.pisosEscalera || 0,
-            notas: req.notas || ''
+          id: request.id,
+          clientId: request.client_id,
+          client: {
+            ...request.clients,
+            dni: '' // El DNI no es obligatorio en la tabla clients
           },
-          // Usar datos directamente de la tabla requests (estructura simplificada)
+          quote: {
+            origen: request.origen,
+            destino: request.destino,
+            fecha: request.fecha,
+            franja: request.franja,
+            tipoServicio: request.carga_tipo,
+            pisosEscalera: 0, // Este campo no está en la tabla
+            notas: cleanNotes
+          },
+          // Usar datos extraídos temporalmente de notas
           calculatedQuote: {
-            km: req.km || 0,
-            tarifaBase: req.tarifa_base || 0,
-            extras: req.extras_json || {},
-            total: req.total || 0,
-            requiereSenia: (req.total || 0) > 50000,
-            montoSenia: (req.total || 0) > 50000 ? Math.round((req.total || 0) * 0.3) : 0
+            km: extractedQuote.km,
+            tarifaBase: extractedQuote.tarifaBase,
+            extras: extractedQuote.extras,
+            total: extractedQuote.total,
+            requiereSenia: extractedQuote.requiereSenia,
+            montoSenia: extractedQuote.montoSenia
           },
           status: 'pending',
-          createdAt: new Date(req.created_at),
-          updatedAt: new Date(req.updated_at)
+          createdAt: new Date(request.created_at),
+          updatedAt: new Date(request.updated_at)
         };
       }) || [];
 
@@ -489,6 +674,15 @@ export class FreightService {
           }
         });
         await eventBus.emit(freightConfirmedEvent);
+
+        // Notificar al cliente por email
+        try {
+          await this.notifyClientFreightConfirmed(freightId);
+          console.log('[FreightService] 📧 Email de confirmación enviado al cliente');
+        } catch (emailError) {
+          console.error('[FreightService] ⚠️ Error enviando email de confirmación (no bloquea el flujo):', emailError);
+        }
+
       } else if (newStatus === 'Rechazada') {
         const freightRejectedEvent = createEvent<any>({
           type: 'freight.rejected',
@@ -500,12 +694,338 @@ export class FreightService {
           }
         });
         await eventBus.emit(freightRejectedEvent);
+
+        // Notificar al cliente por email
+        try {
+          await this.notifyClientFreightRejected(freightId, reason || 'Sin especificar');
+          console.log('[FreightService] 📧 Email de rechazo enviado al cliente');
+        } catch (emailError) {
+          console.error('[FreightService] ⚠️ Error enviando email de rechazo (no bloquea el flujo):', emailError);
+        }
       }
 
       console.log('[FreightService] Estado actualizado exitosamente');
 
     } catch (error) {
       console.error('[FreightService] Error en updateFreightStatus:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Notifica al admin sobre un nuevo flete
+   */
+  private async notifyAdminNewFreight(freightId: string): Promise<void> {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          freightId,
+          type: 'admin_new_freight'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      console.log('[FreightService] ✅ Notificación al admin enviada exitosamente');
+    } catch (error) {
+      console.error('[FreightService] ❌ Error notificando al admin:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Notifica al cliente sobre confirmación de flete
+   */
+  private async notifyClientFreightConfirmed(freightId: string): Promise<void> {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          freightId,
+          type: 'client_confirmed'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      console.log('[FreightService] ✅ Notificación de confirmación al cliente enviada');
+    } catch (error) {
+      console.error('[FreightService] ❌ Error notificando al cliente:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Notifica al cliente sobre rechazo de flete
+   */
+  private async notifyClientFreightRejected(freightId: string, reason: string): Promise<void> {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          freightId,
+          type: 'client_rejected',
+          reason
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      console.log('[FreightService] ✅ Notificación de rechazo al cliente enviada');
+    } catch (error) {
+      console.error('[FreightService] ❌ Error notificando al cliente:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Solicita seña al cliente (admin acepta pero requiere seña)
+   */
+  async requestSenia(freightId: string, linkPago: string): Promise<void> {
+    try {
+      console.log('[FreightService] Solicitando seña para flete:', freightId);
+      
+      // Actualizar estado en BD (usamos estado existente + campos adicionales)
+      const { error } = await supabase
+        .from('requests')
+        .update({ 
+          estado: 'Señada', // Estado existente que usaremos para señas
+          notas: `SEÑA SOLICITADA - Link: ${linkPago}`,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', freightId);
+
+      if (error) {
+        console.error('[FreightService] Error actualizando estado para seña:', error);
+        throw new Error('Error al solicitar seña: ' + error.message);
+      }
+
+      // Notificar al cliente
+      try {
+        await this.notifyClientSeniaRequired(freightId, linkPago);
+        console.log('[FreightService] 📧 Email de seña enviado al cliente');
+      } catch (emailError) {
+        console.error('[FreightService] ⚠️ Error enviando email de seña (no bloquea el flujo):', emailError);
+      }
+
+      console.log('[FreightService] Seña solicitada exitosamente');
+    } catch (error) {
+      console.error('[FreightService] Error en requestSenia:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Marca la seña como pagada (cliente reporta el pago)
+   */
+  async markSeniaPaid(freightId: string, referenciaPago: string, metodoPago: string): Promise<void> {
+    try {
+      console.log('[FreightService] Marcando seña como pagada:', freightId);
+      
+      // Actualizar estado en BD (seguimos en Señada pero con info de pago)
+      const { error } = await supabase
+        .from('requests')
+        .update({ 
+          estado: 'Señada',
+          notas: `SEÑA PAGADA - Método: ${metodoPago} - Referencia: ${referenciaPago} - Fecha: ${new Date().toLocaleDateString()}`,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', freightId);
+
+      if (error) {
+        console.error('[FreightService] Error marcando seña como pagada:', error);
+        throw new Error('Error al marcar seña pagada: ' + error.message);
+      }
+
+      // Emitir evento
+      const seniaPaidEvent = createEvent({
+        type: 'freight.senia.paid',
+        payload: {
+          freightRequestId: freightId,
+          referenciaPago: referenciaPago,
+          metodoPago: metodoPago,
+          paidAt: new Date()
+        }
+      });
+      await eventBus.emit(seniaPaidEvent);
+
+      // Notificar al admin
+      try {
+        await this.notifyAdminSeniaPaid(freightId, referenciaPago);
+        console.log('[FreightService] 📧 Email de seña pagada enviado al admin');
+      } catch (emailError) {
+        console.error('[FreightService] ⚠️ Error enviando email de seña pagada (no bloquea el flujo):', emailError);
+      }
+
+      console.log('[FreightService] Seña marcada como pagada exitosamente');
+    } catch (error) {
+      console.error('[FreightService] Error en markSeniaPaid:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Confirma el servicio después del pago de seña (admin confirma)
+   */
+  async confirmServiceAfterSenia(freightId: string): Promise<void> {
+    try {
+      console.log('[FreightService] Confirmando servicio después de seña:', freightId);
+      
+      // Actualizar estado en BD (confirmado después de seña)
+      const { error } = await supabase
+        .from('requests')
+        .update({ 
+          estado: 'Confirmada',
+          notas: `SERVICIO CONFIRMADO - Seña pagada y verificada - ${new Date().toLocaleDateString()}`,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', freightId);
+
+      if (error) {
+        console.error('[FreightService] Error confirmando servicio final:', error);
+        throw new Error('Error al confirmar servicio: ' + error.message);
+      }
+
+      // Notificar al cliente (versión simplificada)
+      try {
+        await this.notifyClientServiceConfirmed(freightId);
+        console.log('[FreightService] 📧 Email de confirmación final enviado al cliente');
+      } catch (emailError) {
+        console.error('[FreightService] ⚠️ Error enviando email de confirmación final (no bloquea el flujo):', emailError);
+      }
+
+      console.log('[FreightService] Servicio confirmado exitosamente después de seña');
+    } catch (error) {
+      console.error('[FreightService] Error en confirmServiceAfterSenia:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Notifica al cliente que debe pagar seña
+   */
+  private async notifyClientSeniaRequired(freightId: string, linkPago: string): Promise<void> {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          freightId,
+          type: 'client_senia_required',
+          linkPago
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      console.log('[FreightService] ✅ Notificación de seña requerida enviada al cliente');
+    } catch (error) {
+      console.error('[FreightService] ❌ Error notificando seña requerida al cliente:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Notifica al admin que se pagó la seña
+   */
+  private async notifyAdminSeniaPaid(freightId: string, referenciaPago: string): Promise<void> {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          freightId,
+          type: 'admin_senia_paid',
+          referenciaPago
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      console.log('[FreightService] ✅ Notificación de seña pagada enviada al admin');
+    } catch (error) {
+      console.error('[FreightService] ❌ Error notificando seña pagada al admin:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Confirma servicio urbano directamente (sin seña)
+   */
+  async confirmUrbanService(freightId: string): Promise<void> {
+    try {
+      console.log('[FreightService] 🏙️ Confirmando servicio urbano:', freightId);
+
+      // Actualizar estado a "Confirmada"
+      const { error: updateError } = await supabase
+        .from('requests')
+        .update({ 
+          estado: 'Confirmada',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', freightId);
+
+      if (updateError) {
+        throw new Error(`Error al actualizar estado: ${updateError.message}`);
+      }
+
+      // Notificar al cliente que el servicio está confirmado
+      await this.notifyClientServiceConfirmed(freightId);
+
+      console.log('[FreightService] ✅ Servicio urbano confirmado exitosamente');
+    } catch (error) {
+      console.error('[FreightService] ❌ Error confirmando servicio urbano:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Notifica al cliente que el servicio está confirmado
+   */
+  private async notifyClientServiceConfirmed(freightId: string): Promise<void> {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          freightId,
+          type: 'client_service_confirmed'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      console.log('[FreightService] ✅ Notificación de servicio confirmado enviada al cliente');
+    } catch (error) {
+      console.error('[FreightService] ❌ Error notificando servicio confirmado al cliente:', error);
       throw error;
     }
   }

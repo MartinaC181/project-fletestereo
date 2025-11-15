@@ -318,8 +318,13 @@ export type Database = {
           fecha: string
           franja: string
           id: string
+          km: number | null
           notas: string | null
           origen: string
+          precio_km: number | null
+          tarifa_base: number | null
+          total: number | null
+          extras_json: Json | null
           updated_at: string
         }
         Insert: {
@@ -332,8 +337,13 @@ export type Database = {
           fecha: string
           franja: string
           id?: string
+          km?: number | null
           notas?: string | null
           origen: string
+          precio_km?: number | null
+          tarifa_base?: number | null
+          total?: number | null
+          extras_json?: Json | null
           updated_at?: string
         }
         Update: {
@@ -346,8 +356,13 @@ export type Database = {
           fecha?: string
           franja?: string
           id?: string
+          km?: number | null
           notas?: string | null
           origen?: string
+          precio_km?: number | null
+          tarifa_base?: number | null
+          total?: number | null
+          extras_json?: Json | null
           updated_at?: string
         }
         Relationships: [

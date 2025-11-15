@@ -4,8 +4,8 @@ import { AnimatePresence } from "framer-motion";
 import PageTransition from "@/src/components/PageTransition";
 import Header from "@/src/components/Header";
 import Footer from "@/src/components/Footer";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
@@ -24,8 +24,9 @@ import type { Coordinates } from "@/src/lib/services/geolocation.service";
 
 export interface ExtraQuoteResult extends QuoteResult { precioKm: number; }
 
-export default function SolicitarFletePage() {
+function SolicitarFleteContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -41,6 +42,30 @@ export default function SolicitarFletePage() {
     polyline?: string;
     distance: number;
   } | null>(null);
+
+  // Efecto para preseleccionar el tipo de servicio desde URL
+  useEffect(() => {
+    const servicioParam = searchParams.get('servicio');
+    if (servicioParam) {
+      const validServices = ['mudanza_completa', 'mini_mudanza', 'flete_liviano', 'viaje_largo'];
+      if (validServices.includes(servicioParam)) {
+        setRequestData(prev => ({ ...prev, tipoServicio: servicioParam as ServiceType }));
+        
+        // Mejorar el mensaje del toast
+        const serviceLabels = {
+          'mudanza_completa': 'Mudanza Completa',
+          'mini_mudanza': 'Mini Mudanza', 
+          'flete_liviano': 'Flete Liviano',
+          'viaje_largo': 'Viaje Interurbano'
+        };
+        
+        toast({
+          title: "Servicio preseleccionado",
+          description: `Se ha seleccionado: ${serviceLabels[servicioParam as keyof typeof serviceLabels]}`,
+        });
+      }
+    }
+  }, [searchParams, toast]);
 
   const handleClientDataChange = (field: keyof ClientInfo, value: string) => setClientData(p => ({ ...p, [field]: value }));
   
@@ -140,7 +165,7 @@ export default function SolicitarFletePage() {
       }) as ExtraQuoteResult;
       
       setQuote(calculated);
-      setStep(3);
+      setStep(2); // Cambiar al paso 2 para mostrar la cotización
       
       toast({ 
         title: "¡Cotización calculada!", 
@@ -160,18 +185,27 @@ export default function SolicitarFletePage() {
     setLoading(true);
     try {
       console.log('🚀 Iniciando envío de solicitud...');
-      console.log('👤 Datos del cliente:', clientData);
+      console.log('�️ Tipo de viaje:', quote.requiereSenia ? 'INTERURBANO (con seña)' : 'URBANO (sin seña)');
+      console.log('�👤 Datos del cliente:', clientData);
       console.log('📦 Datos de la solicitud:', requestData);
       console.log('💰 Cotización:', quote);
       
       const freightRequest = await freightService.createFreightRequest(clientData, requestData, quote);
       
       console.log('✅ Solicitud creada exitosamente:', freightRequest);
+      
+      // Mensaje específico según tipo de viaje
+      const tipoViaje = quote.requiereSenia ? 'interurbano' : 'urbano';
+      const mensajeExtra = quote.requiereSenia 
+        ? `Seña requerida: $${quote.montoSenia.toLocaleString()} (50% del total).`
+        : 'No requiere seña por ser un viaje urbano.';
+      
       toast({ 
         title: "¡Solicitud enviada exitosamente!", 
-        description: `Tu solicitud #${freightRequest.id.slice(0,8)} ha sido registrada y aparecerá en el dashboard administrativo.` 
+        description: `Tu solicitud #${freightRequest.id.slice(0,8)} para viaje ${tipoViaje} ha sido registrada. ${mensajeExtra}`,
+        duration: 5000
       });
-      setTimeout(()=> router.push('/'), 3000);
+      setTimeout(()=> router.push('/'), 4000);
     } catch (e) {
       console.error('❌ Error completo:', e);
       toast({ 
@@ -184,13 +218,22 @@ export default function SolicitarFletePage() {
 
   const nextStep = () => {
     if (step === 1) {
-      if (!clientData.nombre || !clientData.telefono) {
-        toast({ title: "Campos requeridos", description: "Nombre y teléfono son obligatorios", variant: "destructive" }); return; }
-      setStep(2);
-    } else if (step === 2) {
+      // Validar datos del flete en el paso 1
       if (!requestData.origen || !requestData.destino || !requestData.fecha || !requestData.franja || !requestData.tipoServicio) {
-        toast({ title: "Campos requeridos", description: "Completa todos los campos", variant: "destructive" }); return; }
-      calculateQuote();
+        toast({ title: "Campos requeridos", description: "Completa todos los campos del flete", variant: "destructive" }); 
+        return; 
+      }
+      calculateQuote(); // Esto cambiará automáticamente al paso 2
+    } else if (step === 2) {
+      // En el paso 2 (cotización), pasar a datos del cliente
+      setStep(3);
+    } else if (step === 3) {
+      // Validar datos del cliente en el paso 3
+      if (!clientData.nombre || !clientData.telefono) {
+        toast({ title: "Campos requeridos", description: "Nombre y teléfono son obligatorios", variant: "destructive" }); 
+        return; 
+      }
+      setStep(4); // Pasar a confirmación final
     }
   };
 
@@ -204,38 +247,25 @@ export default function SolicitarFletePage() {
               <div className="mb-8">
                 <div className="flex items-center justify-between">
                   <div className={`flex items-center ${step >= 1 ? 'text-primary' : 'text-muted-foreground'}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-primary text-white' : 'bg-muted'}`}><User className="h-4 w-4" /></div>
-                    <span className="ml-2 text-sm font-medium">Datos personales</span>
-                  </div>
-                  <div className={`flex items-center ${step >= 2 ? 'text-primary' : 'text-muted-foreground'}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-primary text-white' : 'bg-muted'}`}><MapPin className="h-4 w-4" /></div>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-primary text-white' : 'bg-muted'}`}><MapPin className="h-4 w-4" /></div>
                     <span className="ml-2 text-sm font-medium">Detalles del flete</span>
                   </div>
+                  <div className={`flex items-center ${step >= 2 ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-primary text-white' : 'bg-muted'}`}><Calculator className="h-4 w-4" /></div>
+                    <span className="ml-2 text-sm font-medium">Ver cotización</span>
+                  </div>
                   <div className={`flex items-center ${step >= 3 ? 'text-primary' : 'text-muted-foreground'}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-primary text-white' : 'bg-muted'}`}><Calculator className="h-4 w-4" /></div>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-primary text-white' : 'bg-muted'}`}><User className="h-4 w-4" /></div>
+                    <span className="ml-2 text-sm font-medium">Datos personales</span>
+                  </div>
+                  <div className={`flex items-center ${step >= 4 ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 4 ? 'bg-primary text-white' : 'bg-muted'}`}><Phone className="h-4 w-4" /></div>
                     <span className="ml-2 text-sm font-medium">Confirmación</span>
                   </div>
                 </div>
-                <div className="mt-4 bg-muted rounded-full h-2"><div className="bg-primary h-2 rounded-full transition-all duration-500" style={{ width: `${(step / 3) * 100}%` }} /></div>
+                <div className="mt-4 bg-muted rounded-full h-2"><div className="bg-primary h-2 rounded-full transition-all duration-500" style={{ width: `${(step / 4) * 100}%` }} /></div>
               </div>
               {step === 1 && (
-                <Card className="shadow-lg">
-                  <CardHeader><CardTitle className="flex items-center gap-2"><User className="h-5 w-5 text-accent-yellow" />Tus Datos de Contacto</CardTitle></CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div><Label htmlFor="nombre">Nombre *</Label><Input id="nombre" value={clientData.nombre} onChange={e=>handleClientDataChange('nombre', e.target.value)} placeholder="Tu nombre" /></div>
-                      <div><Label htmlFor="apellido">Apellido</Label><Input id="apellido" value={clientData.apellido} onChange={e=>handleClientDataChange('apellido', e.target.value)} placeholder="Tu apellido" /></div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div><Label htmlFor="telefono">Teléfono *</Label><Input id="telefono" value={clientData.telefono} onChange={e=>handleClientDataChange('telefono', e.target.value)} placeholder="+54 11 1234-5678" /></div>
-                      <div><Label htmlFor="email">Email</Label><Input id="email" type="email" value={clientData.email} onChange={e=>handleClientDataChange('email', e.target.value)} placeholder="tu@email.com" /></div>
-                    </div>
-                    <div><Label htmlFor="dni">DNI (opcional)</Label><Input id="dni" value={clientData.dni} onChange={e=>handleClientDataChange('dni', e.target.value)} placeholder="12.345.678" /></div>
-                    <Button onClick={nextStep} className="w-full">Continuar</Button>
-                  </CardContent>
-                </Card>
-              )}
-              {step === 2 && (
                 <Card className="shadow-lg">
                   <CardHeader><CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5 text-accent-yellow" />Detalles del Flete</CardTitle></CardHeader>
                   <CardContent className="space-y-6">
@@ -363,21 +393,9 @@ export default function SolicitarFletePage() {
                                   size="sm"
                                   variant="outline"
                                   className="text-xs"
-                                  disabled={calculatingRoute}
                                 >
                                   Recalcular
                                 </Button>
-                              </div>
-                            </div>
-                            
-                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-3">
-                              <div className="flex items-start gap-2">
-                                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center mt-0.5">
-                                  <span className="text-amber-600 text-xs font-bold">!</span>
-                                </div>
-                                <p className="text-sm text-amber-800 leading-relaxed">
-                                  <strong>Importante:</strong> El recorrido podría variar por causa de fuerza mayor, tránsito colapsado u otra. De todas formas el precio no se modificará.
-                                </p>
                               </div>
                             </div>
                           </div>
@@ -386,9 +404,6 @@ export default function SolicitarFletePage() {
                     )}
                     
                     <div className="flex gap-4">
-                      <Button onClick={()=>setStep(1)} className="flex-1 border border-gray-300" disabled={calculatingQuote}>
-                        Volver
-                      </Button>
                       <Button 
                         onClick={nextStep} 
                         className="flex-1 bg-black text-white hover:bg-gray-800" 
@@ -400,7 +415,153 @@ export default function SolicitarFletePage() {
                   </CardContent>
                 </Card>
               )}
-              {step === 3 && quote && routeData && (
+              {step === 2 && quote && (
+                <div className="space-y-6">
+                  {/* Mostrar solo la cotización */}
+                  <Card className="shadow-lg border-green-200 bg-green-50">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-green-800">
+                        <Calculator className="h-5 w-5" />
+                        Tu Cotización
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        Este es el precio calculado para tu flete
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-center mb-4">
+                        <p className="text-3xl font-bold text-green-700 mb-2">
+                          ${(quote.total || 0).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-green-600">
+                          Distancia: {routeData?.distance.toFixed(1)} km • {requestData.tipoServicio}
+                        </p>
+                      </div>
+                      
+                      <div className="bg-white rounded-lg p-4 space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Tarifa base:</span>
+                          <span>${(quote.tarifaBase || 0).toLocaleString()}</span>
+                        </div>
+                        {quote.extras && Object.entries(quote.extras).map(([key, value]) => {
+                          // Convertir claves a etiquetas amigables
+                          const getExtraLabel = (key: string) => {
+                            switch(key) {
+                              case 'pisos_escalera': return 'Pisos con escaleras';
+                              case 'escaleras': return 'Escaleras';
+                              case 'volumen_extra': return 'Volumen extra';
+                              case 'distancia_extra': return 'Distancia adicional';
+                              default: return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            }
+                          };
+                          
+                          return (
+                            <div key={key} className="flex justify-between text-sm">
+                              <span>{getExtraLabel(key)}:</span>
+                              <span>+${value.toLocaleString()}</span>
+                            </div>
+                          );
+                        })}
+                        {quote.requiereSenia && (
+                          <div className="flex justify-between text-sm font-medium text-amber-600 pt-2 border-t">
+                            <span>Seña requerida:</span>
+                            <span>${(quote.montoSenia || 0).toLocaleString()}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="mt-6 text-center space-y-4">
+                        <p className="text-sm text-muted-foreground">
+                          ¿Te gusta el precio? Procede a ingresar tus datos de contacto
+                        </p>
+                        <div className="flex gap-4">
+                          <Button onClick={()=>setStep(1)} variant="outline" className="flex-1">
+                            Modificar Detalles
+                          </Button>
+                          <Button onClick={nextStep} className="flex-1 bg-accent-yellow text-black hover:bg-accent-yellow/90">
+                            ¡Me Gusta! Proceder
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+              {step === 3 && (
+                <Card className="shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <User className="h-5 w-5 text-accent-yellow" />
+                      Tus Datos de Contacto
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Completa tus datos para confirmar la solicitud del servicio
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="nombre">Nombre *</Label>
+                        <Input 
+                          id="nombre" 
+                          value={clientData.nombre} 
+                          onChange={e=>handleClientDataChange('nombre', e.target.value)} 
+                          placeholder="Tu nombre" 
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="apellido">Apellido</Label>
+                        <Input 
+                          id="apellido" 
+                          value={clientData.apellido} 
+                          onChange={e=>handleClientDataChange('apellido', e.target.value)} 
+                          placeholder="Tu apellido" 
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="telefono">Teléfono *</Label>
+                        <Input 
+                          id="telefono" 
+                          value={clientData.telefono} 
+                          onChange={e=>handleClientDataChange('telefono', e.target.value)} 
+                          placeholder="+54 11 1234-5678" 
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="email">Email</Label>
+                        <Input 
+                          id="email" 
+                          type="email" 
+                          value={clientData.email} 
+                          onChange={e=>handleClientDataChange('email', e.target.value)} 
+                          placeholder="tu@email.com" 
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="dni">DNI (opcional)</Label>
+                      <Input 
+                        id="dni" 
+                        value={clientData.dni} 
+                        onChange={e=>handleClientDataChange('dni', e.target.value)} 
+                        placeholder="12.345.678" 
+                      />
+                    </div>
+                    
+                    <div className="flex gap-4">
+                      <Button onClick={()=>setStep(2)} variant="outline" className="flex-1">
+                        Ver Cotización
+                      </Button>
+                      <Button onClick={nextStep} className="flex-1 bg-accent-yellow text-black hover:bg-accent-yellow/90">
+                        Continuar con la Solicitud
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              {step === 4 && quote && routeData && (
                 <div className="space-y-6">
                   {/* Mapa con la ruta calculada */}
                   <Card className="shadow-lg">
@@ -456,13 +617,36 @@ export default function SolicitarFletePage() {
                         <h4 className="font-semibold mb-4">Tu Cotización</h4>
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between"><span>Tarifa base:</span><span>${quote.tarifaBase.toLocaleString()}</span></div>
-                          <div className="flex justify-between"><span>Distancia ({quote.km} km):</span><span>${(quote.km * (quote as any).precioKm).toLocaleString()}</span></div>
-                          {Object.entries(quote.extras).map(([k,v]) => v>0 && (<div key={k} className="flex justify-between"><span className="capitalize">{k.replace(/([A-Z])/g,' $1').toLowerCase()}:</span><span>${(v as number).toLocaleString()}</span></div>))}
+                          <div className="flex justify-between"><span>Distancia ({quote.km} km):</span><span>Incluido en tarifa</span></div>
+                          {Object.entries(quote.extras).map(([k,v]) => {
+                            if (!v || v <= 0) return null;
+                            const getExtraLabel = (key: string) => {
+                              switch(key) {
+                                case 'pisos_escalera': return 'Pisos con escaleras';
+                                case 'escaleras': return 'Escaleras';
+                                case 'volumen_extra': return 'Volumen extra';
+                                case 'distancia_extra': return 'Distancia adicional';
+                                default: return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                              }
+                            };
+                            return (
+                              <div key={k} className="flex justify-between">
+                                <span>{getExtraLabel(k)}:</span>
+                                <span>+${(v as number).toLocaleString()}</span>
+                              </div>
+                            );
+                          })}
                           <hr />
                           <div className="flex justify-between font-bold text-lg"><span>Total estimado:</span><span className="text-accent-yellow">${quote.total.toLocaleString()}</span></div>
                         </div>
-                        {quote.km > 100 && (
-                          <div className="mt-4 bg-accent-yellow-light/20 p-4 rounded-lg border border-accent-yellow/20"><h5 className="font-semibold text-black mb-2">Seña Requerida</h5><p className="text-sm text-black">Para viajes mayores a 100km se requiere una seña del 30% (${Math.round(quote.total*0.3).toLocaleString()})</p></div>
+                        {quote.requiereSenia && (
+                          <div className="mt-4 bg-amber-50 p-4 rounded-lg border border-amber-200">
+                            <h5 className="font-semibold text-amber-800 mb-2">Seña Requerida</h5>
+                            <p className="text-sm text-amber-700">
+                              Para viajes interurbanos (fuera de Corrientes Capital) se requiere una seña del 30% 
+                              (${quote.montoSenia.toLocaleString()})
+                            </p>
+                          </div>
                         )}
                       </div>
                       <div className="flex items-start space-x-2">
@@ -480,5 +664,18 @@ export default function SolicitarFletePage() {
         </div>
       </PageTransition>
     </AnimatePresence>
+  );
+}
+
+export default function SolicitarFletePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-2 text-muted-foreground">Cargando...</p>
+      </div>
+    </div>}>
+      <SolicitarFleteContent />
+    </Suspense>
   );
 }

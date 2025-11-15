@@ -3,7 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   images: {
-    domains: ['localhost'],
+    domains: ['localhost', 'github.com', 'avatars.githubusercontent.com'],
   },
   experimental: {
     serverComponentsExternalPackages: ['@supabase/supabase-js'],

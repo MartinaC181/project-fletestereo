@@ -46,12 +46,6 @@ const Header = () => {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link
-              href="/servicios"
-              className="text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 transition-colors"
-            >
-              Servicios
-            </Link>
-            <Link
               href="/tarifas"
               className="text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 transition-colors"
             >
@@ -179,13 +173,6 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t py-4">
             <nav className="flex flex-col space-y-4">
-              <Link
-                href="/servicios"
-                className="text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 transition-colors py-2"
-                onClick={toggleMenu}
-              >
-                Servicios
-              </Link>
               <Link
                 href="/tarifas"
                 className="text-gray-300 dark:text-black hover:text-white dark:hover:text-gray-800 transition-colors py-2"

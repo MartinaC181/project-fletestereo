@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Badge } from '@/src/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/src/components/ui/dialog';
+import { Input } from '@/src/components/ui/input';
+import { Label } from '@/src/components/ui/label';
 import { useAuth } from '@/src/hooks/useAuth';
 import { LogOut, TrendingUp, Users, CheckCircle, Clock, X, Phone, Mail } from 'lucide-react';
 import { FreightHistory } from '@/src/components/FreightHistory';
 import { FreightHistoryStats } from '@/src/components/FreightHistoryStats';
+import { ConfigForm } from './ConfigForm';
 import { freightService } from '@/src/modules/freight';
 import { useToast } from '@/src/hooks/use-toast';
 import type { 
@@ -24,10 +28,17 @@ export const OwnerDashboard: React.FC = () => {
   const [recentPayments, setRecentPayments] = useState<PaymentEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingRequest, setProcessingRequest] = useState<string | null>(null);
+  
+  // Estados para el modal de seña
+  const [showSeniaModal, setShowSeniaModal] = useState(false);
+  const [selectedRequestId, setSelectedRequestId] = useState<string>('');
+  const [seniaLinkPago, setSeniaLinkPago] = useState('');
+  const [sendingSenia, setSendingSenia] = useState(false);
+  
   const { user, signOut } = useAuth();
   const { toast } = useToast();
 
-  // Cargar solicitudes pendientes de la base de datos
+  // Cargar solicitudes pendientes y con señas de la base de datos
   const loadPendingRequests = async () => {
     try {
       setLoading(true);
@@ -38,7 +49,7 @@ export const OwnerDashboard: React.FC = () => {
       console.error('Error cargando solicitudes:', error);
       toast({
         title: "Error",
-        description: "No se pudieron cargar las solicitudes pendientes",
+        description: "No se pudieron cargar las solicitudes",
         variant: "destructive"
       });
     } finally {
@@ -54,7 +65,32 @@ export const OwnerDashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Función para confirmar solicitud
+  // Función para confirmar solicitud urbana (sin seña)
+  const handleConfirmUrbanRequest = async (requestId: string) => {
+    try {
+      setProcessingRequest(requestId);
+      await freightService.confirmUrbanService(requestId);
+      
+      toast({
+        title: "Servicio Confirmado",
+        description: "El servicio urbano ha sido confirmado exitosamente",
+      });
+      
+      // Recargar lista
+      await loadPendingRequests();
+    } catch (error) {
+      console.error('Error confirmando servicio urbano:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo confirmar el servicio",
+        variant: "destructive"
+      });
+    } finally {
+      setProcessingRequest(null);
+    }
+  };
+
+  // Función para confirmar solicitud interurbana después de seña
   const handleConfirmRequest = async (requestId: string) => {
     try {
       setProcessingRequest(requestId);
@@ -98,6 +134,82 @@ export const OwnerDashboard: React.FC = () => {
       toast({
         title: "Error",
         description: "No se pudo rechazar la solicitud",
+        variant: "destructive"
+      });
+    } finally {
+      setProcessingRequest(null);
+    }
+  };
+
+    // Función helper para determinar si un viaje es interurbano
+  const isInterurbanTrip = (request: FreightRequest): boolean => {
+    return freightService.isInterurbanTrip(request.quote.origen, request.quote.destino);
+  };
+
+  // Función para abrir modal de solicitar seña
+  const handleRequestSenia = (requestId: string) => {
+    setSelectedRequestId(requestId);
+    setShowSeniaModal(true);
+  };
+
+  // Función para enviar solicitud de seña
+  const handleSendSeniaRequest = async () => {
+    if (!seniaLinkPago.trim()) {
+      toast({
+        title: "Error",
+        description: "Por favor ingresa el link de pago",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setSendingSenia(true);
+      
+      // Llamar al método del FreightService para solicitar seña
+      await freightService.requestSenia(selectedRequestId, seniaLinkPago);
+      
+      toast({
+        title: "Seña Solicitada",
+        description: "Se ha enviado el email al cliente con el link de pago",
+      });
+      
+      // Cerrar modal y recargar
+      setShowSeniaModal(false);
+      await loadPendingRequests();
+      
+    } catch (error) {
+      console.error('Error solicitando seña:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo enviar la solicitud de seña",
+        variant: "destructive"
+      });
+    } finally {
+      setSendingSenia(false);
+    }
+  };
+
+  // Función para confirmar que se recibió el pago de la seña
+  const handleConfirmSeniaPaid = async (requestId: string) => {
+    try {
+      setProcessingRequest(requestId);
+      
+      // Confirmar el servicio después del pago de seña
+      await freightService.confirmServiceAfterSenia(requestId);
+      
+      toast({
+        title: "Pago Confirmado",
+        description: "Se ha confirmado el pago de la seña y se notificó al cliente",
+      });
+      
+      // Recargar lista
+      await loadPendingRequests();
+    } catch (error) {
+      console.error('Error confirmando pago de seña:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo confirmar el pago de la seña",
         variant: "destructive"
       });
     } finally {
@@ -158,11 +270,12 @@ export const OwnerDashboard: React.FC = () => {
       {/* Contenido del Dashboard */}
       <main className="container mx-auto px-4 py-6">
         <Tabs defaultValue="solicitudes" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
             <TabsTrigger value="solicitudes">Solicitudes</TabsTrigger>
             <TabsTrigger value="pagos">Pagos</TabsTrigger>
             <TabsTrigger value="historial">Historial</TabsTrigger>
             <TabsTrigger value="estadisticas">Estadísticas</TabsTrigger>
+            <TabsTrigger value="config">Tarifas y Reglas</TabsTrigger>
           </TabsList>
           
           <TabsContent value="solicitudes" className="space-y-6">
@@ -314,9 +427,19 @@ export const OwnerDashboard: React.FC = () => {
                       <div key={request.id} className="border border-border rounded-lg p-4 space-y-3 bg-card">
                         <div className="flex justify-between items-start">
                           <div>
-                            <h3 className="font-semibold text-foreground">
-                              {request.client.nombre} {request.client.apellido}
-                            </h3>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-semibold text-foreground">
+                                {request.client.nombre} {request.client.apellido}
+                              </h3>
+                              {/* Badge del estado */}
+                              <Badge variant={
+                                request.quote.notas?.includes('SEÑA SOLICITADA') ? 'secondary' : 
+                                isInterurbanTrip(request) ? 'destructive' : 'default'
+                              }>
+                                {request.quote.notas?.includes('SEÑA SOLICITADA') ? '💰 Seña Pendiente' : 
+                                 isInterurbanTrip(request) ? '🌍 Interurbano' : '🏙️ Urbano'}
+                              </Badge>
+                            </div>
                             <p className="text-sm text-muted-foreground">
                               {request.client.telefono} • {request.client.email}
                             </p>
@@ -376,29 +499,93 @@ export const OwnerDashboard: React.FC = () => {
                           </div>
                         </div>
 
-                        {request.quote.notas && (
+                        {/* Mostrar información especial para señas */}
+                        {request.quote.notas?.includes('SEÑA SOLICITADA') && (
+                          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-orange-600">💰</span>
+                              <span className="font-medium text-orange-800">Seña Solicitada al Cliente</span>
+                            </div>
+                            <div className="text-sm text-orange-700">
+                              <p>• Email enviado al cliente con link de pago</p>
+                              <p>• Esperando confirmación de pago</p>
+                              <p>• Una vez recibida la seña, confirma para notificar al cliente</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {request.quote.notas && !request.quote.notas.includes('SEÑA SOLICITADA') && (
                           <div className="text-sm text-foreground">
                             <span className="font-medium text-primary">Notas:</span> {request.quote.notas}
                           </div>
                         )}
 
-                        <div className="flex gap-2 pt-2">
-                          <Button 
-                            onClick={() => handleConfirmRequest(request.id)}
-                            disabled={processingRequest === request.id}
-                            className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white flex items-center gap-2"
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                            {processingRequest === request.id ? 'Confirmando...' : 'Confirmar'}
-                          </Button>
-                          <Button 
-                            onClick={() => handleRejectRequest(request.id)}
-                            disabled={processingRequest === request.id}
-                            className="bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white flex items-center gap-2"
-                          >
-                            <X className="h-4 w-4" />
-                            {processingRequest === request.id ? 'Rechazando...' : 'Rechazar'}
-                          </Button>
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          {/* Mostrar botones según el estado */}
+                          {request.quote.notas?.includes('SEÑA SOLICITADA') ? (
+                            // Solicitud con seña pendiente
+                            <>
+                              <Button 
+                                onClick={() => handleConfirmSeniaPaid(request.id)}
+                                disabled={processingRequest === request.id}
+                                className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white flex items-center gap-2"
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                                {processingRequest === request.id ? 'Confirmando...' : 'Confirmar Pago Recibido'}
+                              </Button>
+                              
+                              <Button 
+                                onClick={() => handleRejectRequest(request.id)}
+                                disabled={processingRequest === request.id}
+                                className="bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white flex items-center gap-2"
+                              >
+                                <X className="h-4 w-4" />
+                                {processingRequest === request.id ? 'Rechazando...' : 'Rechazar'}
+                              </Button>
+                            </>
+                          ) : isInterurbanTrip(request) ? (
+                            // Solicitud nueva INTERURBANA - Requiere seña
+                            <>
+                              <Button 
+                                onClick={() => handleRequestSenia(request.id)}
+                                disabled={processingRequest === request.id}
+                                className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-600 dark:hover:bg-orange-700 text-white flex items-center gap-2"
+                              >
+                                💰 Solicitar Seña
+                              </Button>
+                              
+                              <Button 
+                                onClick={() => handleRejectRequest(request.id)}
+                                disabled={processingRequest === request.id}
+                                className="bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white flex items-center gap-2"
+                              >
+                                <X className="h-4 w-4" />
+                                {processingRequest === request.id ? 'Rechazando...' : 'Rechazar'}
+                              </Button>
+                            </>
+                          ) : (
+                            // Solicitud nueva URBANA - Confirmación directa
+                            <>
+                              <Button 
+                                onClick={() => handleConfirmUrbanRequest(request.id)}
+                                disabled={processingRequest === request.id}
+                                className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white flex items-center gap-2"
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                                {processingRequest === request.id ? 'Confirmando...' : '🏙️ Confirmar Servicio'}
+                              </Button>
+                              
+                              <Button 
+                                onClick={() => handleRejectRequest(request.id)}
+                                disabled={processingRequest === request.id}
+                                className="bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white flex items-center gap-2"
+                              >
+                                <X className="h-4 w-4" />
+                                {processingRequest === request.id ? 'Rechazando...' : 'Rechazar'}
+                              </Button>
+                            </>
+                          )}
+                          
                           <Button 
                             variant="outline"
                             disabled
@@ -525,8 +712,70 @@ export const OwnerDashboard: React.FC = () => {
           <TabsContent value="estadisticas" className="space-y-6">
             <FreightHistoryStats />
           </TabsContent>
+
+          <TabsContent value="config">
+            <Card>
+              <CardHeader>
+                <CardTitle>Configuración de Reglas de Negocio (M15)</CardTitle>
+                <CardDescription>
+                  Ajusta las tarifas, combos y reglas que usa el sistema para
+                  calcular las cotizaciones.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ConfigForm />
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </main>
+
+      {/* Modal para solicitar seña */}
+      <Dialog open={showSeniaModal} onOpenChange={setShowSeniaModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>💰 Solicitar Seña al Cliente</DialogTitle>
+            <DialogDescription>
+              Ingresa el link de pago para que el cliente pueda pagar la seña requerida.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="linkPago">Link de Pago (MercadoPago, Transferencia, etc.)</Label>
+              <Input
+                id="linkPago"
+                type="url"
+                placeholder="https://mpago.la/1234567 o enlace de transferencia"
+                value={seniaLinkPago}
+                onChange={(e) => setSeniaLinkPago(e.target.value)}
+              />
+            </div>
+            <div className="text-sm text-muted-foreground">
+              <p><strong>¿Qué sucederá?</strong></p>
+              <ul className="list-disc list-inside space-y-1 mt-2">
+                <li>Se enviará un email al cliente con el link de pago</li>
+                <li>El cliente podrá pagar la seña desde su celular/computadora</li>
+                <li>Una vez pagada, deberás confirmar el pago manualmente</li>
+              </ul>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowSeniaModal(false)}
+              disabled={sendingSenia}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSendSeniaRequest}
+              disabled={sendingSenia || !seniaLinkPago.trim()}
+            >
+              {sendingSenia ? 'Enviando...' : 'Enviar Solicitud'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
